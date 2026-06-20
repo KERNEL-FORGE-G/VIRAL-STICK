@@ -1,0 +1,14 @@
+{
+  "name": "viral-stick-web",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build"
+  },
+  "dependencies": {
+    "react": "^18.x",
+    "react-dom": "^18.x",
+    "react-scripts": "5.x"
+  }
+}
