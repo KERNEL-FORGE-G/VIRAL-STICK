@@ -2,3 +2,5 @@
 [19/06 09:55] The end!: le backend de l'app (nodejs express va utiliser l'app des ia de génération multimodales)
 [19/06 10:04] The end!: Maintenant, imaginez une app qui peut générer ce genre de stickers à la demande, en deepfakant les visages, les voix etc....
 [19/06 10:09] The end!: imaginez que l'on puis prendre ce texte donner a votre app et l'app genre une illustration avec la tete de Pischonette dessus. CA SERAIT LA PATATE de l'application 🥳🥳🥳
+parler pour faire des sctikers aussi donc a partir de l'audio je dois pouvoir generer des stickers
+voire la possibilite de faire =une integration whasapp pour pouvoir envoyer les message directement à l'apps
