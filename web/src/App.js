@@ -1,81 +1,227 @@
-import React, { useState } from 'react';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import "./App.css";
+
+const FEATURES = [
+  {
+    id: "context",
+    icon: "📖",
+    title: "Context Reader",
+    tagline: "Analyse un texte et génère un mème IA",
+    description:
+      "Colle un texte, une conversation ou un statut. Notre IA détecte le ton, le contexte et les personnages, puis génère un mème ou un sticker parfaitement adapté.",
+    gradient: "linear-gradient(135deg, #7C3AED, #3B82F6)",
+    companion: "art",
+  },
+  {
+    id: "voice",
+    icon: "🎙️",
+    title: "Voice → Mème",
+    tagline: "Parle, ton mème se génère automatiquement",
+    description:
+      "Enregistre ta voix depuis le mobile, notre IA transcrit et analyse ton ton. En quelques secondes, transforme tes paroles en sticker viral.",
+    gradient: "linear-gradient(135deg, #06B6D4, #7C3AED)",
+    companion: "ubu",
+  },
+  {
+    id: "remixer",
+    icon: "🎨",
+    title: "Status Remixer",
+    tagline: "Remixe tes images en stickers viraux",
+    description:
+      "Importe une image, applique des filtres, ajoute du texte et des effets. Remixe tes photos en stickers uniques prêts à partager.",
+    gradient: "linear-gradient(135deg, #F59E0B, #EF4444)",
+    companion: "bio",
+  },
+];
 
 const COMPANIONS = [
-  { id: 'arch', name: 'Archlord', role: 'PDG & Admin', emoji: '👑' },
-  { id: 'art', name: 'Art', role: 'Artiste Visuel', emoji: '🎨' },
-  { id: 'ubu', name: 'Ubu', role: 'Humoriste', emoji: '🤖' },
-  { id: 'bio', name: 'Bio', role: 'Créatif', emoji: '🌿' },
+  { id: "arch", name: "Archlord", role: "PDG & Admin" },
+  { id: "art", name: "Art", role: "Artiste Visuel" },
+  { id: "ubu", name: "Ubu", role: "Humoriste" },
+  { id: "bio", name: "Bio", role: "Créatif" },
+  { id: "data", name: "Data", role: "Analyste" },
+  { id: "para", name: "Para", role: "Stratège" },
+  { id: "secu", name: "Secu", role: "Gardien" },
 ];
 
 function App() {
-  const [activeTab, setActiveTab] = useState('home');
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
-    <div className="app-container">
-      <header className="app-header">
-        <div className="logo-section">
-          <img src="/asset/logo/logo_sans_fond.png" alt="Viral Stick" className="logo" />
-          <h1>Viral <span className="highlight">Stick</span></h1>
+    <div className="app">
+      {/* ── Header ─────────────────────────────────── */}
+      <header className={`header ${scrolled ? "header-scrolled" : ""}`}>
+        <div className="header-inner">
+          <div className="logo-wrap">
+            <img
+              src="/asset/logo/logo_sans_fond.png"
+              alt="Viral Stick"
+              className="logo-img"
+            />
+            <span className="logo-text">
+              Viral <strong>Stick</strong>
+            </span>
+          </div>
+          <nav className="nav">
+            <a href="#features">Fonctionnalités</a>
+            <a href="#companions">Compagnons</a>
+            <a href="#about">À propos</a>
+          </nav>
         </div>
-        <nav className="main-nav">
-          <button onClick={() => setActiveTab('home')} className={activeTab === 'home' ? 'active' : ''}>Tableau de bord</button>
-          <button onClick={() => setActiveTab('forum')} className={activeTab === 'forum' ? 'active' : ''}>Forum</button>
-          <button onClick={() => setActiveTab('about')} className={activeTab === 'about' ? 'active' : ''}>À propos</button>
-        </nav>
       </header>
 
-      <main className="app-content">
-        {activeTab === 'home' && (
-          <div className="dashboard">
-            <section className="welcome-banner">
-              <h2>Bienvenue sur le Studio Web</h2>
-              <p>Générez vos mèmes et stickers avec la puissance de l'IA.</p>
-            </section>
+      {/* ── Hero ────────────────────────────────────── */}
+      <section className="hero">
+        <div className="hero-bg" />
+        <div className="hero-content">
+          <div className="hero-badge">Générateur IA Multimodal</div>
+          <h1 className="hero-title">
+            Crée du contenu <span className="gradient-text">viral</span>
+            <br />
+            en un clic
+          </h1>
+          <p className="hero-subtitle">
+            Context Reader, Voice to Meme, Status Remixer — trois outils IA pour
+            transformer vos idées en stickers et mèmes prêts à partager.
+          </p>
+          <div className="hero-actions">
+            <a href="#features" className="btn-primary">
+              Découvrir
+            </a>
+            <a href="#companions" className="btn-secondary">
+              Nos Compagnons
+            </a>
+          </div>
+        </div>
+        <div className="hero-visual">
+          <div className="hero-glow" />
+          <img
+            src="/asset/compagnons/arch_sans_fond.png"
+            alt="Archlord"
+            className="hero-mascot"
+          />
+        </div>
+      </section>
 
-            <div className="modules-grid">
-              <div className="module-card">
-                <span className="module-icon">📖</span>
-                <h3>Context Reader</h3>
-                <p>Analysez vos discussions et créez des mèmes.</p>
-                <button className="btn-primary">Lancer</button>
-              </div>
-              <div className="module-card">
-                <span className="module-icon">🎙️</span>
-                <h3>Voice to Meme</h3>
-                <p>Transformez votre voix en sticker viral.</p>
-                <button className="btn-primary">Lancer</button>
+      {/* ── Features ────────────────────────────────── */}
+      <section id="features" className="features">
+        <div className="section-label">FONCTIONNALITÉS</div>
+        <h2 className="section-title">
+          Tout ce dont tu as besoin pour{" "}
+          <span className="gradient-text">devenir viral</span>
+        </h2>
+        <p className="section-desc">
+          Trois modules complémentaires propulsés par l'IA Générative.
+        </p>
+
+        <div className="features-grid">
+          {FEATURES.map((f, i) => (
+            <div
+              key={f.id}
+              className="feature-card"
+              style={{ animationDelay: `${i * 0.15}s` }}
+            >
+              <div
+                className="feature-card-glow"
+                style={{ background: f.gradient }}
+              />
+              <div className="feature-card-inner">
+                <div
+                  className="feature-icon-wrap"
+                  style={{ background: f.gradient }}
+                >
+                  <span className="feature-icon">{f.icon}</span>
+                </div>
+                <h3 className="feature-title">{f.title}</h3>
+                <p className="feature-tagline">{f.tagline}</p>
+                <p className="feature-desc">{f.description}</p>
+                <div className="feature-companion">
+                  <img
+                    src={`/asset/compagnons/${f.companion}_sans_fond.png`}
+                    alt={f.companion}
+                    className="feature-companion-img"
+                  />
+                </div>
               </div>
             </div>
+          ))}
+        </div>
+      </section>
 
-            <section className="companions-section">
-              <h3>Nos Compagnons</h3>
-              <div className="companions-grid">
-                {COMPANIONS.map(c => (
-                  <div key={c.id} className="companion-mini-card">
-                    <img src={`/asset/compagnons/${c.id}_sans_fond.png`} alt={c.name} />
-                    <h4>{c.name}</h4>
-                    <p>{c.role}</p>
-                  </div>
-                ))}
+      {/* ── Companions ──────────────────────────────── */}
+      <section id="companions" className="companions">
+        <div className="section-label">ÉQUIPE</div>
+        <h2 className="section-title">
+          Rencontre les <span className="gradient-text">Compagnons</span>
+        </h2>
+        <p className="section-desc">
+          7 personnalités IA prêtes à t'assister dans la création.
+        </p>
+
+        <div className="companions-grid">
+          {COMPANIONS.map((c) => (
+            <div key={c.id} className="companion-card">
+              <div className="companion-avatar-wrap">
+                <div className="companion-glow" />
+                <img
+                  src={`/asset/compagnons/${c.id}_sans_fond.png`}
+                  alt={c.name}
+                  className="companion-avatar"
+                />
               </div>
-            </section>
-          </div>
-        )}
+              <h4 className="companion-name">{c.name}</h4>
+              <p className="companion-role">{c.role}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
-        {activeTab === 'about' && (
-          <div className="about-page">
-            <h2>À propos de KERNEL FORGE</h2>
-            <p>Viral Stick est un projet académique ICT202 de l'Université de Yaoundé I.</p>
-            <div className="links">
-              <a href="https://github.com/Archlord12345/VIRAL-STICK" target="_blank" rel="noreferrer">GitHub du Projet</a>
+      {/* ── CTA ─────────────────────────────────────── */}
+      <section className="cta">
+        <div className="cta-glow" />
+        <h2 className="cta-title">Prêt à créer du contenu viral ?</h2>
+        <p className="cta-desc">
+          Rejoins KERNEL FORGE et propulse ta créativité avec l'IA.
+        </p>
+        <div className="cta-actions">
+          <a
+            href="https://github.com/Archlord12345/VIRAL-STICK"
+            target="_blank"
+            rel="noreferrer"
+            className="btn-primary"
+          >
+            Code source →
+          </a>
+        </div>
+      </section>
+
+      {/* ── Footer ──────────────────────────────────── */}
+      <footer id="about" className="footer">
+        <div className="footer-inner">
+          <div className="footer-brand">
+            <img
+              src="/asset/logo/logo_sans_fond.png"
+              alt="Viral Stick"
+              className="footer-logo"
+            />
+            <div>
+              <strong>Viral Stick</strong>
+              <p>Générateur IA Multimodal — ICT202</p>
             </div>
           </div>
-        )}
-      </main>
-
-      <footer className="app-footer">
-        <p>KERNEL FORGE — 2026 | Viral Stick Web v1.0</p>
+          <div className="footer-links">
+            <p className="footer-credit">
+              Projet académique — Université de Yaoundé I
+            </p>
+            <p className="footer-copy">KERNEL FORGE &copy; 2026</p>
+          </div>
+        </div>
       </footer>
     </div>
   );

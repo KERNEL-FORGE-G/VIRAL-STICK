@@ -1,0 +1,8 @@
+ici sont contenue les avatar des compagnon pour chacune des pages et services de notre application:
+- archlord (arch.png): administrateur systeme et responsable globale de tout le monde c'est lui qui dicte les ordre on peut conisderer toute cette application comme une entreprise et lui il est le pdg
+- para (para.png): il a pour role de gere la parit parametre et il alrepresente et quand on ouvre cette parit c'est lui qui nous accueil et on echange avec lui sur cette page
+- secu (secu.png): avatar de securite il apparei quand des erreur de securite ou toute autre actions de securite est lancer et il est aussi sur la page securité
+- data (data.png): il sera charger de la page donner user et assistance support et beneficira aussi e lus d'une autre page de tchat systeme ou il guidera les user qui sont perdu ou qui essai de contacter le systeme client
+
+- bio (bio.png), ubu (ubu.png) et enfin art (art.png): les 3 artiste qui representerons toutes les autres pages de mon application il viendront de temps en tempssur leur pages communiquer avec le user le dire des blagues voir faires des conversation entre eux 3
+- tu developpera de meileur systeme pour mes compagnons pour que l'app soit la plus nteractive possible et aussi j'ajoutera a chacun une version gift animer de leur image
