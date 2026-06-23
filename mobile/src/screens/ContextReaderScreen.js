@@ -5,7 +5,7 @@
  * Companion: art
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -18,35 +18,37 @@ import {
   ActivityIndicator,
   Alert,
   Keyboard,
-} from 'react-native';
-import axios from 'axios';
-import { useTheme, spacing, radius, typography, createShadow } from '../theme';
-import GlassCard from '../components/GlassCard';
-import AnimatedButton from '../components/AnimatedButton';
-import CompanionAvatar from '../components/CompanionAvatar';
+} from "react-native";
+import axios from "axios";
+import { useTheme, spacing, radius, typography, createShadow } from "../theme";
+import GlassCard from "../components/GlassCard";
+import AnimatedButton from "../components/AnimatedButton";
+import CompanionAvatar from "../components/CompanionAvatar";
 
-const API_BASE = 'https://viral-stick.vercel.app';
+const API_BASE = "https://viral-stick.vercel.app";
 
 const ART_MESSAGES = [
-  '🎨 Donne-moi un contexte et je crée la légende !',
-  '📖 Je lis entre les lignes pour toi...',
-  '💡 Un bon mème, ça se construit sur une bonne idée !',
-  '🔥 Tape quelque chose de viral !',
+  "🎨 Donne-moi un contexte et je crée la légende !",
+  "📖 Je lis entre les lignes pour toi...",
+  "💡 Un bon mème, ça se construit sur une bonne idée !",
+  "🔥 Tape quelque chose de viral !",
 ];
 
 const ContextReaderScreen = ({ navigate }) => {
   const { theme } = useTheme();
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
   const [meme, setMeme] = useState(null);
   const [loading, setLoading] = useState(false);
   const [companionMsg, setCompanionMsg] = useState(ART_MESSAGES[0]);
   const resultAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim  = useRef(new Animated.Value(1)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (!loading && !meme) {
       const t = setInterval(() => {
-        setCompanionMsg(ART_MESSAGES[Math.floor(Math.random() * ART_MESSAGES.length)]);
+        setCompanionMsg(
+          ART_MESSAGES[Math.floor(Math.random() * ART_MESSAGES.length)],
+        );
       }, 5000);
       return () => clearInterval(t);
     }
@@ -55,11 +57,19 @@ const ContextReaderScreen = ({ navigate }) => {
   // Pulse loading animation
   useEffect(() => {
     if (loading) {
-      setCompanionMsg('🎨 Je réfléchis... Ta situation est inspirante !');
+      setCompanionMsg("🎨 Je réfléchis... Ta situation est inspirante !");
       Animated.loop(
         Animated.sequence([
-          Animated.timing(pulseAnim, { toValue: 1.08, duration: 600, useNativeDriver: true }),
-          Animated.timing(pulseAnim, { toValue: 1,    duration: 600, useNativeDriver: true }),
+          Animated.timing(pulseAnim, {
+            toValue: 1.08,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
         ]),
       ).start();
     } else {
@@ -70,20 +80,22 @@ const ContextReaderScreen = ({ navigate }) => {
 
   const generateMeme = async () => {
     if (!text.trim()) {
-      setCompanionMsg('⚠️ Oh ! Tu as oublié de m\'écrire quelque chose.');
-      Alert.alert('Viral Stick', 'Entre un texte de contexte !');
+      setCompanionMsg("⚠️ Oh ! Tu as oublié de m'écrire quelque chose.");
+      Alert.alert("Viral Stick", "Entre un texte de contexte !");
       return;
     }
     Keyboard.dismiss();
     setLoading(true);
     setMeme(null);
     try {
-      const res = await axios.post(`${API_BASE}/api/memes/generate-from-text`, { text });
+      const res = await axios.post(`${API_BASE}/api/memes/generate-from-text`, {
+        text,
+      });
       setMeme(res.data);
       if (res.data.companionComment) {
         setCompanionMsg(res.data.companionComment);
       } else {
-        setCompanionMsg('✨ Tadaaa ! Voilà une idée qui va faire un carton !');
+        setCompanionMsg("✨ Tadaaa ! Voilà une idée qui va faire un carton !");
       }
       Animated.spring(resultAnim, {
         toValue: 1,
@@ -92,18 +104,21 @@ const ContextReaderScreen = ({ navigate }) => {
         useNativeDriver: true,
       }).start();
     } catch (err) {
-      setCompanionMsg('❌ Oups, j\'ai eu un petit bug créatif. Réessaie ?');
-      Alert.alert('Erreur', 'Impossible de générer le mème. Vérifie ta connexion.');
+      setCompanionMsg("❌ Oups, j'ai eu un petit bug créatif. Réessaie ?");
+      Alert.alert(
+        "Erreur",
+        "Impossible de générer le mème. Vérifie ta connexion.",
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const reset = () => {
-    setText('');
+    setText("");
     setMeme(null);
     resultAnim.setValue(0);
-    setCompanionMsg('📖 Prêt pour une nouvelle idée ? Je t\'écoute.');
+    setCompanionMsg("📖 Prêt pour une nouvelle idée ? Je t'écoute.");
   };
 
   return (
@@ -116,12 +131,19 @@ const ContextReaderScreen = ({ navigate }) => {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={[styles.screenTag, { color: theme.textMuted }]}>MODULE 1</Text>
+            <Text style={[styles.screenTag, { color: theme.textMuted }]}>
+              MODULE 1
+            </Text>
             <Text style={[styles.title, { color: theme.textPrimary }]}>
               Context <Text style={{ color: theme.primaryLight }}>Reader</Text>
             </Text>
           </View>
-          <CompanionAvatar companion="art" size={68} floating message={companionMsg} />
+          <CompanionAvatar
+            companion="art"
+            size={136}
+            floating
+            message={companionMsg}
+          />
         </View>
 
         {/* Input */}
@@ -155,7 +177,7 @@ const ContextReaderScreen = ({ navigate }) => {
         {/* Generate Button */}
         <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
           <AnimatedButton
-            title={loading ? 'Génération...' : '✨ Générer le mème'}
+            title={loading ? "Génération..." : "✨ Générer le mème"}
             onPress={generateMeme}
             loading={loading}
             disabled={loading}
@@ -182,7 +204,14 @@ const ContextReaderScreen = ({ navigate }) => {
           <Animated.View
             style={{
               opacity: resultAnim,
-              transform: [{ translateY: resultAnim.interpolate({ inputRange: [0, 1], outputRange: [30, 0] }) }],
+              transform: [
+                {
+                  translateY: resultAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [30, 0],
+                  }),
+                },
+              ],
             }}
           >
             <GlassCard style={styles.resultCard}>
@@ -191,24 +220,48 @@ const ContextReaderScreen = ({ navigate }) => {
               </Text>
 
               {/* Meme preview */}
-              <View style={[styles.memePreview, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
-                <Text style={[styles.memeTopText, { color: theme.textPrimary }]}>
-                  {meme.topText || ''}
+              <View
+                style={[
+                  styles.memePreview,
+                  {
+                    backgroundColor: theme.backgroundSecondary,
+                    borderColor: theme.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[styles.memeTopText, { color: theme.textPrimary }]}
+                >
+                  {meme.topText || ""}
                 </Text>
                 <View style={styles.memePlaceholder}>
                   <Text style={styles.memeEmoji}>🖼️</Text>
                   <Text style={[styles.memeDesc, { color: theme.textMuted }]}>
-                    {meme.descriptionImage || 'Image de mème'}
+                    {meme.descriptionImage || "Image de mème"}
                   </Text>
                 </View>
-                <Text style={[styles.memeBottomText, { color: theme.textPrimary }]}>
-                  {meme.bottomText || ''}
+                <Text
+                  style={[styles.memeBottomText, { color: theme.textPrimary }]}
+                >
+                  {meme.bottomText || ""}
                 </Text>
               </View>
 
               <View style={styles.resultActions}>
-                <AnimatedButton title="🔁 Régénérer" onPress={generateMeme} variant="ghost" size="sm" style={{ flex: 1 }} />
-                <AnimatedButton title="🗑️ Effacer" onPress={reset} variant="ghost" size="sm" style={{ flex: 1 }} />
+                <AnimatedButton
+                  title="🔁 Régénérer"
+                  onPress={generateMeme}
+                  variant="ghost"
+                  size="sm"
+                  style={{ flex: 1 }}
+                />
+                <AnimatedButton
+                  title="🗑️ Effacer"
+                  onPress={reset}
+                  variant="ghost"
+                  size="sm"
+                  style={{ flex: 1 }}
+                />
               </View>
             </GlassCard>
           </Animated.View>
@@ -224,26 +277,26 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   scroll: { paddingHorizontal: spacing.md, paddingTop: 80 },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: spacing.lg,
   },
   screenTag: {
     fontSize: typography.fontSize.xs,
     letterSpacing: 2,
-    textTransform: 'uppercase',
-    fontWeight: '600',
+    textTransform: "uppercase",
+    fontWeight: "600",
   },
   title: {
     fontSize: typography.fontSize.xxl,
-    fontWeight: '900',
+    fontWeight: "900",
     letterSpacing: -0.5,
   },
   inputCard: { marginBottom: spacing.md },
   label: {
     fontSize: typography.fontSize.sm,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: spacing.sm,
   },
   input: {
@@ -254,19 +307,19 @@ const styles = StyleSheet.create({
     minHeight: 130,
   },
   charCount: {
-    textAlign: 'right',
+    textAlign: "right",
     fontSize: typography.fontSize.xs,
     marginTop: 4,
   },
   btn: { marginBottom: spacing.md },
   loadingCard: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: spacing.sm,
     marginBottom: spacing.md,
   },
   loadingText: {
     fontSize: typography.fontSize.md,
-    fontWeight: '600',
+    fontWeight: "600",
     marginTop: spacing.sm,
   },
   loadingSubtext: {
@@ -275,51 +328,51 @@ const styles = StyleSheet.create({
   resultCard: { marginBottom: spacing.md },
   resultTitle: {
     fontSize: typography.fontSize.xl,
-    fontWeight: '800',
+    fontWeight: "800",
     marginBottom: spacing.md,
-    textAlign: 'center',
+    textAlign: "center",
   },
   memePreview: {
     borderRadius: radius.md,
     borderWidth: 1,
     padding: spacing.md,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: spacing.md,
   },
   memeTopText: {
     fontSize: typography.fontSize.lg,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    textAlign: 'center',
+    fontWeight: "800",
+    textTransform: "uppercase",
+    textAlign: "center",
     marginBottom: spacing.sm,
     letterSpacing: 0.5,
   },
   memePlaceholder: {
-    width: '100%',
+    width: "100%",
     height: 160,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.1)",
     borderRadius: radius.md,
     marginVertical: spacing.sm,
   },
   memeEmoji: { fontSize: 48 },
   memeDesc: {
     fontSize: typography.fontSize.xs,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 8,
-    maxWidth: '80%',
+    maxWidth: "80%",
   },
   memeBottomText: {
     fontSize: typography.fontSize.lg,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    textAlign: 'center',
+    fontWeight: "800",
+    textTransform: "uppercase",
+    textAlign: "center",
     marginTop: spacing.sm,
     letterSpacing: 0.5,
   },
   resultActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
   },
 });

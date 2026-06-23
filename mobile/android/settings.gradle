@@ -1,4 +1,4 @@
 rootProject.name = 'ViralStick'
-apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesSettingsGradle(settings)
+apply plugin: "com.facebook.react.settings"
 include ':app'
 includeBuild('../node_modules/@react-native/gradle-plugin')

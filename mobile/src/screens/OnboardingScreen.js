@@ -20,7 +20,8 @@ const PAGES = [
     companion: "art",
     title: "Bienvenue sur Viral Stick",
     subtitle: "Générateur IA Multimodal",
-    description: "Transformez vos textes, voix et images en mèmes et stickers virals avec nos 7 compagnons IA uniques."
+    description:
+      "Transformez vos textes, voix et images en mèmes et stickers virals avec nos 7 compagnons IA uniques.",
   },
   {
     key: "context",
@@ -28,7 +29,8 @@ const PAGES = [
     companion: "art",
     title: "Context Reader",
     subtitle: "Texte → Mème",
-    description: "Collez un extrait de discussion et laissez l'IA générer le mème parfait adapté à votre culture."
+    description:
+      "Collez un extrait de discussion et laissez l'IA générer le mème parfait adapté à votre culture.",
   },
   {
     key: "voice",
@@ -36,7 +38,8 @@ const PAGES = [
     companion: "ubu",
     title: "Voice to Meme",
     subtitle: "Voix → Mème",
-    description: "Parlez et notre IA transformera vos mots en mèmes hilarants en temps réel."
+    description:
+      "Parlez et notre IA transformera vos mots en mèmes hilarants en temps réel.",
   },
   {
     key: "remix",
@@ -44,7 +47,8 @@ const PAGES = [
     companion: "bio",
     title: "Status Remixer",
     subtitle: "Image → Mème",
-    description: "Importez une image et laissez Bio créer un remix visuel unique."
+    description:
+      "Importez une image et laissez Bio créer un remix visuel unique.",
   },
   {
     key: "chat",
@@ -52,7 +56,8 @@ const PAGES = [
     companion: "data",
     title: "Companion Chat",
     subtitle: "Discutez avec l'IA",
-    description: "Échangez avec nos 7 compagnons IA pour des conversations personnalisées et divertissantes."
+    description:
+      "Échangez avec nos 7 compagnons IA pour des conversations personnalisées et divertissantes.",
   },
   {
     key: "ready",
@@ -60,8 +65,9 @@ const PAGES = [
     companion: "arch",
     title: "Prêt à commencer ?",
     subtitle: "L'aventure commence",
-    description: "Explorez toutes les fonctionnalités et créez du contenu viral dès maintenant !"
-  }
+    description:
+      "Explorez toutes les fonctionnalités et créez du contenu viral dès maintenant !",
+  },
 ];
 
 const COMPANION_IMAGES = {
@@ -267,9 +273,9 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   glowCircle: {
-    width: width * 0.6,
-    height: width * 0.6,
-    borderRadius: width * 0.3,
+    width: width * 0.8,
+    height: width * 0.8,
+    borderRadius: width * 0.4,
     backgroundColor: "rgba(124, 58, 237, 0.12)",
     alignItems: "center",
     justifyContent: "center",
@@ -277,8 +283,8 @@ const styles = StyleSheet.create({
     borderColor: "rgba(124, 58, 237, 0.2)",
   },
   companionImage: {
-    width: width * 0.4,
-    height: width * 0.4,
+    width: width * 0.6,
+    height: width * 0.6,
   },
   pageIcon: {
     position: "absolute",

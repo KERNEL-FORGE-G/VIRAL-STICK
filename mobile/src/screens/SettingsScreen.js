@@ -107,7 +107,7 @@ const SettingsScreen = ({ navigate }) => {
             </View>
             <CompanionAvatar
               companion="para"
-              size={68}
+              size={136}
               floating
               message={PARA_MESSAGES[msgIdx]}
             />
@@ -166,7 +166,7 @@ const SettingsScreen = ({ navigate }) => {
                     ]}
                     activeOpacity={0.7}
                   >
-                    <CompanionAvatar companion={c.id} size={44} />
+                    <CompanionAvatar companion={c.id} size={88} />
                     <Text
                       style={[
                         styles.companionName,

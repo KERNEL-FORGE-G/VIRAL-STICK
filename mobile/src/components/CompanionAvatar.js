@@ -3,7 +3,7 @@
  * Viral Stick | Design System — 2026
  */
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState } from "react";
 import {
   View,
   Image,
@@ -11,32 +11,32 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-} from 'react-native';
-import { colors, borderRadius, spacing } from '../theme/tokens';
+} from "react-native";
+import { colors, borderRadius, spacing } from "../theme/tokens";
 
 const COMPANIONS = {
-  arch: require('../../assets/companions/arch_sans_fond.png'),
-  para: require('../../assets/companions/para_sans_fond.png'),
-  secu: require('../../assets/companions/secu_sans_fond.png'),
-  data: require('../../assets/companions/data_sans_fond.png'),
-  bio:  require('../../assets/companions/bio_sans_fond.png'),
-  ubu:  require('../../assets/companions/ubu_sans_fond.png'),
-  art:  require('../../assets/companions/art_sans_fond.png'),
+  arch: require("../../assets/companions/arch_sans_fond.png"),
+  para: require("../../assets/companions/para_sans_fond.png"),
+  secu: require("../../assets/companions/secu_sans_fond.png"),
+  data: require("../../assets/companions/data_sans_fond.png"),
+  bio: require("../../assets/companions/bio_sans_fond.png"),
+  ubu: require("../../assets/companions/ubu_sans_fond.png"),
+  art: require("../../assets/companions/art_sans_fond.png"),
 };
 
 const COMPANION_NAMES = {
-  arch: 'Archlord',
-  para: 'Para',
-  secu: 'Secu',
-  data: 'Data',
-  bio:  'Bio',
-  ubu:  'Ubu',
-  art:  'Art',
+  arch: "Archlord",
+  para: "Para",
+  secu: "Secu",
+  data: "Data",
+  bio: "Bio",
+  ubu: "Ubu",
+  art: "Art",
 };
 
 const CompanionAvatar = ({
-  companion = 'arch',
-  size = 80,
+  companion = "arch",
+  size = 160,
   message = null,
   floating = false,
   onPress,
@@ -88,10 +88,7 @@ const CompanionAvatar = ({
         style={[
           styles.container,
           {
-            transform: [
-              { translateY: floatAnim },
-              { scale: scaleAnim },
-            ],
+            transform: [{ translateY: floatAnim }, { scale: scaleAnim }],
           },
         ]}
       >
@@ -127,7 +124,7 @@ const CompanionAvatar = ({
           style={[
             styles.bubble,
             {
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              backgroundColor: "rgba(255, 255, 255, 0.1)",
               borderColor: accentColor,
             },
           ]}
@@ -146,14 +143,14 @@ const CompanionAvatar = ({
 
 const styles = StyleSheet.create({
   wrapper: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   container: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   glowRing: {
-    position: 'absolute',
+    position: "absolute",
     borderWidth: 2,
     opacity: 0.5,
     shadowOffset: { width: 0, height: 0 },
@@ -168,15 +165,15 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     maxWidth: 220,
     // Glassmorphism
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderColor: "rgba(255, 255, 255, 0.2)",
   },
   bubbleName: {
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 12,
     marginBottom: 2,
     letterSpacing: 0.8,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
   bubbleText: {
     fontSize: 14,
@@ -186,4 +183,3 @@ const styles = StyleSheet.create({
 
 export { COMPANIONS, COMPANION_NAMES };
 export default CompanionAvatar;
-

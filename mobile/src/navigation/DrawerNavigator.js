@@ -6,7 +6,7 @@
  * Duration: 300ms ease-in-out
  */
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from "react";
 import {
   View,
   Text,
@@ -17,22 +17,33 @@ import {
   SafeAreaView,
   Image,
   StatusBar,
-} from 'react-native';
-import { useTheme, spacing, radius, typography, createShadow } from '../theme';
-import CompanionAvatar from '../components/CompanionAvatar';
+} from "react-native";
+import { useTheme, spacing, radius, typography, createShadow } from "../theme";
+import CompanionAvatar from "../components/CompanionAvatar";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const DRAWER_WIDTH = SCREEN_WIDTH * 0.75;
 
 // Navigation items
 const NAV_ITEMS = [
-  { key: 'Home',          label: 'Accueil',           icon: '🏠', companion: 'bio'  },
-  { key: 'ContextReader', label: 'Context Reader',    icon: '📖', companion: 'art'  },
-  { key: 'VoiceToMeme',  label: 'Voice → Mème',      icon: '🎙️', companion: 'ubu'  },
-  { key: 'StatusRemixer',label: 'Status Remixer',     icon: '🎨', companion: 'bio'  },
-  { key: 'CompanionChat',label: 'Compagnons',         icon: '💬', companion: 'data' },
-  { key: 'Settings',     label: 'Paramètres',         icon: '⚙️', companion: 'para' },
-  { key: 'About',        label: 'À propos',           icon: 'ℹ️', companion: 'arch' },
+  { key: "Home", label: "Accueil", icon: "🏠", companion: "bio" },
+  {
+    key: "ContextReader",
+    label: "Context Reader",
+    icon: "📖",
+    companion: "art",
+  },
+  { key: "VoiceToMeme", label: "Voice → Mème", icon: "🎙️", companion: "ubu" },
+  {
+    key: "StatusRemixer",
+    label: "Status Remixer",
+    icon: "🎨",
+    companion: "bio",
+  },
+  { key: "CompanionChat", label: "Compagnons", icon: "💬", companion: "data" },
+  { key: "MultiChat", label: "Multi-Chat", icon: "👥", companion: "arch" },
+  { key: "Settings", label: "Paramètres", icon: "⚙️", companion: "para" },
+  { key: "About", label: "À propos", icon: "ℹ️", companion: "arch" },
 ];
 
 const DrawerNavigator = ({ children, currentScreen, onNavigate }) => {
@@ -40,8 +51,8 @@ const DrawerNavigator = ({ children, currentScreen, onNavigate }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const translateX = useRef(new Animated.Value(0)).current;
-  const scale      = useRef(new Animated.Value(1)).current;
-  const borderR    = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(1)).current;
+  const borderR = useRef(new Animated.Value(0)).current;
 
   const openDrawer = () => {
     setIsOpen(true);
@@ -92,7 +103,7 @@ const DrawerNavigator = ({ children, currentScreen, onNavigate }) => {
   return (
     <View style={[styles.root, { backgroundColor: theme.backgroundSecondary }]}>
       <StatusBar
-        barStyle={theme.isDark ? 'light-content' : 'dark-content'}
+        barStyle={theme.isDark ? "light-content" : "dark-content"}
         backgroundColor="transparent"
         translucent
       />
@@ -103,14 +114,16 @@ const DrawerNavigator = ({ children, currentScreen, onNavigate }) => {
           {/* Logo & brand */}
           <View style={styles.drawerHeader}>
             <Image
-              source={require('../../assets/logo/logo_sans_fond.png')}
+              source={require("../../assets/logo/logo_sans_fond.png")}
               style={styles.drawerLogo}
               resizeMode="contain"
             />
             <Text style={[styles.drawerTitle, { color: theme.textPrimary }]}>
               Viral Stick
             </Text>
-            <Text style={[styles.drawerSubtitle, { color: theme.textSecondary }]}>
+            <Text
+              style={[styles.drawerSubtitle, { color: theme.textSecondary }]}
+            >
               KERNEL FORGE — 2026
             </Text>
           </View>
@@ -137,15 +150,22 @@ const DrawerNavigator = ({ children, currentScreen, onNavigate }) => {
                     style={[
                       styles.navLabel,
                       {
-                        color: active ? theme.primaryLight : theme.textSecondary,
-                        fontWeight: active ? '700' : '500',
+                        color: active
+                          ? theme.primaryLight
+                          : theme.textSecondary,
+                        fontWeight: active ? "700" : "500",
                       },
                     ]}
                   >
                     {item.label}
                   </Text>
                   {active && (
-                    <View style={[styles.activeDot, { backgroundColor: theme.primary }]} />
+                    <View
+                      style={[
+                        styles.activeDot,
+                        { backgroundColor: theme.primary },
+                      ]}
+                    />
                   )}
                 </TouchableOpacity>
               );
@@ -154,7 +174,7 @@ const DrawerNavigator = ({ children, currentScreen, onNavigate }) => {
 
           {/* Bottom companion */}
           <View style={styles.drawerFooter}>
-            <CompanionAvatar companion="arch" size={56} floating />
+            <CompanionAvatar companion="arch" size={112} floating />
             <Text style={[styles.footerText, { color: theme.textMuted }]}>
               Archlord vous surveille 👁️
             </Text>
@@ -170,7 +190,7 @@ const DrawerNavigator = ({ children, currentScreen, onNavigate }) => {
           {
             transform: [{ translateX }, { scale }],
             borderRadius: borderR,
-            overflow: 'hidden',
+            overflow: "hidden",
           },
         ]}
       >
@@ -181,7 +201,13 @@ const DrawerNavigator = ({ children, currentScreen, onNavigate }) => {
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
           <View style={[styles.bar, { backgroundColor: theme.textPrimary }]} />
-          <View style={[styles.bar, styles.barMid, { backgroundColor: theme.textPrimary }]} />
+          <View
+            style={[
+              styles.bar,
+              styles.barMid,
+              { backgroundColor: theme.textPrimary },
+            ]}
+          />
           <View style={[styles.bar, { backgroundColor: theme.textPrimary }]} />
         </TouchableOpacity>
 
@@ -205,7 +231,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   drawer: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     bottom: 0,
@@ -216,46 +242,46 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   drawerHeader: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: spacing.xl,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: "rgba(255,255,255,0.08)",
     marginBottom: spacing.md,
   },
   drawerLogo: {
-    width: 60,
-    height: 60,
+    width: 180,
+    height: 180,
     marginBottom: spacing.sm,
   },
   drawerTitle: {
     fontSize: typography.fontSize.xl,
-    fontWeight: '800',
+    fontWeight: "800",
     letterSpacing: 1,
   },
   drawerSubtitle: {
     fontSize: typography.fontSize.xs,
     letterSpacing: 2,
     marginTop: 2,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
   navList: {
     flex: 1,
   },
   navItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 14,
     paddingHorizontal: spacing.md,
     borderRadius: radius.md,
     marginVertical: 2,
     borderLeftWidth: 3,
-    borderLeftColor: 'transparent',
+    borderLeftColor: "transparent",
   },
   navIcon: {
     fontSize: 20,
     marginRight: spacing.md,
     width: 28,
-    textAlign: 'center',
+    textAlign: "center",
   },
   navLabel: {
     fontSize: typography.fontSize.md,
@@ -267,37 +293,37 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   drawerFooter: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingBottom: spacing.xl,
     gap: 8,
   },
   footerText: {
     fontSize: typography.fontSize.xs,
-    textAlign: 'center',
+    textAlign: "center",
   },
   screenPanel: {
     flex: 1,
     ...StyleSheet.absoluteFillObject,
   },
   menuBtn: {
-    position: 'absolute',
+    position: "absolute",
     top: 50,
     left: spacing.md,
     zIndex: 100,
     width: 44,
     height: 44,
     borderRadius: radius.md,
-    justifyContent: 'center',
+    justifyContent: "center",
     paddingHorizontal: 10,
     gap: 5,
-    ...createShadow('#7C3AED', 8),
+    ...createShadow("#7C3AED", 8),
   },
   bar: {
     height: 2.5,
     borderRadius: 2,
   },
   barMid: {
-    width: '70%',
+    width: "70%",
   },
 });
 

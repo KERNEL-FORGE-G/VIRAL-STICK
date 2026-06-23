@@ -3,31 +3,33 @@
  * Viral Stick | KERNEL FORGE — 2026
  */
 
-import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import DrawerNavigator from './DrawerNavigator';
+import React, { useState } from "react";
+import { View, StyleSheet } from "react-native";
+import DrawerNavigator from "./DrawerNavigator";
 
 // Screens
-import HomeScreen          from '../screens/HomeScreen';
-import ContextReaderScreen from '../screens/ContextReaderScreen';
-import VoiceToMemeScreen   from '../screens/VoiceToMemeScreen';
-import StatusRemixerScreen from '../screens/StatusRemixerScreen';
-import CompanionChatScreen from '../screens/CompanionChatScreen';
-import SettingsScreen      from '../screens/SettingsScreen';
-import AboutScreen         from '../screens/AboutScreen';
+import HomeScreen from "../screens/HomeScreen";
+import ContextReaderScreen from "../screens/ContextReaderScreen";
+import VoiceToMemeScreen from "../screens/VoiceToMemeScreen";
+import StatusRemixerScreen from "../screens/StatusRemixerScreen";
+import CompanionChatScreen from "../screens/CompanionChatScreen";
+import MultiChatScreen from "../screens/MultiChatScreen";
+import SettingsScreen from "../screens/SettingsScreen";
+import AboutScreen from "../screens/AboutScreen";
 
 const SCREENS = {
-  Home:          HomeScreen,
+  Home: HomeScreen,
   ContextReader: ContextReaderScreen,
-  VoiceToMeme:   VoiceToMemeScreen,
+  VoiceToMeme: VoiceToMemeScreen,
   StatusRemixer: StatusRemixerScreen,
   CompanionChat: CompanionChatScreen,
-  Settings:      SettingsScreen,
-  About:         AboutScreen,
+  MultiChat: MultiChatScreen,
+  Settings: SettingsScreen,
+  About: AboutScreen,
 };
 
 const RootNavigator = () => {
-  const [currentScreen, setCurrentScreen] = useState('Home');
+  const [currentScreen, setCurrentScreen] = useState("Home");
 
   const Screen = SCREENS[currentScreen] || HomeScreen;
 

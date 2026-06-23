@@ -80,7 +80,7 @@ const AboutScreen = ({ navigate }) => {
             </View>
             <CompanionAvatar
               companion="arch"
-              size={68}
+              size={136}
               floating
               message="Bienvenue dans l'univers KERNEL FORGE. Je suis Archlord, le lead de ce projet."
             />
@@ -176,7 +176,7 @@ const AboutScreen = ({ navigate }) => {
             <AnimatedButton
               title="⭐ GitHub — KERNEL FORGE"
               onPress={() =>
-                Linking.openURL("https://github.com/Archlord12345/VIRAL-STICK")
+                Linking.openURL("https://github.com/KERNEL-FORGE-G/VIRAL-STICK")
               }
               variant="ghost"
               size="sm"
@@ -186,7 +186,7 @@ const AboutScreen = ({ navigate }) => {
               title="📄 Documentation technique"
               onPress={() =>
                 Linking.openURL(
-                  "https://github.com/Archlord12345/VIRAL-STICK/tree/main/docs",
+                  "https://github.com/KERNEL-FORGE-G/VIRAL-STICK/tree/main/docs",
                 )
               }
               variant="ghost"
