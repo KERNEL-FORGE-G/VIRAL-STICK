@@ -183,10 +183,41 @@ const styles = StyleSheet.create({
   actionButton: { flex: 1, backgroundColor: theme.colors.primary, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
   cameraButton: { backgroundColor: '#34495e' },
   buttonText: { color: theme.colors.text, fontWeight: 'bold' },
-  adjustmentPanel: { width: '100%', backgroundColor: theme.colors.surface, padding: 12, borderRadius: 10, marginTop: 10, borderWidth: 1, borderColor: '#2d2d30' },
+
+  adjustmentPanel: { 
+    width: '100%', 
+    backgroundColor: '#1c1c1e', // Surface légèrement surélevée
+    padding: 16, 
+    borderRadius: 14, 
+    marginTop: 15, 
+    borderWidth: 1, 
+    borderColor: 'rgba(130, 87, 229, 0.25)', // Lueur subtile violet KERNEL FORGE
+    
+    // Ombre portée optimisée pour Android natif (Jour 4 Polish)
+    elevation: 6, 
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+  },
+
+  //adjustmentPanel: { width: '100%', backgroundColor: theme.colors.surface, padding: 12, borderRadius: 10, marginTop: 10, borderWidth: 1, borderColor: '#2d2d30' },
   panelTitle: { color: theme.colors.textMuted, fontSize: 11, fontWeight: 'bold', marginBottom: 8 },
   controlRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  panelBtn: { backgroundColor: '#2d2d30', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 6, justifyContent: 'center', minWidth: 44, alignItems: 'center' },
+
+  panelBtn: { 
+    backgroundColor: '#2c2c2e', 
+    paddingHorizontal: 14, 
+    paddingVertical: 10, 
+    borderRadius: 8, 
+    justifyContent: 'center', 
+    minWidth: 46, 
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#3a3a3c'
+  },
+
+  //panelBtn: { backgroundColor: '#2d2d30', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 6, justifyContent: 'center', minWidth: 44, alignItems: 'center' },
   btnText: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
   colorIndicator: { width: 12, height: 12, borderRadius: 6 },
   punchlineSection: { width: '100%', marginTop: 15 },
