@@ -1,8 +1,3 @@
-/**
- * CompanionAvatar — Animated companion display component
- * Viral Stick | Design System — 2026
- */
-
 import React, { useRef, useEffect, useState } from "react";
 import {
   View,
@@ -42,7 +37,7 @@ const CompanionAvatar = ({
   onPress,
 }) => {
   const floatAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.92)).current;
   const [showBubble, setShowBubble] = useState(!!message);
 
   useEffect(() => {
@@ -66,22 +61,21 @@ const CompanionAvatar = ({
     Animated.spring(scaleAnim, {
       toValue: 1,
       tension: 80,
-      friction: 6,
+      friction: 7,
       useNativeDriver: true,
     }).start();
-  }, [floating]);
+  }, [floating, floatAnim, scaleAnim]);
 
   useEffect(() => {
     setShowBubble(!!message);
   }, [message]);
 
-  // Utilisation des tokens pour la couleur d'accent
   const accentColor = colors[companion] || colors.arch;
 
   return (
     <TouchableOpacity
       onPress={onPress}
-      activeOpacity={0.85}
+      activeOpacity={0.9}
       style={styles.wrapper}
     >
       <Animated.View
@@ -92,49 +86,42 @@ const CompanionAvatar = ({
           },
         ]}
       >
-        {/* Glow ring */}
         <View
           style={[
-            styles.glowRing,
+            styles.outerGlow,
             {
-              width: size + 16,
-              height: size + 16,
-              borderRadius: (size + 16) / 2,
-              borderColor: accentColor,
+              width: size + 22,
+              height: size + 22,
+              borderRadius: (size + 22) / 2,
               shadowColor: accentColor,
+              backgroundColor: `${accentColor}20`,
             },
           ]}
         />
-
-        {/* Avatar image */}
+        <View
+          style={[
+            styles.ring,
+            {
+              width: size + 8,
+              height: size + 8,
+              borderRadius: (size + 8) / 2,
+              borderColor: `${accentColor}88`,
+            },
+          ]}
+        />
         <Image
           source={COMPANIONS[companion]}
-          style={{
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-          }}
+          style={{ width: size, height: size }}
           resizeMode="contain"
         />
       </Animated.View>
 
-      {/* Speech bubble */}
       {showBubble && message && (
-        <View
-          style={[
-            styles.bubble,
-            {
-              backgroundColor: "rgba(255, 255, 255, 0.1)",
-              borderColor: accentColor,
-            },
-          ]}
-        >
+        <View style={[styles.bubble, { borderColor: `${accentColor}88` }]}>
           <Text style={[styles.bubbleName, { color: accentColor }]}>
             {COMPANION_NAMES[companion]}
           </Text>
-          <Text style={[styles.bubbleText, { color: colors.text }]}>
-            {message}
-          </Text>
+          <Text style={styles.bubbleText}>{message}</Text>
         </View>
       )}
     </TouchableOpacity>
@@ -149,35 +136,38 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  glowRing: {
+  outerGlow: {
     position: "absolute",
-    borderWidth: 2,
-    opacity: 0.5,
+    opacity: 1,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.9,
+    shadowRadius: 22,
+    elevation: 10,
+  },
+  ring: {
+    position: "absolute",
+    borderWidth: 1.2,
+    backgroundColor: "rgba(255,255,255,0.04)",
   },
   bubble: {
     marginTop: spacing.sm,
     borderRadius: borderRadius.md,
     borderWidth: 1,
     padding: spacing.md,
-    maxWidth: 220,
-    // Glassmorphism
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderColor: "rgba(255, 255, 255, 0.2)",
+    maxWidth: 240,
+    backgroundColor: "rgba(12,18,35,0.92)",
   },
   bubbleName: {
-    fontWeight: "700",
+    fontWeight: "800",
     fontSize: 12,
-    marginBottom: 2,
+    marginBottom: 4,
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
   bubbleText: {
     fontSize: 14,
-    lineHeight: 18,
+    lineHeight: 19,
+    color: colors.text,
   },
 });
 

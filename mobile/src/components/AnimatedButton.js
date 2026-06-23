@@ -1,9 +1,4 @@
-/**
- * AnimatedButton — Premium tap button with micro-animations
- * Viral Stick | Design System — 2026
- */
-
-import React, { useRef } from 'react';
+import React, { useRef } from "react";
 import {
   Animated,
   TouchableWithoutFeedback,
@@ -11,14 +6,14 @@ import {
   StyleSheet,
   View,
   ActivityIndicator,
-} from 'react-native';
-import { colors, borderRadius, spacing } from '../theme/tokens';
+} from "react-native";
+import { colors, borderRadius, spacing } from "../theme/tokens";
 
 const AnimatedButton = ({
   title,
   onPress,
-  variant = 'primary', // 'primary' | 'secondary' | 'ghost' | 'danger'
-  size = 'md',          // 'sm' | 'md' | 'lg'
+  variant = "primary",
+  size = "md",
   loading = false,
   disabled = false,
   icon = null,
@@ -29,10 +24,10 @@ const AnimatedButton = ({
 
   const onPressIn = () => {
     Animated.spring(scale, {
-      toValue: 0.96,
+      toValue: 0.97,
       useNativeDriver: true,
-      tension: 200,
-      friction: 5,
+      tension: 220,
+      friction: 7,
     }).start();
   };
 
@@ -40,34 +35,38 @@ const AnimatedButton = ({
     Animated.spring(scale, {
       toValue: 1,
       useNativeDriver: true,
-      tension: 200,
-      friction: 5,
+      tension: 220,
+      friction: 7,
     }).start();
   };
 
-  const getBackground = () => {
-    if (disabled) return colors.textMuted;
-    switch (variant) {
-      case 'secondary': return colors.data;
-      case 'ghost':     return 'transparent';
-      case 'danger':    return colors.para;
-      default:          return colors.arch; // Primary
-    }
-  };
-
-  const getBorderColor = () => {
-    if (variant === 'ghost') return colors.border;
-    return 'transparent';
-  };
-
-  const getTextColor = () => {
-    return '#FFFFFF'; // Text always white on colored buttons
-  };
+  const variantStyle = {
+    primary: {
+      backgroundColor: colors.brandPrimary,
+      borderColor: "transparent",
+      textColor: colors.white,
+    },
+    secondary: {
+      backgroundColor: colors.brandSecondary,
+      borderColor: "transparent",
+      textColor: colors.white,
+    },
+    ghost: {
+      backgroundColor: "rgba(255,255,255,0.04)",
+      borderColor: colors.border,
+      textColor: colors.text,
+    },
+    danger: {
+      backgroundColor: colors.danger,
+      borderColor: "transparent",
+      textColor: colors.white,
+    },
+  }[variant];
 
   const sizeStyles = {
-    sm: { paddingVertical: spacing.xs, paddingHorizontal: spacing.sm, fontSize: 12 },
-    md: { paddingVertical: spacing.sm, paddingHorizontal: spacing.lg, fontSize: 14 },
-    lg: { paddingVertical: spacing.md, paddingHorizontal: spacing.xl, fontSize: 16 },
+    sm: { paddingVertical: 10, paddingHorizontal: 14, fontSize: 13 },
+    md: { paddingVertical: 14, paddingHorizontal: 20, fontSize: 15 },
+    lg: { paddingVertical: 18, paddingHorizontal: 24, fontSize: 16 },
   }[size];
 
   return (
@@ -80,19 +79,26 @@ const AnimatedButton = ({
         style={[
           styles.button,
           {
-            backgroundColor: getBackground(),
-            borderColor: getBorderColor(),
+            backgroundColor: disabled
+              ? "rgba(255,255,255,0.10)"
+              : variantStyle.backgroundColor,
+            borderColor: variantStyle.borderColor,
             borderRadius: borderRadius.md,
             paddingVertical: sizeStyles.paddingVertical,
             paddingHorizontal: sizeStyles.paddingHorizontal,
             transform: [{ scale }],
             opacity: disabled ? 0.6 : 1,
+            shadowColor: disabled
+              ? "#000"
+              : variant === "secondary"
+                ? colors.brandSecondary
+                : colors.brandPrimary,
           },
           style,
         ]}
       >
         {loading ? (
-          <ActivityIndicator color="#FFFFFF" size="small" />
+          <ActivityIndicator color={variantStyle.textColor} size="small" />
         ) : (
           <View style={styles.row}>
             {icon && <View style={styles.icon}>{icon}</View>}
@@ -100,7 +106,7 @@ const AnimatedButton = ({
               style={[
                 styles.label,
                 {
-                  color: getTextColor(),
+                  color: variantStyle.textColor,
                   fontSize: sizeStyles.fontSize,
                 },
                 textStyle,
@@ -117,17 +123,21 @@ const AnimatedButton = ({
 
 const styles = StyleSheet.create({
   button: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.24,
+    shadowRadius: 18,
+    elevation: 8,
   },
   label: {
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontWeight: "800",
+    letterSpacing: 0.3,
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   icon: {
     marginRight: spacing.sm,

@@ -1,7 +1,6 @@
 import React from "react";
 import { colors } from "../theme/tokens";
 
-// Mapping des assets PNG (sans fond)
 const COMPANIONS_PNG = {
   arch: "/asset/compagnons/arch_sans_fond.png",
   para: "/asset/compagnons/para_sans_fond.png",
@@ -12,7 +11,11 @@ const COMPANIONS_PNG = {
   art: "/asset/compagnons/art_sans_fond.png",
 };
 
-const CompanionAvatarWeb = ({ companion = "arch", size = 160 }) => {
+const CompanionAvatarWeb = ({
+  companion = "arch",
+  size = 140,
+  ring = true,
+}) => {
   const accentColor = colors[companion] || colors.arch;
 
   return (
@@ -29,49 +32,37 @@ const CompanionAvatarWeb = ({ companion = "arch", size = 160 }) => {
       <div
         style={{
           position: "absolute",
-          width: size + 20,
-          height: size + 20,
+          inset: -10,
           borderRadius: "50%",
-          background: `radial-gradient(circle, ${accentColor}40 0%, transparent 70%)`,
-          filter: "blur(8px)",
-          zIndex: 0,
+          background: `radial-gradient(circle, ${accentColor}55 0%, transparent 68%)`,
+          filter: "blur(16px)",
+          opacity: 0.95,
         }}
       />
+      {ring && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            borderRadius: "50%",
+            border: `1px solid ${accentColor}66`,
+            background: `linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03))`,
+            boxShadow: `0 10px 36px ${accentColor}33`,
+          }}
+        />
+      )}
       <img
         src={COMPANIONS_PNG[companion]}
         alt={companion}
         style={{
-          width: size,
-          height: size,
+          width: size * 0.88,
+          height: size * 0.88,
           objectFit: "contain",
           position: "relative",
           zIndex: 1,
-          filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.3))",
-        }}
-        onError={(e) => {
-          e.target.style.display = "none";
-          e.target.nextSibling.style.display = "flex";
+          filter: "drop-shadow(0 12px 28px rgba(0,0,0,0.4))",
         }}
       />
-      <div
-        style={{
-          display: "none",
-          width: size,
-          height: size,
-          borderRadius: "50%",
-          background: `linear-gradient(135deg, ${accentColor}, ${accentColor}80)`,
-          alignItems: "center",
-          justifyContent: "center",
-          color: "white",
-          fontWeight: "bold",
-          fontSize: size / 2.5,
-          textTransform: "uppercase",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        {companion[0]}
-      </div>
     </div>
   );
 };

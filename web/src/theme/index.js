@@ -1,3 +1,9 @@
-import { colors, spacing, borderRadius, shadows } from "./tokens";
+import { colors, spacing, radius, shadows, gradients } from "./tokens";
 
-export const theme = { colors, spacing, borderRadius, shadows };
+export const theme = {
+  colors,
+  spacing,
+  radius,
+  shadows,
+  gradients,
+};

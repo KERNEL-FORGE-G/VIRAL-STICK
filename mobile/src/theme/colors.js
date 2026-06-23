@@ -1,43 +1,38 @@
-/**
- * Viral Stick — Design System Colors
- * Unified for Mobile and Web
- */
-import { colors as sharedColors } from './tokens';
+import { colors as sharedColors } from "./tokens";
 
 export const colors = {
-  primary: sharedColors.arch, // Utilisation de l'accent bleu par défaut
-  primaryLight: '#a78bfa',
-  primaryDark: '#5b21b6',
-  secondary: sharedColors.data,
+  primary: sharedColors.brandPrimary,
+  primaryLight: "#A78BFA",
+  primaryDark: "#5B21B6",
+  secondary: sharedColors.brandSecondary,
+  secondaryLight: "#67E8F9",
   accent1: sharedColors.bio,
   accent2: sharedColors.art,
   accent3: sharedColors.para,
   bg: sharedColors.background,
-  bgCard: 'rgba(255, 255, 255, 0.04)', // À réajuster selon le nouveau fond
-  bgCardHover: 'rgba(255, 255, 255, 0.08)',
+  bgCard: sharedColors.panel,
+  bgCardHover: "rgba(255, 255, 255, 0.10)",
   text: sharedColors.text,
-  textSecondary: sharedColors.textMuted,
+  textSecondary: sharedColors.textSecondary,
   textMuted: sharedColors.textMuted,
   border: sharedColors.border,
 };
 
 export const theme = {
-  // Surfaces & Backgrounds
+  isDark: true,
   background: colors.bg,
   backgroundCard: colors.bgCard,
-  backgroundSecondary: 'rgba(255, 255, 255, 0.08)',
-  
-  // Text
+  backgroundSecondary: sharedColors.backgroundElevated,
   textPrimary: colors.text,
   textSecondary: colors.textSecondary,
   textMuted: colors.textMuted,
   textAccent: colors.primaryLight,
-  
-  // Accents / Actions
   primaryAction: colors.primary,
   secondaryAction: colors.secondary,
   primary: colors.primary,
-
-  // Borders
+  secondary: colors.secondary,
+  secondaryLight: colors.secondaryLight,
+  danger: sharedColors.danger,
+  divider: "rgba(255,255,255,0.10)",
   border: colors.border,
 };

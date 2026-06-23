@@ -1,53 +1,48 @@
-/**
- * Viral Stick — Theme System
- * Unified for Mobile
- */
+import React, { createContext, useContext } from "react";
+import { theme } from "./colors";
 
-import React, { createContext, useContext } from 'react';
-import { theme } from './colors';
-
-// ─── Spacing scale (4px base) ──────────────────────────────────────────────
 export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 24,
-  xxxl: 32,
-  huge: 48,
+  xs: 6,
+  sm: 10,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 40,
+  xxxl: 56,
+  huge: 72,
 };
 
-// ─── Border radii ─────────────────────────────────────────────────────────
 export const radius = {
-  button: 4,
-  md: 12,
-  lg: 16,
-  xl: 24,
+  button: 16,
+  md: 18,
+  lg: 28,
+  xl: 36,
 };
 
-// ─── Typography ────────────────────────────────────────────────────────────
 export const typography = {
   fontSize: {
     xs: 12,
     sm: 14,
     md: 16,
     lg: 18,
-    xl: 20,
-    xxl: 24,
-    xxxl: 32,
+    xl: 22,
+    xxl: 28,
+    xxxl: 36,
   },
 };
 
-// ─── Theme Context ────────────────────────────────────────────────────────
+export const createShadow = (color = "#7C3AED", elevation = 16) => ({
+  shadowColor: color,
+  shadowOffset: { width: 0, height: Math.max(6, elevation / 2) },
+  shadowOpacity: 0.24,
+  shadowRadius: elevation,
+  elevation: Math.max(6, Math.round(elevation / 2)),
+});
+
 const ThemeContext = createContext({ theme });
 
-export const ThemeProvider = ({ children }) => {
-  return (
-    <ThemeContext.Provider value={{ theme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-};
+export const ThemeProvider = ({ children }) => (
+  <ThemeContext.Provider value={{ theme }}>{children}</ThemeContext.Provider>
+);
 
 export const useTheme = () => useContext(ThemeContext);
