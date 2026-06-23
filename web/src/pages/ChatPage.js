@@ -21,7 +21,7 @@ const ChatPage = () => {
 
   useEffect(() => {
     // Initial greeting
-    fetch('/api/memes/chat/greeting', {
+    fetch('https://viral-stick.vercel.app/api/memes/chat/greeting', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ companionId: activeCompanion })
@@ -41,7 +41,7 @@ const ChatPage = () => {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/memes/chat', {
+      const res = await fetch('https://viral-stick.vercel.app/api/memes/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ companionId: activeCompanion, message: input })

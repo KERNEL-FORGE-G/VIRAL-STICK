@@ -4,6 +4,7 @@ import LandingPage from './pages/LandingPage';
 import ChatPage from './pages/ChatPage';
 import RemixPage from './pages/RemixPage';
 import ContextPage from './pages/ContextPage';
+import SettingsPage from './pages/SettingsPage';
 import { theme } from './theme';
 import './App.css';
 
@@ -16,6 +17,7 @@ function App() {
           <Link to="/chat">Chat</Link>
           <Link to="/remix">Remix</Link>
           <Link to="/context">Context</Link>
+          <Link to="/settings">Settings</Link>
         </nav>
 
         <Routes>
@@ -23,6 +25,7 @@ function App() {
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/remix" element={<RemixPage />} />
           <Route path="/context" element={<ContextPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </div>
     </Router>
