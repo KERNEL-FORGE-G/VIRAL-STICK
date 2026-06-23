@@ -1,10 +1,3 @@
-/**
- * SettingsScreen — App settings with theme toggle, companion selection, API key
- * Viral Stick | KERNEL FORGE — 2026
- *
- * Companion: para
- */
-
 import React, { useState, useRef, useEffect } from "react";
 import {
   View,
@@ -16,45 +9,41 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  Switch,
 } from "react-native";
-import { useTheme, spacing, radius, typography } from "../theme";
+import { useTheme, spacing, radius, typography, createShadow } from "../theme";
 import GlassCard from "../components/GlassCard";
 import AnimatedButton from "../components/AnimatedButton";
 import CompanionAvatar from "../components/CompanionAvatar";
 
-const COMPANIONS = [
-  { id: "arch", name: "Archlord", role: "PDG & Admin", color: "#7C3AED" },
-  { id: "para", name: "Para", role: "Paramètres", color: "#06B6D4" },
-  { id: "secu", name: "Secu", role: "Sécurité", color: "#EF4444" },
-  { id: "data", name: "Data", role: "Support", color: "#10B981" },
-  { id: "bio", name: "Bio", role: "Artiste", color: "#F59E0B" },
-  { id: "ubu", name: "Ubu", role: "Comique", color: "#EC4899" },
-  { id: "art", name: "Art", role: "Visuel", color: "#8B5CF6" },
-];
-
-const PARA_MESSAGES = [
-  "⚙️ Para ici ! Je t'aide à configurer tout ça.",
-  "🔧 Paramètres en ordre ? Je vérifie tout !",
-  "🎨 Change le thème selon ton humeur !",
-  "💡 Un bon réglage = une meilleure expérience !",
+const PROVIDERS = [
+  {
+    key: "gemini",
+    label: "Gemini",
+    desc: "Provider principal pour le texte et potentiellement l’image",
+    color: "#7C3AED",
+  },
+  {
+    key: "mistral",
+    label: "Mistral",
+    desc: "Fallback texte pour maintenir la génération",
+    color: "#06B6D4",
+  },
+  {
+    key: "deepseek",
+    label: "DeepSeek",
+    desc: "Deuxième fallback texte pour la continuité de service",
+    color: "#84CC16",
+  },
 ];
 
 const SettingsScreen = ({ navigate }) => {
-  const { theme, toggleTheme, isDark } = useTheme();
-  const [selectedCompanion, setSelectedCompanion] = useState("para");
-  const [apiKey, setApiKey] = useState("");
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [msgIdx, setMsgIdx] = useState(0);
+  const { theme } = useTheme();
+  const [geminiKey, setGeminiKey] = useState("");
+  const [mistralKey, setMistralKey] = useState("");
+  const [deepseekKey, setDeepseekKey] = useState("");
+  const [showSecret, setShowSecret] = useState(false);
+  const [status, setStatus] = useState("");
   const contentAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const t = setInterval(
-      () => setMsgIdx((i) => (i + 1) % PARA_MESSAGES.length),
-      5000,
-    );
-    return () => clearInterval(t);
-  }, []);
 
   useEffect(() => {
     Animated.spring(contentAnim, {
@@ -63,17 +52,17 @@ const SettingsScreen = ({ navigate }) => {
       friction: 8,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [contentAnim]);
 
-  const saveApiKey = () => {
-    if (!apiKey.trim()) {
-      Alert.alert("Viral Stick", "Entre une clé API valide");
+  const saveKeys = () => {
+    if (!geminiKey.trim() && !mistralKey.trim() && !deepseekKey.trim()) {
+      Alert.alert(
+        "Viral Stick",
+        "Entre au moins une clé API avant d'enregistrer.",
+      );
       return;
     }
-    Alert.alert(
-      "✅ Clé sauvegardée",
-      "Ta clé API Gemini a été enregistrée (simulation).",
-    );
+    setStatus("Clés enregistrées localement pour la session (simulation UI).");
   };
 
   return (
@@ -82,7 +71,6 @@ const SettingsScreen = ({ navigate }) => {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
         <Animated.View
           style={{
             opacity: contentAnim,
@@ -90,160 +78,153 @@ const SettingsScreen = ({ navigate }) => {
               {
                 translateY: contentAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [-20, 0],
+                  outputRange: [-24, 0],
                 }),
               },
             ],
           }}
         >
-          <View style={styles.header}>
-            <View>
-              <Text style={[styles.screenTag, { color: theme.textMuted }]}>
-                PARAMÈTRES
-              </Text>
-              <Text style={[styles.title, { color: theme.textPrimary }]}>
-                Ré<Text style={{ color: theme.secondary }}>glages</Text>
-              </Text>
-            </View>
-            <CompanionAvatar
-              companion="para"
-              size={136}
-              floating
-              message={PARA_MESSAGES[msgIdx]}
-            />
-          </View>
-
-          {/* Apparence */}
-          <GlassCard animate delay={100}>
-            <Text style={[styles.sectionIcon]}>🎨</Text>
-            <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>
-              Apparence
-            </Text>
-            <View style={styles.settingRow}>
-              <View style={styles.settingInfo}>
-                <Text
-                  style={[styles.settingLabel, { color: theme.textPrimary }]}
-                >
-                  Thème sombre
+          <GlassCard animate style={styles.heroCard}>
+            <View style={styles.heroTop}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.screenTag, { color: theme.textMuted }]}>
+                  PARAMÈTRES IA
                 </Text>
-                <Text style={[styles.settingDesc, { color: theme.textMuted }]}>
-                  {isDark ? "Mode nuit activé" : "Mode jour activé"}
+                <Text style={[styles.title, { color: theme.textPrimary }]}>
+                  Con
+                  <Text style={{ color: theme.secondaryLight }}>
+                    figuration
+                  </Text>
+                </Text>
+                <Text style={[styles.heroDesc, { color: theme.textSecondary }]}>
+                  Ici, l’interface se comporte comme une vraie console produit :
+                  présence de marque, hiérarchie claire et rappel du rôle de
+                  chaque provider.
                 </Text>
               </View>
-              <Switch
-                value={isDark}
-                onValueChange={toggleTheme}
-                trackColor={{ false: theme.border, true: `${theme.primary}66` }}
-                thumbColor={isDark ? theme.primary : theme.textMuted}
+              <View style={styles.logoShell}>
+                <ImageLogo />
+              </View>
+            </View>
+            <View style={{ marginTop: spacing.md, alignItems: "center" }}>
+              <CompanionAvatar
+                companion="para"
+                size={108}
+                floating
+                message="Je garde les réglages lisibles, propres et prêts pour l’exploitation."
               />
             </View>
           </GlassCard>
 
-          {/* Companion selection */}
-          <GlassCard animate delay={200} style={{ marginTop: spacing.md }}>
-            <Text style={[styles.sectionIcon]}>🤖</Text>
+          <GlassCard animate delay={120} style={{ marginTop: spacing.md }}>
             <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>
-              Compagnon par défaut
+              🧠 Providers actifs
             </Text>
-            <Text style={[styles.sectionDesc, { color: theme.textMuted }]}>
-              Choisis ton compagnon principal
-            </Text>
-            <View style={styles.companionGrid}>
-              {COMPANIONS.map((c, idx) => {
-                const active = selectedCompanion === c.id;
-                return (
-                  <TouchableOpacity
-                    key={c.id}
-                    onPress={() => setSelectedCompanion(c.id)}
-                    style={[
-                      styles.companionItem,
-                      {
-                        borderColor: active ? c.color : theme.border,
-                        backgroundColor: active
-                          ? `${c.color}22`
-                          : "transparent",
-                      },
-                    ]}
-                    activeOpacity={0.7}
-                  >
-                    <CompanionAvatar companion={c.id} size={88} />
-                    <Text
-                      style={[
-                        styles.companionName,
-                        { color: active ? c.color : theme.textSecondary },
-                      ]}
-                    >
-                      {c.name}
-                    </Text>
-                    <Text
-                      style={[styles.companionRole, { color: theme.textMuted }]}
-                    >
-                      {c.role}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </GlassCard>
-
-          {/* API Key */}
-          <GlassCard animate delay={300} style={{ marginTop: spacing.md }}>
-            <Text style={[styles.sectionIcon]}>🔑</Text>
-            <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>
-              Clé API Gemini
-            </Text>
-            <Text style={[styles.sectionDesc, { color: theme.textMuted }]}>
-              Requise pour la génération IA (stockée localement)
-            </Text>
-            <View style={styles.apiRow}>
-              <TextInput
+            {PROVIDERS.map((provider) => (
+              <View
+                key={provider.key}
                 style={[
-                  styles.apiInput,
+                  styles.providerRow,
                   {
-                    color: theme.textPrimary,
-                    borderColor: theme.border,
-                    backgroundColor: theme.backgroundSecondary,
+                    borderColor: `${provider.color}55`,
+                    backgroundColor: `${provider.color}12`,
                   },
                 ]}
-                value={apiKey}
-                onChangeText={setApiKey}
-                placeholder="AIzaSy..."
-                placeholderTextColor={theme.textMuted}
-                secureTextEntry={!showApiKey}
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <TouchableOpacity
-                onPress={() => setShowApiKey(!showApiKey)}
-                style={[
-                  styles.eyeBtn,
-                  { backgroundColor: theme.backgroundCard },
-                ]}
               >
-                <Text>{showApiKey ? "🙈" : "👁️"}</Text>
-              </TouchableOpacity>
-            </View>
-            <AnimatedButton
-              title="💾 Sauvegarder la clé"
-              onPress={saveApiKey}
-              size="sm"
-              style={{ marginTop: spacing.sm }}
-            />
+                <View
+                  style={[
+                    styles.providerDot,
+                    { backgroundColor: provider.color },
+                  ]}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={[styles.providerName, { color: theme.textPrimary }]}
+                  >
+                    {provider.label}
+                  </Text>
+                  <Text
+                    style={[styles.providerDesc, { color: theme.textMuted }]}
+                  >
+                    {provider.desc}
+                  </Text>
+                </View>
+              </View>
+            ))}
           </GlassCard>
 
-          {/* About */}
-          <GlassCard animate delay={400} style={{ marginTop: spacing.md }}>
+          <GlassCard animate delay={220} style={{ marginTop: spacing.md }}>
+            <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>
+              🔑 Clés API
+            </Text>
+            {[
+              ["Gemini API Key", geminiKey, setGeminiKey, "AIza..."],
+              ["Mistral API Key", mistralKey, setMistralKey, "mistral-..."],
+              ["DeepSeek API Key", deepseekKey, setDeepseekKey, "sk-..."],
+            ].map(([label, value, setter, placeholder]) => (
+              <View key={label} style={{ marginBottom: 14 }}>
+                <Text
+                  style={[styles.fieldLabel, { color: theme.textSecondary }]}
+                >
+                  {label}
+                </Text>
+                <TextInput
+                  style={[
+                    styles.apiInput,
+                    {
+                      color: theme.textPrimary,
+                      borderColor: theme.border,
+                      backgroundColor: theme.backgroundSecondary,
+                    },
+                  ]}
+                  value={value}
+                  onChangeText={setter}
+                  placeholder={placeholder}
+                  placeholderTextColor={theme.textMuted}
+                  secureTextEntry={!showSecret}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+            ))}
+            <TouchableOpacity
+              onPress={() => setShowSecret((v) => !v)}
+              style={[
+                styles.toggleBtn,
+                {
+                  borderColor: theme.border,
+                  backgroundColor: theme.backgroundCard,
+                },
+              ]}
+            >
+              <Text style={{ color: theme.textPrimary, fontWeight: "700" }}>
+                {showSecret ? "Masquer les clés" : "Afficher les clés"}
+              </Text>
+            </TouchableOpacity>
+            <AnimatedButton
+              title="Enregistrer les clés"
+              onPress={saveKeys}
+              size="md"
+              style={{ marginTop: spacing.md }}
+            />
+            <Text style={[styles.status, { color: theme.textMuted }]}>
+              {status ||
+                "Les clés sont gérées localement côté UI. La sécurisation serveur doit être faite côté backend."}
+            </Text>
+          </GlassCard>
+
+          <GlassCard animate delay={320} style={{ marginTop: spacing.md }}>
             <TouchableOpacity
               onPress={() => navigate && navigate("About")}
               style={styles.aboutRow}
-              activeOpacity={0.7}
+              activeOpacity={0.8}
             >
               <View>
                 <Text style={[styles.aboutLabel, { color: theme.textPrimary }]}>
-                  ℹ️ À propos
+                  ℹ️ À propos du produit
                 </Text>
                 <Text style={[styles.aboutDesc, { color: theme.textMuted }]}>
-                  Version 1.0.0 — KERNEL FORGE
+                  Identité, stack, positionnement et vision
                 </Text>
               </View>
               <Text style={[styles.arrow, { color: theme.primary }]}>›</Text>
@@ -257,84 +238,98 @@ const SettingsScreen = ({ navigate }) => {
   );
 };
 
+const ImageLogo = () => {
+  const { theme } = useTheme();
+  return (
+    <View
+      style={{
+        width: 160,
+        height: 160,
+        borderRadius: 28,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "rgba(255,255,255,0.06)",
+        ...createShadow(theme.primary, 18),
+      }}
+    >
+      <Animated.Image
+        source={require("../../assets/logo/logo_sans_fond.png")}
+        style={{ width: 128, height: 128 }}
+        resizeMode="contain"
+      />
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  scroll: { paddingHorizontal: spacing.md, paddingTop: 80 },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: spacing.lg,
-  },
+  scroll: { paddingHorizontal: spacing.md, paddingTop: 82 },
+  heroCard: { padding: spacing.lg },
+  heroTop: { flexDirection: "row", gap: spacing.md, alignItems: "center" },
+  logoShell: { justifyContent: "center", alignItems: "center" },
   screenTag: {
     fontSize: typography.fontSize.xs,
     letterSpacing: 2,
     textTransform: "uppercase",
-    fontWeight: "600",
+    fontWeight: "800",
   },
   title: {
-    fontSize: typography.fontSize.xxl,
+    fontSize: typography.fontSize.xxxl,
     fontWeight: "900",
-    letterSpacing: -0.5,
+    letterSpacing: -1,
   },
-  sectionIcon: { fontSize: 24, marginBottom: spacing.xs },
+  heroDesc: { fontSize: typography.fontSize.sm, lineHeight: 22, marginTop: 8 },
   sectionTitle: {
     fontSize: typography.fontSize.lg,
-    fontWeight: "700",
-    marginBottom: 2,
+    fontWeight: "800",
+    marginBottom: spacing.md,
   },
-  sectionDesc: { fontSize: typography.fontSize.xs, marginBottom: spacing.md },
-  settingRow: {
+  providerRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: spacing.sm,
-  },
-  settingInfo: { flex: 1 },
-  settingLabel: { fontSize: typography.fontSize.md, fontWeight: "600" },
-  settingDesc: { fontSize: typography.fontSize.xs, marginTop: 2 },
-  companionGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  companionItem: {
-    alignItems: "center",
-    padding: spacing.sm,
+    gap: spacing.md,
+    padding: spacing.md,
     borderRadius: radius.md,
-    borderWidth: 1.5,
-    width: "30%",
-    gap: 4,
+    borderWidth: 1,
+    marginBottom: spacing.sm,
   },
-  companionName: {
+  providerDot: { width: 12, height: 12, borderRadius: 6 },
+  providerName: { fontSize: typography.fontSize.md, fontWeight: "800" },
+  providerDesc: {
     fontSize: typography.fontSize.xs,
-    fontWeight: "700",
-    textAlign: "center",
+    marginTop: 3,
+    lineHeight: 18,
   },
-  companionRole: { fontSize: 9, textAlign: "center" },
-  apiRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  fieldLabel: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
   apiInput: {
-    flex: 1,
     borderWidth: 1.5,
     borderRadius: radius.md,
     padding: spacing.md,
     fontSize: typography.fontSize.sm,
   },
-  eyeBtn: {
-    width: 44,
-    height: 44,
+  toggleBtn: {
+    borderWidth: 1,
     borderRadius: radius.md,
-    justifyContent: "center",
+    paddingVertical: 12,
     alignItems: "center",
+    justifyContent: "center",
+  },
+  status: {
+    fontSize: typography.fontSize.xs,
+    lineHeight: 18,
+    marginTop: spacing.md,
   },
   aboutRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  aboutLabel: { fontSize: typography.fontSize.md, fontWeight: "600" },
-  aboutDesc: { fontSize: typography.fontSize.xs, marginTop: 2 },
+  aboutLabel: { fontSize: typography.fontSize.md, fontWeight: "800" },
+  aboutDesc: { fontSize: typography.fontSize.xs, marginTop: 4 },
   arrow: { fontSize: 28, fontWeight: "300" },
 });
 

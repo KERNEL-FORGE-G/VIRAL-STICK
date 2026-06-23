@@ -1,79 +1,32 @@
 const axios = require("axios");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { COMPANION_PERSONAS, MODULE_PROMPTS } = require("./prompts");
-
-const GEMINI_KEY = process.env.GEMINI_API_KEY;
-const MISTRAL_KEY = process.env.MISTRAL_API_KEY;
-const DEEPSEEK_KEY = process.env.DEEPSEEK_API_KEY;
 
 const MISTRAL_URL = "https://api.mistral.ai/v1/chat/completions";
 const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
-const GEMINI_URL = (model) =>
-  `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${GEMINI_KEY}`;
 
-const SYSTEM_PROMPT_MEME =
-  "Tu génères des mèmes humoristiques en français. Réponds UNIQUEMENT avec du JSON valide, sans markdown.";
+const getEnv = () => ({
+  GEMINI_KEY: process.env.GEMINI_API_KEY,
+  MISTRAL_KEY: process.env.MISTRAL_API_KEY,
+  DEEPSEEK_KEY: process.env.DEEPSEEK_API_KEY,
+  HF_TOKEN: process.env.HF_TOKEN,
+});
 
-async function callDeepSeek(systemPrompt, userPrompt, schema) {
-  if (!DEEPSEEK_KEY) throw new Error("DeepSeek: no key");
-  const res = await axios.post(
-    DEEPSEEK_URL,
-    {
-      model: "deepseek-chat",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      max_tokens: 500,
-      temperature: 0.8,
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${DEEPSEEK_KEY}`,
-        "Content-Type": "application/json",
-      },
-    },
-  );
-  return parseJSON(res.data.choices[0].message.content);
-}
+const GEMINI_URL = (model, key) =>
+  `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${key}`;
 
-async function callMistral(systemPrompt, userPrompt, schema) {
-  if (!MISTRAL_KEY) throw new Error("Mistral: no key");
-  const res = await axios.post(
-    MISTRAL_URL,
-    {
-      model: "mistral-small-latest",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      max_tokens: 500,
-      temperature: 0.8,
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${MISTRAL_KEY}`,
-        "Content-Type": "application/json",
-      },
-    },
-  );
-  const text = res.data.choices[0].message.content;
-  if (schema === "text") return text;
-  return parseJSON(text);
-}
-
-async function callGemini(systemPrompt, userPrompt, schema) {
-  if (!GEMINI_KEY) throw new Error("Gemini: no key");
-  const model = schema === "text" ? "gemini-2.0-flash" : "gemini-2.5-flash";
-  const res = await axios.post(GEMINI_URL(model), {
-    contents: [{ parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
-  });
-  const text = res.data.candidates[0].content.parts[0].text;
-  if (schema === "text") return text;
-  return parseJSON(text);
+function normalizeText(value) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .trim();
 }
 
 function parseJSON(text) {
-  let cleaned = text.replace(/```json|```/gi, "").trim();
+  const cleaned = normalizeText(
+    String(text || "").replace(/```json|```/gi, ""),
+  );
   try {
     return JSON.parse(cleaned);
   } catch (e) {
@@ -83,127 +36,294 @@ function parseJSON(text) {
   }
 }
 
+function sanitizeMemePayload(payload, voice = false) {
+  return {
+    topText: normalizeText(payload?.topText || "QUAND TOUT PART EN VRILLE"),
+    bottomText: normalizeText(
+      payload?.bottomText || "ET QUE TU FAIS SEMBLANT DE GÉRER",
+    ),
+    descriptionImage: normalizeText(
+      payload?.descriptionImage ||
+        "Une scène expressive, exagérée et très relatable",
+    ),
+    ...(voice
+      ? {
+          original_transcript_subtitle: normalizeText(
+            payload?.original_transcript_subtitle ||
+              "Transcription indisponible",
+          ),
+        }
+      : {}),
+  };
+}
+
 function getLocationContext(location) {
   const contexts = {
     france:
-      "ADAPTE L'HUMOUR FRANÇAIS: Utilise des références culturelles françaises (métro parisien, administrations, grèves, fromages, vin, baguette, expressions françaises comme 'c'est la galère', 'c'est dingue', 'putain'). Le ton doit être sarcastique et auto-dérisoire typiquement français.",
+      "Humour français: sarcasme, galère administrative, fatigue sociale, autodérision, références du quotidien compréhensibles.",
     cameroun:
-      "ADAPTE L'HUMOUR CAMEROUNAIS: Utilise des références culturelles camerounaises (ndolé, bobolo, mbolo, pirogue, football, Samuel Eto'o, expressions camerounaises comme 'ça na go', 'mbombo', 'tchop', 'na moki'). Le ton doit être chaleureux et communautaire.",
+      "Humour camerounais: chaleur sociale, expressions locales, énergie communautaire, petites vérités du quotidien, football et vie courante.",
     senegal:
-      "ADAPTE L'HUMOUR SÉNÉGALAIS: Utilise des références culturelles sénégalaises (thieboudienne, yassa, taxi brousse, football Sadio Mané, expressions sénégalaises comme 'damaay', 'sakh', 'toubab'). Le ton doit être spirituel et convivial.",
+      "Humour sénégalais: convivialité, finesse, observation sociale, chaleur humaine et petites situations partagées.",
     coteivoire:
-      "ADAPTE L'HUMOUR IVOIRIEN: Utilise des références culturelles ivoiriennes (attiéké, garba, zagba, Didier Drogba, expressions ivoiriennes comme 'chaud', 'ça va aller', 'n'gbo'). Le ton doit être optimiste et festif.",
-    mali: "ADAPTE L'HUMOUR MALIEN: Utilise des références culturelles maliennes (tô, jollof, griots, désert, expressions maliennes comme 'i ni ce', 'c'est bon', 'bara'). Le ton doit être respectueux et traditionnel.",
+      "Humour ivoirien: énergie festive, confiance, style, débrouillardise et punchlines populaires.",
+    mali: "Humour malien: observation posée, tradition, quotidien et contraste entre sérieux et réalité.",
     benin:
-      "ADAPTE L'HUMOUR BÉNINOIS: Utilise des références culturelles béninoises (akassa, gari, zomi, vaudou, expressions béninoises comme 'c'est pas grave', 'on gère', 'ça va koi'). Le ton doit être détendu et philosophique.",
+      "Humour béninois: philosophie du quotidien, détente, débrouille et expressions naturelles.",
     congo:
-      "ADAPTE L'HUMOUR CONGOLAIS: Utilise des références culturelles congolaises (saka saka, liboke, rumba, expressions congolaises comme 'mbote', 'lingala', 'soki'). Le ton doit être musical et dansant.",
-    rdc: "ADAPTE L'HUMOUR CONGOLAIS (RDC): Utilise des références culturelles congolaises RDC (fufu, pondu, musique congolaise, expressions RDC comme 'mboka', 'sango', 'bana'). Le ton doit être vibrant et festif.",
+      "Humour congolais: musicalité, énergie, style, vie de groupe et grands gestes.",
+    rdc: "Humour RDC: ambiance vibrante, culture populaire, vie quotidienne et intensité expressive.",
     maroc:
-      "ADAPTE L'HUMOUR MAROCAIN: Utilise des références culturelles marocaines (couscous, tagine, thé à la menthe, expressions marocaines comme 'wa l3ah', 'khouya', 'zwin'). Le ton doit être chaleureux et hospitalier.",
+      "Humour marocain: chaleur, famille, petites contradictions sociales et hospitalité détournée avec humour.",
     algerie:
-      "ADAPTE L'HUMOUR ALGÉRIEN: Utilise des références culturelles algériennes (couscous, chorba, expressions algériennes comme 'saha', 'wahed', 'hada'). Le ton doit être direct et franc.",
-    tunisie:
-      "ADAPTE L'HUMOUR TUNISIEN: Utilise des références culturelles tunisiennes (couscous, brik, expressions tunisiennes comme 'aywa', 'bslama', 'yess'). Le ton doit être enjoué et méditerranéen.",
+      "Humour algérien: franc, nerveux, direct, enraciné dans le vécu quotidien.",
+    tunisie: "Humour tunisien: léger, vif, méditerranéen, urbain et spontané.",
     belgique:
-      "ADAPTE L'HUMOUR BELGE: Utilise des références culturelles belges (frites, bière, chocolat, expressions belges comme 'une fois', 'non mais', 'tchiot'). Le ton doit être modéré et autodérision.",
-    suisse:
-      "ADAPTE L'HUMOUR SUISSE: Utilise des références culturelles suisses (chocolat, fromage, montagne, expressions suisses comme 'hopp', 'tschäss', 'merci vielmals'). Le ton doit être précis et calme.",
-    canada:
-      "ADAPTE L'HUMOUR QUÉBÉCOIS: Utilise des références culturelles québécoises (poutine, sirop d'érable, hockey, expressions québécoises comme 'tabarnak', 'osti', 'calice', 'environ'). Le ton doit être coloré et passionné.",
+      "Humour belge: calme, absurde doux, autodérision et petites bizarreries du quotidien.",
+    suisse: "Humour suisse: précis, calme, contraste entre ordre et imprévu.",
+    canada: "Humour québécois: oral, imagé, énergique, familier et coloré.",
     international:
-      "HUMOUR INTERNATIONAL: Utilise des références culturelles universelles et compréhensibles par tous. Évite les expressions trop locales. Le ton doit être accessible et globalement drôle.",
+      "Humour international: références universelles, compréhension immédiate, ton accessible et partageable.",
   };
 
   return contexts[location] || contexts.international;
 }
 
-async function withFallback(fn, fallbackData) {
+async function callDeepSeek(systemPrompt, userPrompt, schema) {
+  const { DEEPSEEK_KEY } = getEnv();
+  if (!DEEPSEEK_KEY) throw new Error("DeepSeek: no key");
+
+  const res = await axios.post(
+    DEEPSEEK_URL,
+    {
+      model: "deepseek-chat",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      max_tokens: 500,
+      temperature: 0.9,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${DEEPSEEK_KEY}`,
+        "Content-Type": "application/json",
+      },
+    },
+  );
+
+  const text = res.data?.choices?.[0]?.message?.content || "";
+  return schema === "text" ? normalizeText(text) : parseJSON(text);
+}
+
+async function callMistral(systemPrompt, userPrompt, schema) {
+  const { MISTRAL_KEY } = getEnv();
+  if (!MISTRAL_KEY) throw new Error("Mistral: no key");
+
+  const res = await axios.post(
+    MISTRAL_URL,
+    {
+      model: "mistral-small-latest",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      max_tokens: 500,
+      temperature: 0.85,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${MISTRAL_KEY}`,
+        "Content-Type": "application/json",
+      },
+    },
+  );
+
+  const text = res.data?.choices?.[0]?.message?.content || "";
+  return schema === "text" ? normalizeText(text) : parseJSON(text);
+}
+
+async function callGemini(systemPrompt, userPrompt, schema) {
+  const { GEMINI_KEY } = getEnv();
+  if (!GEMINI_KEY) throw new Error("Gemini: no key");
+
+  const model = schema === "text" ? "gemini-2.0-flash" : "gemini-2.5-flash";
+  const res = await axios.post(GEMINI_URL(model, GEMINI_KEY), {
+    contents: [{ parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
+  });
+
+  const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  return schema === "text" ? normalizeText(text) : parseJSON(text);
+}
+
+async function withTextFallback(fn, fallbackData) {
   const providers = [
     { name: "Gemini", call: () => fn(callGemini) },
     { name: "Mistral", call: () => fn(callMistral) },
     { name: "DeepSeek", call: () => fn(callDeepSeek) },
   ];
-  for (const p of providers) {
+
+  for (const provider of providers) {
     try {
-      const result = await p.call();
-      console.log(`[AI] ${p.name} OK`);
+      const result = await provider.call();
+      console.log(`[AI] ${provider.name} OK`);
       return result;
     } catch (e) {
-      console.warn(`[AI] ${p.name} failed: ${e.message}`);
+      console.warn(`[AI] ${provider.name} failed: ${e.message}`);
     }
   }
-  console.warn("[AI] All providers failed, using fallback");
+
+  console.warn("[AI] All text providers failed, using fallback");
   return fallbackData;
+}
+
+async function generateWithGeminiImage(prompt) {
+  const { GEMINI_KEY } = getEnv();
+  if (!GEMINI_KEY) throw new Error("Gemini image: no key");
+
+  try {
+    const client = new GoogleGenerativeAI(GEMINI_KEY);
+    const model = client.getGenerativeModel({
+      model: "gemini-2.5-flash-image",
+    });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+
+    const candidates = response?.candidates || [];
+    for (const candidate of candidates) {
+      for (const part of candidate?.content?.parts || []) {
+        if (part?.inlineData?.data) {
+          const mimeType = part.inlineData.mimeType || "image/png";
+          return {
+            imageUrl: `data:${mimeType};base64,${part.inlineData.data}`,
+            description: normalizeText(prompt),
+            provider: "gemini-image",
+            fallback: false,
+          };
+        }
+      }
+    }
+  } catch (e) {
+    console.warn(`[AI] Gemini image failed: ${e.message}`);
+  }
+
+  throw new Error("Gemini image unavailable");
+}
+
+async function generateWithHuggingFace(prompt) {
+  const { HF_TOKEN } = getEnv();
+  if (!HF_TOKEN) throw new Error("HF image: no token");
+
+  const res = await axios.post(
+    "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-Krea-dev",
+    {
+      inputs: prompt,
+      parameters: {
+        width: 1024,
+        height: 1024,
+        guidance_scale: 5.5,
+        num_inference_steps: 28,
+      },
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${HF_TOKEN}`,
+        Accept: "image/png",
+        "Content-Type": "application/json",
+      },
+      responseType: "arraybuffer",
+      timeout: 120000,
+    },
+  );
+
+  const base64 = Buffer.from(res.data, "binary").toString("base64");
+  const mimeType = res.headers["content-type"] || "image/png";
+
+  return {
+    imageUrl: `data:${mimeType};base64,${base64}`,
+    description: normalizeText(prompt),
+    provider: "huggingface-flux-krea",
+    fallback: false,
+  };
 }
 
 const AIService = {
   generateMemeFromText: async (text, location = "international") => {
     const locationContext = getLocationContext(location);
-    const enhancedPrompt = `${MODULE_PROMPTS.contextReader}\n\n${locationContext}`;
-    return withFallback(
-      async (call) =>
-        call(enhancedPrompt, `CONTEXTE UTILISATEUR (${location}): "${text}"`),
+    const userPrompt = [
+      `LOCALISATION: ${location}`,
+      `CADRE CULTUREL: ${locationContext}`,
+      `CONTEXTE UTILISATEUR: ${normalizeText(text)}`,
+      "Trouve le noyau comique principal puis construis un mème plus fort que le contexte brut.",
+    ].join("\n\n");
+
+    const raw = await withTextFallback(
+      async (call) => call(MODULE_PROMPTS.contextReader, userPrompt, "json"),
       {
-        topText: "QUAND L'IA BUGUE...",
-        bottomText: "...MAIS QUE TU GARDES LE SOURIRE",
-        descriptionImage: "Un robot confus avec un panneau Error 500",
+        topText: "QUAND TU VEUX GÉRER TRANQUILLE",
+        bottomText: "ET QUE LE CHAOS CHOISIT TON NOM",
+        descriptionImage:
+          "Une personne figée pendant que tout s'effondre autour d'elle",
       },
     );
+
+    return sanitizeMemePayload(raw, false);
   },
 
   generateMemeFromVoice: async (transcription) => {
-    return withFallback(
-      async (call) =>
-        call(
-          MODULE_PROMPTS.voiceToMeme,
-          `TRANSCRIPTION VOCALE: "${transcription}"`,
-        ),
+    const userPrompt = [
+      `TRANSCRIPTION: ${normalizeText(transcription)}`,
+      "Conserve l'énergie du parlé, nettoie juste ce qu'il faut, puis construis un mème avec une vraie chute.",
+    ].join("\n\n");
+
+    const raw = await withTextFallback(
+      async (call) => call(MODULE_PROMPTS.voiceToMeme, userPrompt, "json"),
       {
-        topText: "QUAND LA VOIX NE PASSE PAS...",
-        bottomText: "...MAIS QUE LE MESSAGE EST CLAIR",
-        descriptionImage: "Un micro qui fume avec des ondes sonores",
-        original_transcript_subtitle: transcription,
+        topText: "QUAND TU PARLES TROP VITE",
+        bottomText: "MAIS QUE LE DRAME RESTE PARFAITEMENT COMPRÉHENSIBLE",
+        descriptionImage: "Un micro saturé devant quelqu'un très expressif",
+        original_transcript_subtitle: normalizeText(transcription),
       },
     );
+
+    return sanitizeMemePayload(raw, true);
   },
 
   chatWithCompanion: async (companionId, message) => {
     const personaData =
       COMPANION_PERSONAS[companionId] || COMPANION_PERSONAS.arch;
-    const systemPrompt = `Tu es ${personaData.persona}
-Ton ton est : ${personaData.tone}
-Instructions : ${personaData.instructions.join(" ")}
-Réponds en 2-3 phrases maximum, reste dans ton personnage.`;
+    const systemPrompt = `Tu es ${personaData.persona}\nTon ton est: ${personaData.tone}\nInstructions: ${personaData.instructions.join(" ")}`;
 
-    const result = await withFallback(
-      async (call) => call(systemPrompt, `Message: "${message}"`, "text"),
-      "Désolé, j'ai une petite perte de connexion avec mon noyau central. Peux-tu répéter ?",
+    return withTextFallback(
+      async (call) =>
+        call(
+          systemPrompt,
+          `Message utilisateur: "${normalizeText(message)}"`,
+          "text",
+        ),
+      "Désolé, j'ai une petite perte de synchronisation avec mon noyau central. Réessaie dans un instant.",
     );
-    return result;
   },
 
   generateImage: async (prompt) => {
-    if (GEMINI_KEY) {
-      try {
-        const res = await axios.post(
-          `https://generativelanguage.googleapis.com/v1/models/imagen-4.0-generate-001:predict?key=${GEMINI_KEY}`,
-          { prompt },
-          { headers: { "Content-Type": "application/json" } },
-        );
-        return {
-          imageUrl: res.data?.predictions?.[0]?.bytesBase64Encoded
-            ? `data:image/png;base64,${res.data.predictions[0].bytesBase64Encoded}`
-            : null,
-          description: prompt,
-        };
-      } catch (e) {
-        console.warn("[AI] Imagen failed, returning description:", e.message);
-      }
+    const normalizedPrompt = normalizeText(prompt);
+
+    try {
+      return await generateWithHuggingFace(normalizedPrompt);
+    } catch (e) {
+      console.warn(`[AI] Hugging Face image failed: ${e.message}`);
     }
+
+    try {
+      return await generateWithGeminiImage(normalizedPrompt);
+    } catch (e) {
+      console.warn(`[AI] Gemini image unavailable: ${e.message}`);
+    }
+
     return {
       imageUrl: null,
-      description: `Image générée : ${prompt}`,
+      description: `Image générée : ${normalizedPrompt}`,
+      provider: "fallback-text-only",
       fallback: true,
     };
   },

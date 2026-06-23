@@ -2,15 +2,16 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { colors, gradients, radius, shadows } from "../theme/tokens";
 import CompanionAvatarWeb from "./CompanionAvatarWeb";
+import AppIcon from "./AppIcon";
 
 const NAV = [
-  ["/", "Accueil"],
-  ["/context", "Context Reader"],
-  ["/remix", "Status Remixer"],
-  ["/chat", "Compagnons"],
-  ["/multi-chat", "Multi-Chat"],
-  ["/about", "À propos"],
-  ["/settings", "Paramètres"],
+  ["/", "Accueil", "dashboard"],
+  ["/context", "Context Reader", "context"],
+  ["/remix", "Status Remixer", "remix"],
+  ["/chat", "Compagnons", "chat"],
+  ["/multi-chat", "Multi-Chat", "multiChat"],
+  ["/about", "À propos", "about"],
+  ["/settings", "Paramètres", "settings"],
 ];
 
 export const pageStyles = {
@@ -24,8 +25,9 @@ export const pageStyles = {
     top: 0,
     zIndex: 20,
     backdropFilter: "blur(22px)",
-    background: "rgba(7, 11, 23, 0.72)",
+    background: "rgba(13, 13, 13, 0.82)",
     borderBottom: `1px solid ${colors.border}`,
+    boxShadow: shadows.lift,
   },
   headerInner: {
     maxWidth: 1280,
@@ -49,11 +51,14 @@ export const pageStyles = {
     borderRadius: radius.lg,
     boxShadow: shadows.card,
     overflow: "hidden",
+    transformStyle: "preserve-3d",
   },
   softPanel: {
     background: colors.panelSoft,
     border: `1px solid ${colors.border}`,
     borderRadius: radius.md,
+    boxShadow: shadows.lift,
+    backdropFilter: "blur(20px)",
   },
   heroTitle: {
     fontSize: "clamp(2.5rem, 4vw, 4.8rem)",
@@ -121,24 +126,42 @@ export const pageStyles = {
 export const BrandHeader = ({ title, companion }) => (
   <header style={pageStyles.header}>
     <div style={pageStyles.headerInner}>
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <img
-          src="/asset/logo/logo_sans_fond.png"
-          alt="Viral Stick"
-          style={{ width: 48, height: 48, objectFit: "contain" }}
-        />
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div
+          style={{
+            width: 72,
+            height: 72,
+            display: "grid",
+            placeItems: "center",
+            boxShadow: shadows.glow,
+            animation: "orbitalTilt 10s ease-in-out infinite",
+          }}
+        >
+          <img
+            src="/asset/logo/logo_sans_fond.png"
+            alt="Viral Stick"
+            style={{
+              width: 68,
+              height: 68,
+              objectFit: "contain",
+              filter: "drop-shadow(0 12px 24px rgba(232,73,15,0.28))",
+            }}
+          />
+        </div>
         <div>
-          <div style={{ fontWeight: 900, letterSpacing: "-0.03em" }}>
+          <div
+            style={{ fontWeight: 900, letterSpacing: "-0.03em", fontSize: 20 }}
+          >
             Viral Stick
           </div>
           <div style={{ color: colors.textMuted, fontSize: 13 }}>
-            Meme engine · compagnons · identité premium
+            Studio de génération et d’édition de mèmes texte + image
           </div>
         </div>
       </div>
 
       <nav style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {NAV.map(([to, label]) => (
+        {NAV.map(([to, label, icon]) => (
           <Link
             key={to}
             to={to}
@@ -147,19 +170,27 @@ export const BrandHeader = ({ title, companion }) => (
               borderRadius: radius.pill,
               textDecoration: "none",
               color: colors.textSecondary,
-              background: "rgba(255,255,255,0.03)",
+              background: "rgba(255,255,255,0.05)",
               border: `1px solid ${colors.border}`,
               fontSize: 14,
-              fontWeight: 600,
+              fontWeight: 700,
+              boxShadow: shadows.lift,
+              backdropFilter: "blur(16px)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
             }}
           >
+            <AppIcon name={icon} size={16} color={colors.textSecondary} />
             {label}
           </Link>
         ))}
       </nav>
 
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        {companion ? <CompanionAvatarWeb companion={companion} size={64} /> : null}
+        {companion ? (
+          <CompanionAvatarWeb companion={companion} size={64} />
+        ) : null}
         <div style={{ fontWeight: 800 }}>{title}</div>
       </div>
     </div>

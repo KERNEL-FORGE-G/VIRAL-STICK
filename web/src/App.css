@@ -1,12 +1,14 @@
 * {
   box-sizing: border-box;
 }
+
 html,
 body,
 #root {
   margin: 0;
   min-height: 100%;
 }
+
 body {
   font-family:
     Inter,
@@ -16,15 +18,81 @@ body {
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
-  background: #070b17;
-  color: #f5f7ff;
+  background: linear-gradient(180deg, #0d0d0d 0%, #1a1a2e 100%);
+  color: #ffffff;
+  overflow-x: hidden;
 }
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(24px);
+}
+
+body::before {
+  top: 8%;
+  left: 6%;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: rgba(232, 73, 15, 0.16);
+  animation: floatGlow 9s ease-in-out infinite;
+}
+
+body::after {
+  right: 8%;
+  bottom: 10%;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: rgba(243, 156, 18, 0.12);
+  animation: floatGlow 11s ease-in-out infinite reverse;
+}
+
 a {
   color: inherit;
 }
+
 button,
 input,
 textarea,
 select {
   font: inherit;
+}
+
+img {
+  transform: translateZ(0);
+}
+
+@keyframes floatGlow {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0) scale(1.04);
+  }
+}
+
+@keyframes orbitalTilt {
+  0%,
+  100% {
+    transform: perspective(1400px) rotateX(0deg) rotateY(0deg) translateY(0);
+  }
+  50% {
+    transform: perspective(1400px) rotateX(3deg) rotateY(-4deg) translateY(-4px);
+  }
+}
+
+@keyframes levitateCard {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -6px, 0);
+  }
 }

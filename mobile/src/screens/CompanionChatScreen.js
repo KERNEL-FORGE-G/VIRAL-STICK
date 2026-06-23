@@ -1,12 +1,4 @@
-/**
- * CompanionChatScreen — Interactive chat with AI companions
- * Viral Stick | KERNEL FORGE — 2026
- *
- * Companion system: arch (admin), data (support), para (settings guide),
- *   secu (security), bio/ubu/art (creative trio)
- */
-
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -23,100 +15,86 @@ import {
 } from "react-native";
 import axios from "axios";
 import { useTheme, spacing, radius, typography, createShadow } from "../theme";
+import GlassCard from "../components/GlassCard";
 import { COMPANIONS, COMPANION_NAMES } from "../components/CompanionAvatar";
 
 const API_BASE = "https://viral-stick.vercel.app";
 
 const COMPANION_LIST = [
-  { id: "arch", role: "PDG & Admin système" },
-  { id: "data", role: "Support & Données" },
-  { id: "para", role: "Paramètres & Guide" },
-  { id: "secu", role: "Sécurité" },
-  { id: "bio", role: "Artiste Créatif" },
-  { id: "ubu", role: "Artiste Comique" },
-  { id: "art", role: "Artiste Visuel" },
+  { id: "arch", role: "Direction produit" },
+  { id: "data", role: "Support & structure" },
+  { id: "para", role: "Réglages & onboarding" },
+  { id: "secu", role: "Sécurité & vigilance" },
+  { id: "bio", role: "Énergie visuelle" },
+  { id: "ubu", role: "Humour & imprévu" },
+  { id: "art", role: "Direction artistique" },
 ];
 
-// Pre-seeded conversation starters per companion
 const GREETINGS = {
   arch: [
-    "Bienvenue dans Viral Stick. Je suis Archlord, PDG de cette opération. 👑",
-    "Que puis-je faire pour toi ?",
+    "Bienvenue dans le studio Viral Stick.",
+    "On va structurer ton idée proprement.",
   ],
-  data: [
-    "Salut ! Je suis Data 📊, ton assistant support.",
-    "Tu as une question sur l'app ? Je suis là !",
-  ],
+  data: ["Data en ligne.", "Je peux clarifier, trier et résoudre."],
   para: [
-    "Hey ! Para ici ⚙️",
-    "Je m'occupe de tout ce qui est paramètres. Tu as besoin d'aide pour configurer quelque chose ?",
+    "Para ici.",
+    "On peut remettre de l'ordre dans les réglages ou le parcours.",
   ],
   secu: [
-    "Système de sécurité activé 🔒",
-    "Je surveille que tout va bien. Aucune anomalie détectée.",
+    "Secu active la veille.",
+    "On vérifie que tout tient debout avant d'avancer.",
   ],
-  bio: ["Yooo ! Bio en ligne 🌿🎉", "Prêt à créer des trucs stylés ensemble ?"],
-  ubu: [
-    "Ubu arrive ! 🤖💥",
-    "Tu as des blagues à transformer en mèmes ? Je suis ton gars !",
-  ],
-  art: [
-    "Art ici 🎨✨",
-    "Chaque contenu est une œuvre d'art. Dis-moi ton idée !",
-  ],
+  bio: ["Bio en scène.", "On va rendre ton contenu plus vivant."],
+  ubu: ["Ubu débarque.", "Si ta demande a du potentiel comique, je le trouve."],
+  art: ["Art est prêt.", "Montre-moi l'idée, je juge le rendu."],
 };
 
 const AUTO_REPLIES = {
   arch: [
-    "Ordre exécuté. 👁️‍🗨️",
-    "Comme je te le disais, cette app est un chef-d'œuvre. 🏆",
-    "Parle à Data si tu as besoin de support technique.",
-    "KERNEL FORGE ne dort jamais. 💪",
+    "Décision nette : on peut améliorer ça sans le compliquer.",
+    "Le produit gagne quand le message devient plus clair et plus fort.",
   ],
   data: [
-    "Voici les infos que j'ai trouvées ! 📊",
-    "Je note ça dans mes registres.",
-    "Pour les problèmes techniques, je suis ton expert !",
-    "Tu peux me confier tes données en toute sécurité.",
+    "Je reformule : il faut distinguer le problème, puis l'action.",
+    "On peut rendre ça plus lisible immédiatement.",
   ],
   para: [
-    "Pour changer le thème, va dans Paramètres → Apparence.",
-    "Tu veux configurer ton API key ? Je t'explique !",
-    "Les réglages sont sauvegardés automatiquement.",
+    "Je te propose l'option la plus simple d'abord.",
+    "On peut fluidifier ce parcours sans perdre en contrôle.",
   ],
   secu: [
-    "Connexion sécurisée confirmée. ✅",
-    "Aucune menace détectée. 🛡️",
-    "Ton API key est chiffrée et sécurisée.",
-    "Sécurité maximale activée. 🔐",
+    "Je vois surtout un point de vigilance à traiter avant la suite.",
+    "Mieux vaut verrouiller l'essentiel maintenant.",
   ],
   bio: [
-    "TROP COOL ! 🌿🌟",
-    "On fait ça ensemble bro !",
-    "La créativité n'a pas de limites ici !",
+    "Il manque un peu de relief, mais la base a du potentiel.",
+    "On peut injecter plus de rythme visuel dans cette idée.",
   ],
   ubu: [
-    "MDR 💀",
-    "T'es trop drôle !",
-    "On va faire un mème là-dessus !",
-    "LMAO 🤣",
+    "Il y a clairement une chute à sortir de ça.",
+    "C'est presque drôle. Avec un angle plus nerveux, ça part.",
   ],
   art: [
-    "Magnifique idée ! 🎨",
-    "Je visualise déjà le résultat !",
-    "Art approuve. ✨",
+    "La composition mentale est là, mais il faut un meilleur contraste.",
+    "Je veux une image plus nette et une phrase plus iconique.",
   ],
 };
 
 const COMPANION_COLORS = {
-  arch: "#0081c0", // Bleu
-  para: "#4CAF50", // Vert
-  secu: "#F44336", // Rouge
-  data: "#FF9800", // Jaune/Orange
-  bio: "#9C27B0", // Violet/Rose
-  ubu: "#8BC34A", // Jaune/Vert
-  art: "#FF5722", // Orange/Rouge
+  arch: "#3B82F6",
+  para: "#22C55E",
+  secu: "#EF4444",
+  data: "#F59E0B",
+  bio: "#A855F7",
+  ubu: "#84CC16",
+  art: "#FB923C",
 };
+
+const PROMPT_SUGGESTIONS = [
+  "Aide-moi à améliorer un prompt mème.",
+  "Quel compagnon est le meilleur pour un visuel ?",
+  "Comment rendre un post plus viral sans le surcharger ?",
+];
 
 const ChatBubble = ({ msg, theme }) => {
   const anim = useRef(new Animated.Value(0)).current;
@@ -128,7 +106,7 @@ const ChatBubble = ({ msg, theme }) => {
       friction: 8,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [anim]);
 
   const isUser = msg.sender === "user";
   const companionColor = COMPANION_COLORS[msg.companion] || theme.primary;
@@ -144,7 +122,7 @@ const ChatBubble = ({ msg, theme }) => {
             {
               scale: anim.interpolate({
                 inputRange: [0, 1],
-                outputRange: [0.8, 1],
+                outputRange: [0.92, 1],
               }),
             },
           ],
@@ -163,9 +141,9 @@ const ChatBubble = ({ msg, theme }) => {
           styles.bubble,
           {
             backgroundColor: isUser
-              ? `${theme.primary}CC`
+              ? `${theme.primary}D9`
               : theme.backgroundCard,
-            borderColor: isUser ? "transparent" : companionColor,
+            borderColor: isUser ? "transparent" : `${companionColor}99`,
             alignSelf: isUser ? "flex-end" : "flex-start",
             borderWidth: isUser ? 0 : 1,
           },
@@ -187,7 +165,7 @@ const ChatBubble = ({ msg, theme }) => {
         <Text
           style={[
             styles.bubbleTime,
-            { color: isUser ? "rgba(255,255,255,0.6)" : theme.textMuted },
+            { color: isUser ? "rgba(255,255,255,0.68)" : theme.textMuted },
           ]}
         >
           {msg.time}
@@ -204,7 +182,6 @@ const CompanionChatScreen = ({ navigate }) => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const flatRef = useRef(null);
-  const tabAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const fetchGreeting = async () => {
@@ -213,25 +190,26 @@ const CompanionChatScreen = ({ navigate }) => {
         const res = await axios.post(`${API_BASE}/api/memes/chat/greeting`, {
           companionId: activeCompanion,
         });
-        const initMsg = {
-          id: "g0",
-          text: res.data.reply,
-          sender: activeCompanion,
-          companion: activeCompanion,
-          time: "maintenant",
-        };
-        setMessages([initMsg]);
-      } catch (err) {
-        // Fallback to static if API fails
-        const greets = GREETINGS[activeCompanion] || ["Bonjour !"];
-        const initMsgs = greets.map((text, i) => ({
-          id: `g${i}`,
-          text,
-          sender: activeCompanion,
-          companion: activeCompanion,
-          time: "maintenant",
-        }));
-        setMessages(initMsgs);
+        setMessages([
+          {
+            id: `g-${activeCompanion}`,
+            text: res.data.reply,
+            sender: activeCompanion,
+            companion: activeCompanion,
+            time: "maintenant",
+          },
+        ]);
+      } catch {
+        const fallback = (GREETINGS[activeCompanion] || ["Bonjour."]).map(
+          (text, i) => ({
+            id: `${activeCompanion}-${i}`,
+            text,
+            sender: activeCompanion,
+            companion: activeCompanion,
+            time: "maintenant",
+          }),
+        );
+        setMessages(fallback);
       } finally {
         setLoading(false);
       }
@@ -247,21 +225,21 @@ const CompanionChatScreen = ({ navigate }) => {
       hour: "2-digit",
       minute: "2-digit",
     });
+
+    const currentInput = input.trim();
     const userMsg = {
       id: Date.now().toString(),
-      text: input,
+      text: currentInput,
       sender: "user",
       companion: activeCompanion,
       time: now,
     };
 
-    const currentInput = input;
     setInput("");
     setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
 
     try {
-      // Prepare chat history for the AI
       const history = messages.slice(-6).map((m) => ({
         role: m.sender === "user" ? "user" : "model",
         parts: [{ text: m.text }],
@@ -270,11 +248,11 @@ const CompanionChatScreen = ({ navigate }) => {
       const res = await axios.post(`${API_BASE}/api/memes/chat`, {
         companionId: activeCompanion,
         message: currentInput,
-        history: history,
+        history,
       });
 
       const reply = {
-        id: (Date.now() + 1).toString(),
+        id: `${Date.now()}-reply`,
         text: res.data.reply,
         sender: activeCompanion,
         companion: activeCompanion,
@@ -283,137 +261,162 @@ const CompanionChatScreen = ({ navigate }) => {
           minute: "2-digit",
         }),
       };
-
       setMessages((prev) => [...prev, reply]);
-    } catch (err) {
-      console.error("Chat error:", err);
-      // Minimal fallback
-      const replies = AUTO_REPLIES[activeCompanion];
-      const fallbackMsg = {
-        id: (Date.now() + 1).toString(),
-        text: replies[Math.floor(Math.random() * replies.length)],
-        sender: activeCompanion,
-        companion: activeCompanion,
-        time: "maintenant",
-      };
-      setMessages((prev) => [...prev, fallbackMsg]);
+    } catch {
+      const replies = AUTO_REPLIES[activeCompanion] || [
+        "Réessaie dans un instant.",
+      ];
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `${Date.now()}-fallback`,
+          text: replies[Math.floor(Math.random() * replies.length)],
+          sender: activeCompanion,
+          companion: activeCompanion,
+          time: "maintenant",
+        },
+      ]);
     } finally {
       setLoading(false);
       setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
     }
   };
 
-  const switchCompanion = (id) => {
-    Animated.sequence([
-      Animated.timing(tabAnim, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.spring(tabAnim, {
-        toValue: 1,
-        tension: 80,
-        friction: 6,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    setActiveCompanion(id);
-  };
-
   const accentColor = COMPANION_COLORS[activeCompanion] || theme.primary;
+  const activeRole = COMPANION_LIST.find((c) => c.id === activeCompanion)?.role;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: theme.divider }]}>
-        <View>
-          <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>
-            💬 Compagnons
-          </Text>
-          <Text style={[styles.headerSub, { color: accentColor }]}>
-            {COMPANION_NAMES[activeCompanion]} —{" "}
-            {COMPANION_LIST.find((c) => c.id === activeCompanion)?.role}
-          </Text>
-        </View>
-        <Image
-          source={COMPANIONS[activeCompanion]}
-          style={[styles.headerAvatar, { borderColor: accentColor }]}
-          resizeMode="contain"
-        />
-      </View>
-
-      {/* Companion selector */}
-      <View style={[styles.selector, { borderBottomColor: theme.divider }]}>
-        <FlatList
-          data={COMPANION_LIST}
-          horizontal
-          keyExtractor={(c) => c.id}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.selectorContent}
-          renderItem={({ item }) => {
-            const active = item.id === activeCompanion;
-            const itemColor = COMPANION_COLORS[item.id] || theme.primary;
-            return (
-              <TouchableOpacity
-                onPress={() => switchCompanion(item.id)}
-                style={[
-                  styles.selectorItem,
-                  {
-                    borderColor: active ? itemColor : "transparent",
-                    backgroundColor: active ? `${itemColor}22` : "transparent",
-                  },
-                ]}
+      <View style={styles.page}>
+        <GlassCard style={styles.heroCard}>
+          <View style={styles.heroTop}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.kicker, { color: theme.textMuted }]}>
+                COMPANION CONSOLE
+              </Text>
+              <Text style={[styles.heroTitle, { color: theme.textPrimary }]}>
+                Chat <Text style={{ color: accentColor }}>compagnon</Text>
+              </Text>
+              <Text
+                style={[styles.heroSubtitle, { color: theme.textSecondary }]}
               >
-                <Image
-                  source={COMPANIONS[item.id]}
-                  style={styles.selectorAvatar}
-                  resizeMode="contain"
-                />
-                <Text
-                  style={[
-                    styles.selectorName,
-                    { color: active ? itemColor : theme.textMuted },
-                  ]}
-                >
-                  {COMPANION_NAMES[item.id]}
-                </Text>
-              </TouchableOpacity>
-            );
-          }}
-        />
-      </View>
-
-      {/* Chat messages */}
-      <FlatList
-        ref={flatRef}
-        data={messages}
-        keyExtractor={(m) => m.id}
-        renderItem={({ item }) => <ChatBubble msg={item} theme={theme} />}
-        contentContainerStyle={styles.chatContent}
-        onContentSizeChange={() =>
-          flatRef.current?.scrollToEnd({ animated: true })
-        }
-        showsVerticalScrollIndicator={false}
-        ListFooterComponent={
-          loading && (
-            <View style={styles.loadingBubble}>
-              <ActivityIndicator size="small" color={accentColor} />
-              <Text style={[styles.loadingText, { color: theme.textMuted }]}>
-                {COMPANION_NAMES[activeCompanion]} réfléchit...
+                Un interlocuteur dédié selon le besoin : produit, sécurité,
+                humour, visuel ou structure.
               </Text>
             </View>
-          )
-        }
-      />
+            <View style={[styles.heroLogo, { shadowColor: accentColor }]}>
+              <Image
+                source={require("../../assets/logo/logo_sans_fond.png")}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
+          </View>
 
-      {/* Input */}
+          <View style={styles.activeCompanionRow}>
+            <Image
+              source={COMPANIONS[activeCompanion]}
+              style={[styles.activeAvatar, { borderColor: accentColor }]}
+              resizeMode="contain"
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.activeName, { color: accentColor }]}>
+                {COMPANION_NAMES[activeCompanion]}
+              </Text>
+              <Text style={[styles.activeRole, { color: theme.textSecondary }]}>
+                {activeRole}
+              </Text>
+            </View>
+          </View>
+        </GlassCard>
+
+        <View style={styles.selectorWrap}>
+          <FlatList
+            data={COMPANION_LIST}
+            horizontal
+            keyExtractor={(item) => item.id}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.selectorContent}
+            renderItem={({ item }) => {
+              const active = item.id === activeCompanion;
+              const color = COMPANION_COLORS[item.id] || theme.primary;
+              return (
+                <TouchableOpacity
+                  onPress={() => setActiveCompanion(item.id)}
+                  style={[
+                    styles.selectorItem,
+                    {
+                      borderColor: active ? color : theme.border,
+                      backgroundColor: active
+                        ? `${color}18`
+                        : theme.backgroundCard,
+                    },
+                  ]}
+                >
+                  <Image
+                    source={COMPANIONS[item.id]}
+                    style={styles.selectorAvatar}
+                    resizeMode="contain"
+                  />
+                  <Text
+                    style={[
+                      styles.selectorName,
+                      { color: active ? color : theme.textMuted },
+                    ]}
+                  >
+                    {COMPANION_NAMES[item.id]}
+                  </Text>
+                </TouchableOpacity>
+              );
+            }}
+          />
+        </View>
+
+        <View style={styles.suggestionsRow}>
+          {PROMPT_SUGGESTIONS.map((item) => (
+            <Text
+              key={item}
+              style={[
+                styles.suggestionChip,
+                { color: theme.textSecondary, borderColor: theme.border },
+              ]}
+              onPress={() => setInput(item)}
+            >
+              {item}
+            </Text>
+          ))}
+        </View>
+
+        <FlatList
+          ref={flatRef}
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <ChatBubble msg={item} theme={theme} />}
+          contentContainerStyle={styles.chatContent}
+          showsVerticalScrollIndicator={false}
+          onContentSizeChange={() =>
+            flatRef.current?.scrollToEnd({ animated: true })
+          }
+          ListFooterComponent={
+            loading ? (
+              <View style={styles.loadingBubble}>
+                <ActivityIndicator size="small" color={accentColor} />
+                <Text style={[styles.loadingText, { color: theme.textMuted }]}>
+                  {COMPANION_NAMES[activeCompanion]} prépare sa réponse…
+                </Text>
+              </View>
+            ) : null
+          }
+        />
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={90}
       >
         <View
           style={[
-            styles.inputRow,
+            styles.inputBar,
             {
               backgroundColor: theme.backgroundCard,
               borderTopColor: theme.divider,
@@ -431,7 +434,7 @@ const CompanionChatScreen = ({ navigate }) => {
             ]}
             value={input}
             onChangeText={setInput}
-            placeholder={`Message ${COMPANION_NAMES[activeCompanion]}...`}
+            placeholder={`Écrire à ${COMPANION_NAMES[activeCompanion]}...`}
             placeholderTextColor={theme.textMuted}
             onSubmitEditing={sendMessage}
             returnKeyType="send"
@@ -439,20 +442,19 @@ const CompanionChatScreen = ({ navigate }) => {
           />
           <TouchableOpacity
             onPress={sendMessage}
+            disabled={loading}
             style={[
               styles.sendBtn,
               {
                 backgroundColor: loading ? theme.divider : accentColor,
-                ...createShadow(accentColor, 8),
+                ...createShadow(accentColor, 10),
               },
             ]}
-            activeOpacity={0.8}
-            disabled={loading}
           >
             {loading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text style={styles.sendIcon}>▶</Text>
+              <Text style={styles.sendIcon}>➤</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -463,101 +465,122 @@ const CompanionChatScreen = ({ navigate }) => {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: spacing.md,
-    paddingTop: 60,
-    paddingBottom: spacing.md,
-    borderBottomWidth: 1,
-  },
-  headerTitle: { fontSize: typography.fontSize.xl, fontWeight: "800" },
-  headerSub: {
+  page: { flex: 1, paddingTop: 70, paddingHorizontal: spacing.md },
+  heroCard: { marginBottom: spacing.md },
+  heroTop: { flexDirection: "row", gap: spacing.md, alignItems: "center" },
+  kicker: {
     fontSize: typography.fontSize.xs,
-    fontWeight: "600",
-    marginTop: 2,
+    fontWeight: "800",
+    letterSpacing: 2,
   },
-  headerAvatar: { width: 100, height: 100, borderRadius: 50, borderWidth: 2 },
-  selector: { borderBottomWidth: 1 },
-  selectorContent: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
+  heroTitle: {
+    fontSize: typography.fontSize.xxl,
+    fontWeight: "900",
+    letterSpacing: -0.6,
   },
-  selectorItem: {
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: radius.lg,
-    borderWidth: 1.5,
-    minWidth: 70,
-  },
-  selectorAvatar: { width: 72, height: 72, borderRadius: 36 },
-  selectorName: {
-    fontSize: typography.fontSize.xs,
-    fontWeight: "600",
-    marginTop: 4,
-  },
-  chatContent: { padding: spacing.md, gap: spacing.sm },
-  bubbleRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 8,
-    marginVertical: 3,
-  },
-  bubbleLeft: { justifyContent: "flex-start" },
-  bubbleRight: { justifyContent: "flex-end" },
-  bubbleAvatar: { width: 56, height: 56, borderRadius: 28, borderWidth: 1.5 },
-  bubble: {
-    maxWidth: "78%",
-    padding: spacing.md,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-  },
-  companionName: {
-    fontSize: typography.fontSize.xs,
-    fontWeight: "700",
-    marginBottom: 3,
-    letterSpacing: 0.5,
-  },
-  bubbleText: { fontSize: typography.fontSize.sm, lineHeight: 20 },
-  bubbleTime: { fontSize: 10, marginTop: 4, textAlign: "right" },
-  loadingBubble: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    padding: spacing.md,
-    marginLeft: 40,
-  },
-  loadingText: {
-    fontSize: typography.fontSize.xs,
-    fontStyle: "italic",
-  },
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-    borderTopWidth: 1,
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1.5,
-    borderRadius: radius.full,
-    paddingVertical: 10,
-    paddingHorizontal: spacing.md,
+  heroSubtitle: {
+    marginTop: 8,
     fontSize: typography.fontSize.sm,
+    lineHeight: 21,
   },
-  sendBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  heroLogo: {
+    width: 110,
+    height: 110,
     justifyContent: "center",
     alignItems: "center",
   },
-  sendIcon: { color: "#fff", fontSize: 14, fontWeight: "700" },
+  logo: { width: 104, height: 104 },
+  activeCompanionRow: {
+    marginTop: spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+  },
+  activeAvatar: { width: 72, height: 72, borderRadius: 36, borderWidth: 1.5 },
+  activeName: { fontSize: typography.fontSize.lg, fontWeight: "900" },
+  activeRole: { marginTop: 4, fontSize: typography.fontSize.sm },
+  selectorWrap: { marginBottom: spacing.sm },
+  selectorContent: { gap: spacing.sm, paddingRight: spacing.md },
+  selectorItem: {
+    width: 92,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    alignItems: "center",
+    gap: 6,
+  },
+  selectorAvatar: { width: 44, height: 44 },
+  selectorName: { fontSize: typography.fontSize.xs, fontWeight: "800" },
+  suggestionsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  suggestionChip: {
+    borderWidth: 1,
+    borderRadius: radius.md,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: typography.fontSize.xs,
+    overflow: "hidden",
+  },
+  chatContent: { paddingBottom: spacing.md, gap: spacing.sm },
+  bubbleRow: {
+    flexDirection: "row",
+    marginBottom: spacing.sm,
+    alignItems: "flex-end",
+  },
+  bubbleLeft: { justifyContent: "flex-start" },
+  bubbleRight: { justifyContent: "flex-end" },
+  bubbleAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 8,
+    borderWidth: 1,
+  },
+  bubble: { maxWidth: "82%", borderRadius: radius.md, padding: spacing.md },
+  companionName: {
+    fontSize: typography.fontSize.xs,
+    fontWeight: "900",
+    marginBottom: 6,
+    letterSpacing: 0.6,
+  },
+  bubbleText: { fontSize: typography.fontSize.sm, lineHeight: 20 },
+  bubbleTime: { marginTop: 8, fontSize: 11, fontWeight: "700" },
+  loadingBubble: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+  },
+  loadingText: { fontSize: typography.fontSize.xs },
+  inputBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderTopWidth: 1,
+    gap: spacing.sm,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: typography.fontSize.sm,
+  },
+  sendBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  sendIcon: { color: "#fff", fontSize: 18, fontWeight: "900" },
 });
 
 export default CompanionChatScreen;

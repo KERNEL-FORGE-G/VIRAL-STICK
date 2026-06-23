@@ -1,11 +1,3 @@
-/**
- * DrawerNavigator — Advanced animated drawer navigation
- * Viral Stick | KERNEL FORGE — 2026
- *
- * Animation: translate + scale + borderRadius on screen while drawer slides in
- * Duration: 300ms ease-in-out
- */
-
 import React, { useRef, useState } from "react";
 import {
   View,
@@ -21,10 +13,9 @@ import {
 import { useTheme, spacing, radius, typography, createShadow } from "../theme";
 import CompanionAvatar from "../components/CompanionAvatar";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const DRAWER_WIDTH = SCREEN_WIDTH * 0.75;
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const DRAWER_WIDTH = SCREEN_WIDTH * 0.8;
 
-// Navigation items
 const NAV_ITEMS = [
   { key: "Home", label: "Accueil", icon: "🏠", companion: "bio" },
   {
@@ -49,7 +40,6 @@ const NAV_ITEMS = [
 const DrawerNavigator = ({ children, currentScreen, onNavigate }) => {
   const { theme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
-
   const translateX = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(1)).current;
   const borderR = useRef(new Animated.Value(0)).current;
@@ -63,12 +53,12 @@ const DrawerNavigator = ({ children, currentScreen, onNavigate }) => {
         useNativeDriver: true,
       }),
       Animated.timing(scale, {
-        toValue: 0.88,
+        toValue: 0.9,
         duration: 300,
         useNativeDriver: true,
       }),
       Animated.timing(borderR, {
-        toValue: 24,
+        toValue: 28,
         duration: 300,
         useNativeDriver: false,
       }),
@@ -97,38 +87,50 @@ const DrawerNavigator = ({ children, currentScreen, onNavigate }) => {
 
   const handleNavItem = (key) => {
     closeDrawer();
-    setTimeout(() => onNavigate(key), 300);
+    setTimeout(() => onNavigate(key), 280);
   };
 
   return (
     <View style={[styles.root, { backgroundColor: theme.backgroundSecondary }]}>
       <StatusBar
-        barStyle={theme.isDark ? "light-content" : "dark-content"}
+        barStyle="light-content"
         backgroundColor="transparent"
         translucent
       />
 
-      {/* ── Drawer Panel ──────────────────────────────────────── */}
-      <View style={[styles.drawer, { width: DRAWER_WIDTH }]}>
+      <View
+        style={[
+          styles.drawer,
+          { width: DRAWER_WIDTH, backgroundColor: theme.background },
+        ]}
+      >
         <SafeAreaView style={styles.drawerInner}>
-          {/* Logo & brand */}
-          <View style={styles.drawerHeader}>
-            <Image
-              source={require("../../assets/logo/logo_sans_fond.png")}
-              style={styles.drawerLogo}
-              resizeMode="contain"
-            />
+          <View
+            style={[
+              styles.brandPanel,
+              {
+                borderColor: theme.border,
+                backgroundColor: theme.backgroundCard,
+              },
+            ]}
+          >
+            <View style={styles.logoShell}>
+              <Image
+                source={require("../../assets/logo/logo_sans_fond.png")}
+                style={styles.drawerLogo}
+                resizeMode="contain"
+              />
+            </View>
             <Text style={[styles.drawerTitle, { color: theme.textPrimary }]}>
               Viral Stick
             </Text>
             <Text
               style={[styles.drawerSubtitle, { color: theme.textSecondary }]}
             >
-              KERNEL FORGE — 2026
+              Studio mobile de génération de mèmes
             </Text>
           </View>
 
-          {/* Navigation items */}
           <View style={styles.navList}>
             {NAV_ITEMS.map((item) => {
               const active = currentScreen === item.key;
@@ -138,66 +140,70 @@ const DrawerNavigator = ({ children, currentScreen, onNavigate }) => {
                   onPress={() => handleNavItem(item.key)}
                   style={[
                     styles.navItem,
-                    active && {
-                      backgroundColor: `${theme.primary}22`,
-                      borderLeftColor: theme.primary,
+                    {
+                      borderColor: active ? theme.primary : theme.border,
+                      backgroundColor: active
+                        ? `${theme.primary}22`
+                        : theme.backgroundCard,
                     },
                   ]}
-                  activeOpacity={0.7}
+                  activeOpacity={0.8}
                 >
                   <Text style={styles.navIcon}>{item.icon}</Text>
                   <Text
                     style={[
                       styles.navLabel,
                       {
-                        color: active
-                          ? theme.primaryLight
-                          : theme.textSecondary,
-                        fontWeight: active ? "700" : "500",
+                        color: active ? theme.textPrimary : theme.textSecondary,
                       },
                     ]}
                   >
                     {item.label}
                   </Text>
-                  {active && (
-                    <View
-                      style={[
-                        styles.activeDot,
-                        { backgroundColor: theme.primary },
-                      ]}
-                    />
-                  )}
+                  <View
+                    style={[
+                      styles.navDot,
+                      {
+                        backgroundColor: active ? theme.primary : "transparent",
+                      },
+                    ]}
+                  />
                 </TouchableOpacity>
               );
             })}
           </View>
 
-          {/* Bottom companion */}
           <View style={styles.drawerFooter}>
-            <CompanionAvatar companion="arch" size={112} floating />
-            <Text style={[styles.footerText, { color: theme.textMuted }]}>
-              Archlord vous surveille 👁️
-            </Text>
+            <CompanionAvatar
+              companion="arch"
+              size={120}
+              floating
+              message="Le noyau veille sur toute l'application."
+            />
           </View>
         </SafeAreaView>
       </View>
 
-      {/* ── Animated screen panel ─────────────────────────────── */}
       <Animated.View
         style={[
           styles.screenPanel,
-          { backgroundColor: theme.background },
           {
+            backgroundColor: theme.background,
             transform: [{ translateX }, { scale }],
             borderRadius: borderR,
             overflow: "hidden",
           },
         ]}
       >
-        {/* Hamburger button */}
         <TouchableOpacity
           onPress={isOpen ? closeDrawer : openDrawer}
-          style={[styles.menuBtn, { backgroundColor: theme.backgroundCard }]}
+          style={[
+            styles.menuBtn,
+            {
+              backgroundColor: theme.backgroundCard,
+              borderColor: theme.border,
+            },
+          ]}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
           <View style={[styles.bar, { backgroundColor: theme.textPrimary }]} />
@@ -211,14 +217,13 @@ const DrawerNavigator = ({ children, currentScreen, onNavigate }) => {
           <View style={[styles.bar, { backgroundColor: theme.textPrimary }]} />
         </TouchableOpacity>
 
-        {/* Overlay when drawer open */}
-        {isOpen && (
+        {isOpen ? (
           <TouchableOpacity
             style={StyleSheet.absoluteFill}
             onPress={closeDrawer}
             activeOpacity={1}
           />
-        )}
+        ) : null}
 
         {children}
       </Animated.View>
@@ -227,55 +232,44 @@ const DrawerNavigator = ({ children, currentScreen, onNavigate }) => {
 };
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  drawer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    bottom: 0,
-    paddingTop: 20,
-  },
+  root: { flex: 1 },
+  drawer: { position: "absolute", top: 0, left: 0, bottom: 0, paddingTop: 20 },
   drawerInner: {
     flex: 1,
     paddingHorizontal: spacing.md,
+    paddingBottom: spacing.lg,
   },
-  drawerHeader: {
+  brandPanel: {
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    padding: spacing.md,
     alignItems: "center",
-    paddingVertical: spacing.xl,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.08)",
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
-  drawerLogo: {
+  logoShell: {
     width: 180,
     height: 180,
+    borderRadius: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.06)",
     marginBottom: spacing.sm,
   },
-  drawerTitle: {
-    fontSize: typography.fontSize.xl,
-    fontWeight: "800",
-    letterSpacing: 1,
-  },
+  drawerLogo: { width: 150, height: 150 },
+  drawerTitle: { fontSize: typography.fontSize.xl, fontWeight: "900" },
   drawerSubtitle: {
     fontSize: typography.fontSize.xs,
-    letterSpacing: 2,
-    marginTop: 2,
-    textTransform: "uppercase",
+    textAlign: "center",
+    marginTop: 4,
   },
-  navList: {
-    flex: 1,
-  },
+  navList: { flex: 1, gap: 8 },
   navItem: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 14,
     paddingHorizontal: spacing.md,
     borderRadius: radius.md,
-    marginVertical: 2,
-    borderLeftWidth: 3,
-    borderLeftColor: "transparent",
+    borderWidth: 1,
   },
   navIcon: {
     fontSize: 20,
@@ -283,48 +277,26 @@ const styles = StyleSheet.create({
     width: 28,
     textAlign: "center",
   },
-  navLabel: {
-    fontSize: typography.fontSize.md,
-    flex: 1,
-  },
-  activeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  drawerFooter: {
-    alignItems: "center",
-    paddingBottom: spacing.xl,
-    gap: 8,
-  },
-  footerText: {
-    fontSize: typography.fontSize.xs,
-    textAlign: "center",
-  },
-  screenPanel: {
-    flex: 1,
-    ...StyleSheet.absoluteFillObject,
-  },
+  navLabel: { fontSize: typography.fontSize.md, flex: 1, fontWeight: "700" },
+  navDot: { width: 8, height: 8, borderRadius: 4 },
+  drawerFooter: { alignItems: "center", paddingTop: spacing.md },
+  screenPanel: { flex: 1, ...StyleSheet.absoluteFillObject },
   menuBtn: {
     position: "absolute",
     top: 50,
     left: spacing.md,
     zIndex: 100,
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     borderRadius: radius.md,
     justifyContent: "center",
-    paddingHorizontal: 10,
+    paddingHorizontal: 11,
     gap: 5,
-    ...createShadow("#7C3AED", 8),
+    borderWidth: 1,
+    ...createShadow("#7C3AED", 10),
   },
-  bar: {
-    height: 2.5,
-    borderRadius: 2,
-  },
-  barMid: {
-    width: "70%",
-  },
+  bar: { height: 2.5, borderRadius: 2 },
+  barMid: { width: "72%" },
 });
 
 export { NAV_ITEMS };

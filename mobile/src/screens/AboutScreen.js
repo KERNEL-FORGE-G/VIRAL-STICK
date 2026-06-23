@@ -1,10 +1,3 @@
-/**
- * AboutScreen — Project info, team, and links
- * Viral Stick | KERNEL FORGE — 2026
- *
- * Companion: arch
- */
-
 import React, { useRef, useEffect } from "react";
 import {
   View,
@@ -36,18 +29,18 @@ const TEAM = [
   },
 ];
 
-const AboutScreen = ({ navigate }) => {
+const AboutScreen = () => {
   const { theme } = useTheme();
-  const headerAnim = useRef(new Animated.Value(0)).current;
+  const introAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.spring(headerAnim, {
+    Animated.spring(introAnim, {
       toValue: 1,
-      tension: 50,
-      friction: 7,
+      tension: 55,
+      friction: 8,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [introAnim]);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
@@ -55,100 +48,80 @@ const AboutScreen = ({ navigate }) => {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
         <Animated.View
           style={{
-            opacity: headerAnim,
+            opacity: introAnim,
             transform: [
               {
-                translateY: headerAnim.interpolate({
+                translateY: introAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [-30, 0],
+                  outputRange: [-24, 0],
                 }),
               },
             ],
           }}
         >
-          <View style={styles.header}>
-            <View>
-              <Text style={[styles.screenTag, { color: theme.textMuted }]}>
-                À PROPOS
-              </Text>
-              <Text style={[styles.title, { color: theme.textPrimary }]}>
-                Viral <Text style={{ color: theme.primaryLight }}>Stick</Text>
-              </Text>
+          <GlassCard animate style={styles.heroCard}>
+            <View style={styles.heroTop}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.screenTag, { color: theme.textMuted }]}>
+                  À PROPOS · MANIFESTE PRODUIT
+                </Text>
+                <Text style={[styles.title, { color: theme.textPrimary }]}>
+                  Viral <Text style={{ color: theme.primaryLight }}>Stick</Text>
+                </Text>
+                <Text
+                  style={[styles.aboutText, { color: theme.textSecondary }]}
+                >
+                  Une application pensée comme un studio professionnel de
+                  génération et d’édition de mèmes texte + image, avec une
+                  identité visuelle forte, des compagnons incarnés et une
+                  orchestration IA plus sérieuse.
+                </Text>
+              </View>
+              <View style={styles.logoShell}>
+                <Image
+                  source={require("../../assets/logo/logo_sans_fond.png")}
+                  style={styles.logo}
+                  resizeMode="contain"
+                />
+              </View>
             </View>
-            <CompanionAvatar
-              companion="arch"
-              size={136}
-              floating
-              message="Bienvenue dans l'univers KERNEL FORGE. Je suis Archlord, le lead de ce projet."
-            />
-          </View>
-
-          {/* Description */}
-          <GlassCard animate delay={100}>
-            <Text style={[styles.aboutEmoji]}>🚀</Text>
-            <Text style={[styles.aboutTitle, { color: theme.textPrimary }]}>
-              Générateur de Mèmes & Stickers IA
-            </Text>
-            <Text style={[styles.aboutText, { color: theme.textSecondary }]}>
-              Viral Stick est une plateforme de création et de partage de
-              contenus multimodaux (mèmes, stickers IA) propulsée par Google
-              Gemini AI. Projet de l'équipe KERNEL FORGE pour ICT202 à
-              l'Université de Yaoundé I.
-            </Text>
+            <View style={{ marginTop: spacing.md, alignItems: "center" }}>
+              <CompanionAvatar
+                companion="arch"
+                size={120}
+                floating
+                message="Le produit doit être cohérent, mémorable et techniquement crédible."
+              />
+            </View>
           </GlassCard>
 
-          {/* Modules */}
-          <GlassCard animate delay={200} style={{ marginTop: spacing.md }}>
+          <GlassCard animate delay={120} style={{ marginTop: spacing.md }}>
             <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>
-              🧩 Modules
+              🧩 Vision du produit
             </Text>
             {[
-              {
-                emoji: "📖",
-                name: "Context Reader",
-                desc: "Analyse un texte et génère un mème IA",
-              },
-              {
-                emoji: "🎙️",
-                name: "Voice → Mème",
-                desc: "Transcription vocale → mème automatique",
-              },
-              {
-                emoji: "🎨",
-                name: "Status Remixer",
-                desc: "Remixe tes images en stickers viraux",
-              },
-            ].map((mod, i) => (
-              <View
-                key={i}
-                style={[styles.moduleRow, { borderBottomColor: theme.divider }]}
+              "Génération de mèmes texte plus structurée et plus drôle",
+              "Remix visuel et préparation d’un vrai pipeline image",
+              "Compagnons intégrés à l’UX comme système d’incarnation produit",
+            ].map((item) => (
+              <Text
+                key={item}
+                style={[styles.bullet, { color: theme.textSecondary }]}
               >
-                <Text style={styles.moduleEmoji}>{mod.emoji}</Text>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={[styles.moduleName, { color: theme.textPrimary }]}
-                  >
-                    {mod.name}
-                  </Text>
-                  <Text style={[styles.moduleDesc, { color: theme.textMuted }]}>
-                    {mod.desc}
-                  </Text>
-                </View>
-              </View>
+                • {item}
+              </Text>
             ))}
           </GlassCard>
 
-          {/* Team */}
-          <GlassCard animate delay={300} style={{ marginTop: spacing.md }}>
+          <GlassCard animate delay={220} style={{ marginTop: spacing.md }}>
             <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>
               👥 Équipe
             </Text>
             {TEAM.map((member, i) => (
               <View key={i} style={styles.teamRow}>
-                <CompanionAvatar companion={member.companion} size={48} />
+                <CompanionAvatar companion={member.companion} size={64} />
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.teamName, { color: theme.textPrimary }]}>
                     {member.name}
@@ -168,13 +141,12 @@ const AboutScreen = ({ navigate }) => {
             ))}
           </GlassCard>
 
-          {/* Links */}
-          <GlassCard animate delay={400} style={{ marginTop: spacing.md }}>
+          <GlassCard animate delay={320} style={{ marginTop: spacing.md }}>
             <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>
               🔗 Liens
             </Text>
             <AnimatedButton
-              title="⭐ GitHub — KERNEL FORGE"
+              title="GitHub — KERNEL FORGE"
               onPress={() =>
                 Linking.openURL("https://github.com/KERNEL-FORGE-G/VIRAL-STICK")
               }
@@ -183,7 +155,7 @@ const AboutScreen = ({ navigate }) => {
               style={{ marginBottom: spacing.sm }}
             />
             <AnimatedButton
-              title="📄 Documentation technique"
+              title="Documentation technique"
               onPress={() =>
                 Linking.openURL(
                   "https://github.com/KERNEL-FORGE-G/VIRAL-STICK/tree/main/docs",
@@ -194,7 +166,6 @@ const AboutScreen = ({ navigate }) => {
             />
           </GlassCard>
 
-          {/* Footer */}
           <View style={styles.footer}>
             <Text style={[styles.footerText, { color: theme.textMuted }]}>
               KERNEL FORGE — 2026
@@ -213,64 +184,53 @@ const AboutScreen = ({ navigate }) => {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  scroll: { paddingHorizontal: spacing.md, paddingTop: 80 },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  scroll: { paddingHorizontal: spacing.md, paddingTop: 82 },
+  heroCard: { padding: spacing.lg },
+  heroTop: { flexDirection: "row", gap: spacing.md, alignItems: "center" },
+  logoShell: {
+    width: 180,
+    height: 180,
+    borderRadius: 34,
     alignItems: "center",
-    marginBottom: spacing.lg,
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    ...createShadow("#7C3AED", 20),
   },
+  logo: { width: 145, height: 145 },
   screenTag: {
     fontSize: typography.fontSize.xs,
+    fontWeight: "800",
     letterSpacing: 2,
-    textTransform: "uppercase",
-    fontWeight: "600",
   },
   title: {
-    fontSize: typography.fontSize.xxl,
+    fontSize: typography.fontSize.xxxl,
     fontWeight: "900",
-    letterSpacing: -0.5,
+    letterSpacing: -1,
   },
-  logo: { width: 60, height: 60 },
-  aboutEmoji: { fontSize: 32, marginBottom: spacing.sm },
-  aboutTitle: {
-    fontSize: typography.fontSize.lg,
-    fontWeight: "700",
-    marginBottom: spacing.sm,
-  },
-  aboutText: { fontSize: typography.fontSize.sm, lineHeight: 22 },
+  aboutText: { fontSize: typography.fontSize.sm, lineHeight: 22, marginTop: 8 },
   sectionTitle: {
     fontSize: typography.fontSize.lg,
-    fontWeight: "700",
+    fontWeight: "800",
     marginBottom: spacing.md,
   },
-  moduleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-  },
-  moduleEmoji: { fontSize: 28 },
-  moduleName: { fontSize: typography.fontSize.md, fontWeight: "600" },
-  moduleDesc: { fontSize: typography.fontSize.xs, marginTop: 2 },
+  bullet: { fontSize: typography.fontSize.sm, lineHeight: 22, marginBottom: 8 },
   teamRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
     paddingVertical: spacing.sm,
   },
-  teamName: { fontSize: typography.fontSize.md, fontWeight: "700" },
-  teamRole: { fontSize: typography.fontSize.xs, marginTop: 1 },
+  teamName: { fontSize: typography.fontSize.md, fontWeight: "800" },
+  teamRole: { fontSize: typography.fontSize.xs, marginTop: 2 },
   teamGithub: {
     fontSize: typography.fontSize.xs,
-    marginTop: 1,
-    fontWeight: "600",
+    marginTop: 2,
+    fontWeight: "700",
   },
-  footer: { alignItems: "center", paddingVertical: spacing.xxl, gap: 4 },
+  footer: { alignItems: "center", paddingVertical: spacing.xl, gap: 4 },
   footerText: {
     fontSize: typography.fontSize.xs,
-    fontWeight: "600",
+    fontWeight: "700",
     letterSpacing: 1,
   },
   footerSub: { fontSize: 10 },

@@ -1,11 +1,4 @@
-/**
- * StatusRemixerScreen — Image picker + text overlay + sticker generator
- * Viral Stick | KERNEL FORGE — 2026
- *
- * Companion: bio
- */
-
-import React, { useState, useRef, useEffect } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -17,18 +10,15 @@ import {
   TextInput,
   Alert,
   Image,
+  ActivityIndicator,
 } from "react-native";
+import axios from "axios";
 import { useTheme, spacing, radius, typography, createShadow } from "../theme";
 import GlassCard from "../components/GlassCard";
 import AnimatedButton from "../components/AnimatedButton";
 import CompanionAvatar from "../components/CompanionAvatar";
 
-const BIO_MESSAGES = [
-  "🌿 Bio ici ! Remixons ton status en chef-d'œuvre !",
-  "🎭 Un sticker = mille mots. Laisse-moi t'aider !",
-  "🌟 Ta photo + ma magie = contenu viral garanti !",
-  "🎨 Donne-moi une image et transforme-la !",
-];
+const API_BASE = "https://viral-stick.vercel.app";
 
 const FILTERS = [
   { id: "none", label: "Original", emoji: "📷" },
@@ -46,90 +36,95 @@ const StatusRemixerScreen = ({ navigate }) => {
   const [overlayText, setOverlayText] = useState("");
   const [textPosition, setTextPosition] = useState("bottom");
   const [imagePicked, setImagePicked] = useState(false);
-  const [companionMsg, setCompanionMsg] = useState(BIO_MESSAGES[0]);
+  const [companionMsg, setCompanionMsg] = useState(
+    "Envoie un visuel ou une intention. Je m'occupe de la caption et des finitions qui rendent le post crédible.",
+  );
+  const [loading, setLoading] = useState(false);
+  const [remix, setRemix] = useState(null);
   const previewAnim = useRef(new Animated.Value(0)).current;
-  const filterScales = useRef(FILTERS.map(() => new Animated.Value(1))).current;
 
-  useEffect(() => {
-    if (!imagePicked) {
-      const t = setInterval(() => {
-        setCompanionMsg(
-          BIO_MESSAGES[Math.floor(Math.random() * BIO_MESSAGES.length)],
-        );
-      }, 5500);
-      return () => clearInterval(t);
+  const filterOverlay = useMemo(() => {
+    switch (selectedFilter) {
+      case "dramatic":
+        return "rgba(0,0,0,0.56)";
+      case "neon":
+        return "rgba(34,211,238,0.22)";
+      case "vintage":
+        return "rgba(193,132,79,0.24)";
+      case "fire":
+        return "rgba(239,68,68,0.28)";
+      default:
+        return "transparent";
     }
-  }, [imagePicked]);
-
-  const pickImage = () => {
-    setCompanionMsg("🌿 Choisis ta plus belle photo, je m'occupe du reste !");
-    // In production: use react-native-image-picker
-    Alert.alert("Sélectionner une image", "Choisir depuis:", [
-      { text: "📷 Caméra", onPress: () => simulatePickImage() },
-      { text: "🖼️ Galerie", onPress: () => simulatePickImage() },
-      { text: "Annuler", style: "cancel" },
-    ]);
-  };
+  }, [selectedFilter]);
 
   const simulatePickImage = () => {
     setImagePicked(true);
-    setCompanionMsg("✨ Magnifique ! Maintenant, ajoutons un peu de style.");
+    setCompanionMsg(
+      "Base visuelle chargée. Maintenant on construit une vraie publication, pas juste un autocollant.",
+    );
     Animated.spring(previewAnim, {
       toValue: 1,
       tension: 70,
-      friction: 7,
+      friction: 8,
       useNativeDriver: true,
     }).start();
   };
 
-  const selectFilter = (filterId, index) => {
-    setSelectedFilter(filterId);
-    const msgs = {
-      fire: "🔥 Oh ! Ça va chauffer avec ce filtre !",
-      neon: "💫 Futuriste... j'adore ce style neon !",
-      dramatic: "🌑 Très intense, parfait pour un message fort.",
-      vintage: "🎞️ Le charme du rétro, indémodable.",
-      none: "📷 La simplicité a aussi du bon !",
-    };
-    setCompanionMsg(msgs[filterId] || "🎨 Très bon choix de filtre !");
-
-    Animated.sequence([
-      Animated.timing(filterScales[index], {
-        toValue: 0.85,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.spring(filterScales[index], {
-        toValue: 1,
-        tension: 150,
-        friction: 5,
-        useNativeDriver: true,
-      }),
-    ]).start();
+  const pickImage = () => {
+    Alert.alert("Sélectionner une image", "Choisir depuis :", [
+      { text: "📷 Caméra", onPress: simulatePickImage },
+      { text: "🖼️ Galerie", onPress: simulatePickImage },
+      { text: "Annuler", style: "cancel" },
+    ]);
   };
 
-  const getFilterOverlay = () => {
-    switch (selectedFilter) {
-      case "dramatic":
-        return "rgba(0,0,0,0.6)";
-      case "neon":
-        return "rgba(124,58,237,0.4)";
-      case "vintage":
-        return "rgba(180,120,60,0.4)";
-      case "fire":
-        return "rgba(239,68,68,0.35)";
-      default:
-        return "transparent";
+  const askRemix = async () => {
+    if (!imagePicked && !overlayText.trim()) {
+      Alert.alert(
+        "Viral Stick",
+        "Charge une image ou décris une idée de caption.",
+      );
+      return;
+    }
+
+    setLoading(true);
+    setRemix(null);
+    setCompanionMsg(
+      "Je cherche une caption plus postable et des ajustements visuels utiles sur mobile.",
+    );
+
+    try {
+      const res = await axios.post(`${API_BASE}/api/memes/status-remixer`, {
+        text:
+          overlayText ||
+          "Image de réaction expressive à transformer en mème premium",
+      });
+      setRemix(res.data);
+      if (res.data?.meme_text) {
+        setOverlayText(res.data.meme_text);
+      }
+      setCompanionMsg(
+        res.data?.companionComment ||
+          "Remix prêt. Le texte et l'édition visuelle sont maintenant alignés.",
+      );
+    } catch (e) {
+      setCompanionMsg(
+        "Le remix IA n'a pas répondu. Le studio local reste utilisable pour maqueter.",
+      );
+      Alert.alert("Erreur", "Impossible d'obtenir un remix IA pour le moment.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const exportSticker = () => {
     setCompanionMsg(
-      "💾 C'est prêt ! Ton sticker va devenir viral en un rien de temps.",
+      "Le concept visuel est prêt. Il reste à brancher l'export image final côté moteur.",
     );
     Alert.alert(
       "Viral Stick",
-      "✨ Sticker exporté ! (En développement — la génération PNG sera disponible dans v1.1)",
+      "Maquette prête. L'export PNG automatique reste à finaliser côté pipeline image.",
     );
   };
 
@@ -139,54 +134,68 @@ const StatusRemixerScreen = ({ navigate }) => {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={[styles.screenTag, { color: theme.textMuted }]}>
-              MODULE 3
-            </Text>
-            <Text style={[styles.title, { color: theme.textPrimary }]}>
-              Status <Text style={{ color: "#F59E0B" }}>Remixer</Text>
-            </Text>
+        <GlassCard animate style={styles.heroCard}>
+          <View style={styles.heroTop}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.kicker, { color: theme.textMuted }]}>
+                MODULE 03 · VISUAL REMIX
+              </Text>
+              <Text style={[styles.heroTitle, { color: theme.textPrimary }]}>
+                Status <Text style={{ color: theme.warning }}>Remixer</Text>
+              </Text>
+              <Text
+                style={[styles.heroSubtitle, { color: theme.textSecondary }]}
+              >
+                Passe d'un visuel brut à une publication mème mieux cadrée,
+                mieux légendée et plus lisible.
+              </Text>
+            </View>
+            <View style={styles.logoWrap}>
+              <Image
+                source={require("../../assets/logo/logo_sans_fond.png")}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
           </View>
-          <CompanionAvatar
-            companion="bio"
-            size={136}
-            floating
-            message={companionMsg}
-          />
-        </View>
-
-        {/* Image picker */}
-        {!imagePicked ? (
-          <GlassCard animate delay={100} style={styles.pickCard}>
-            <TouchableOpacity
-              onPress={pickImage}
-              activeOpacity={0.8}
-              style={styles.pickBtn}
-            >
-              <Text style={styles.pickIcon}>🖼️</Text>
-              <Text style={[styles.pickTitle, { color: theme.textPrimary }]}>
-                Choisir une image
-              </Text>
-              <Text style={[styles.pickSubtitle, { color: theme.textMuted }]}>
-                Caméra ou galerie photo
-              </Text>
-            </TouchableOpacity>
-            <View
-              style={[styles.pickDivider, { backgroundColor: theme.divider }]}
+          <View style={styles.heroBottom}>
+            <CompanionAvatar
+              companion="bio"
+              size={116}
+              floating
+              message={companionMsg}
             />
-            <Text style={[styles.pickOr, { color: theme.textMuted }]}>ou</Text>
+          </View>
+        </GlassCard>
+
+        {!imagePicked ? (
+          <GlassCard animate delay={80} style={styles.pickCard}>
+            <Text style={[styles.sectionTag, { color: theme.warning }]}>
+              SOURCE VISUELLE
+            </Text>
+            <Text style={[styles.pickTitle, { color: theme.textPrimary }]}>
+              Charge une image à remixer
+            </Text>
+            <Text style={[styles.pickText, { color: theme.textSecondary }]}>
+              Caméra, galerie ou image de démo. L'objectif est de tester le
+              captioning et la direction visuelle.
+            </Text>
             <AnimatedButton
-              title="📋 Utiliser une image démo"
+              title="Choisir une image"
+              onPress={pickImage}
+              size="lg"
+              style={{ marginTop: spacing.md }}
+            />
+            <AnimatedButton
+              title="Utiliser une image démo"
               onPress={simulatePickImage}
               variant="ghost"
-              size="sm"
+              size="lg"
+              style={{ marginTop: spacing.sm }}
             />
           </GlassCard>
         ) : (
           <>
-            {/* Preview Canvas */}
             <Animated.View
               style={{
                 opacity: previewAnim,
@@ -194,13 +203,16 @@ const StatusRemixerScreen = ({ navigate }) => {
                   {
                     scale: previewAnim.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [0.85, 1],
+                      outputRange: [0.92, 1],
                     }),
                   },
                 ],
               }}
             >
               <GlassCard style={styles.canvasCard}>
+                <Text style={[styles.sectionTag, { color: theme.warning }]}>
+                  CANVAS
+                </Text>
                 <View
                   style={[
                     styles.canvas,
@@ -210,21 +222,18 @@ const StatusRemixerScreen = ({ navigate }) => {
                     },
                   ]}
                 >
-                  {/* Filter overlay */}
                   <View
                     style={[
                       StyleSheet.absoluteFill,
                       {
-                        backgroundColor: getFilterOverlay(),
+                        backgroundColor: filterOverlay,
                         borderRadius: radius.md,
                       },
                     ]}
                     pointerEvents="none"
                   />
-
-                  {/* Demo image placeholder */}
                   <View style={styles.imagePlaceholder}>
-                    <Text style={{ fontSize: 72 }}>
+                    <Text style={styles.canvasEmoji}>
                       {selectedFilter === "fire"
                         ? "🔥"
                         : selectedFilter === "neon"
@@ -238,16 +247,14 @@ const StatusRemixerScreen = ({ navigate }) => {
                     <Text
                       style={[styles.demoLabel, { color: theme.textMuted }]}
                     >
-                      Image sélectionnée
+                      Visuel de démonstration chargé
                     </Text>
                   </View>
 
-                  {/* Overlay text */}
-                  {overlayText.length > 0 && (
+                  {!!overlayText && (
                     <Text
                       style={[
                         styles.overlayText,
-                        { color: "#FFFFFF" },
                         textPosition === "top"
                           ? styles.textTop
                           : textPosition === "center"
@@ -262,65 +269,12 @@ const StatusRemixerScreen = ({ navigate }) => {
               </GlassCard>
             </Animated.View>
 
-            {/* Filters */}
-            <GlassCard animate delay={100} style={styles.filterCard}>
-              <Text
-                style={[styles.sectionLabel, { color: theme.textSecondary }]}
-              >
-                🎨 Filtres
+            <GlassCard animate delay={100} style={styles.controlsCard}>
+              <Text style={[styles.sectionTag, { color: theme.warning }]}>
+                ÉDITION
               </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.filterRow}
-              >
-                {FILTERS.map((f, idx) => (
-                  <Animated.View
-                    key={f.id}
-                    style={{ transform: [{ scale: filterScales[idx] }] }}
-                  >
-                    <TouchableOpacity
-                      onPress={() => selectFilter(f.id, idx)}
-                      style={[
-                        styles.filterChip,
-                        {
-                          backgroundColor:
-                            selectedFilter === f.id
-                              ? `${theme.primary}33`
-                              : theme.backgroundSecondary,
-                          borderColor:
-                            selectedFilter === f.id
-                              ? theme.primary
-                              : theme.border,
-                        },
-                      ]}
-                    >
-                      <Text style={styles.filterEmoji}>{f.emoji}</Text>
-                      <Text
-                        style={[
-                          styles.filterLabel,
-                          {
-                            color:
-                              selectedFilter === f.id
-                                ? theme.primaryLight
-                                : theme.textSecondary,
-                          },
-                        ]}
-                      >
-                        {f.label}
-                      </Text>
-                    </TouchableOpacity>
-                  </Animated.View>
-                ))}
-              </ScrollView>
-            </GlassCard>
-
-            {/* Text overlay */}
-            <GlassCard animate delay={150} style={styles.textCard}>
-              <Text
-                style={[styles.sectionLabel, { color: theme.textSecondary }]}
-              >
-                ✏️ Texte overlay
+              <Text style={[styles.subHeading, { color: theme.textPrimary }]}>
+                Caption / overlay principal
               </Text>
               <TextInput
                 style={[
@@ -334,70 +288,176 @@ const StatusRemixerScreen = ({ navigate }) => {
                 ]}
                 value={overlayText}
                 onChangeText={setOverlayText}
-                placeholder="Entre ton texte..."
+                placeholder="Entre une caption courte et percutante..."
                 placeholderTextColor={theme.textMuted}
+                multiline
               />
 
-              {/* Position selector */}
-              <View style={styles.posRow}>
-                {TEXT_POSITIONS.map((pos) => (
-                  <TouchableOpacity
-                    key={pos}
-                    onPress={() => setTextPosition(pos)}
-                    style={[
-                      styles.posBtn,
-                      {
-                        backgroundColor:
-                          textPosition === pos
-                            ? `${theme.primary}22`
-                            : "transparent",
-                        borderColor:
-                          textPosition === pos ? theme.primary : theme.border,
-                      },
-                    ]}
-                  >
-                    <Text
+              <Text
+                style={[
+                  styles.subHeading,
+                  { color: theme.textPrimary, marginTop: spacing.md },
+                ]}
+              >
+                Filtre
+              </Text>
+              <View style={styles.filterRow}>
+                {FILTERS.map((f) => {
+                  const active = selectedFilter === f.id;
+                  return (
+                    <TouchableOpacity
+                      key={f.id}
+                      onPress={() => setSelectedFilter(f.id)}
                       style={[
-                        styles.posLabel,
+                        styles.filterChip,
                         {
-                          color:
-                            textPosition === pos
-                              ? theme.primaryLight
-                              : theme.textSecondary,
+                          backgroundColor: active
+                            ? `${theme.primary}22`
+                            : theme.backgroundSecondary,
+                          borderColor: active ? theme.primary : theme.border,
                         },
                       ]}
                     >
-                      {pos === "top"
-                        ? "⬆️ Haut"
-                        : pos === "center"
-                          ? "↕️ Centre"
-                          : "⬇️ Bas"}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text style={styles.filterEmoji}>{f.emoji}</Text>
+                      <Text
+                        style={[
+                          styles.filterLabel,
+                          {
+                            color: active
+                              ? theme.primaryLight
+                              : theme.textSecondary,
+                          },
+                        ]}
+                      >
+                        {f.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <Text
+                style={[
+                  styles.subHeading,
+                  { color: theme.textPrimary, marginTop: spacing.md },
+                ]}
+              >
+                Position du texte
+              </Text>
+              <View style={styles.positionRow}>
+                {TEXT_POSITIONS.map((pos) => {
+                  const active = textPosition === pos;
+                  return (
+                    <TouchableOpacity
+                      key={pos}
+                      onPress={() => setTextPosition(pos)}
+                      style={[
+                        styles.positionBtn,
+                        {
+                          backgroundColor: active
+                            ? `${theme.warning}22`
+                            : theme.backgroundSecondary,
+                          borderColor: active ? theme.warning : theme.border,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.positionText,
+                          {
+                            color: active ? theme.warning : theme.textSecondary,
+                          },
+                        ]}
+                      >
+                        {pos === "top"
+                          ? "Haut"
+                          : pos === "center"
+                            ? "Centre"
+                            : "Bas"}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </GlassCard>
 
-            {/* Actions */}
-            <View style={styles.actions}>
+            <View style={styles.actionRow}>
               <AnimatedButton
-                title="🔄 Changer image"
-                onPress={pickImage}
-                variant="ghost"
-                size="sm"
+                title={loading ? "Remix IA..." : "Remixer avec l'IA"}
+                onPress={askRemix}
+                loading={loading}
+                disabled={loading}
+                size="lg"
                 style={{ flex: 1 }}
               />
               <AnimatedButton
-                title="💾 Exporter sticker"
+                title="Exporter"
                 onPress={exportSticker}
-                size="sm"
+                variant="ghost"
+                size="lg"
                 style={{ flex: 1 }}
               />
             </View>
+
+            {loading && (
+              <GlassCard animate style={styles.loadingCard}>
+                <ActivityIndicator color={theme.warning} size="large" />
+                <Text
+                  style={[styles.loadingTitle, { color: theme.textPrimary }]}
+                >
+                  Direction visuelle en cours
+                </Text>
+                <Text style={[styles.loadingText, { color: theme.textMuted }]}>
+                  Recherche d'une caption social-first et d'améliorations de
+                  cadrage, lisibilité et contraste.
+                </Text>
+              </GlassCard>
+            )}
+
+            {remix && (
+              <GlassCard style={styles.resultCard}>
+                <Text style={[styles.sectionTag, { color: theme.warning }]}>
+                  RECOMMANDATIONS IA
+                </Text>
+                <Text
+                  style={[styles.resultTitle, { color: theme.textPrimary }]}
+                >
+                  {remix.meme_text || overlayText || "Caption prête"}
+                </Text>
+                <View style={styles.enhancementsList}>
+                  {(remix.visual_enhancements || []).map((item, index) => (
+                    <View
+                      key={`${item}-${index}`}
+                      style={[
+                        styles.enhancementItem,
+                        { backgroundColor: theme.backgroundSecondary },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.enhancementIndex,
+                          { color: theme.warning },
+                        ]}
+                      >
+                        {index + 1}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.enhancementText,
+                          { color: theme.textSecondary },
+                        ]}
+                      >
+                        {item}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </GlassCard>
+            )}
           </>
         )}
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 110 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -406,99 +466,145 @@ const StatusRemixerScreen = ({ navigate }) => {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   scroll: { paddingHorizontal: spacing.md, paddingTop: 80 },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: spacing.lg,
-  },
-  screenTag: {
+  heroCard: { padding: spacing.lg, marginBottom: spacing.md },
+  heroTop: { flexDirection: "row", gap: spacing.md, alignItems: "center" },
+  heroBottom: { marginTop: spacing.md, alignItems: "center" },
+  kicker: {
     fontSize: typography.fontSize.xs,
+    fontWeight: "800",
     letterSpacing: 2,
-    textTransform: "uppercase",
-    fontWeight: "600",
   },
-  title: {
-    fontSize: typography.fontSize.xxl,
+  heroTitle: {
+    fontSize: typography.fontSize.xxxl,
     fontWeight: "900",
-    letterSpacing: -0.5,
+    letterSpacing: -0.8,
   },
-  pickCard: {
-    alignItems: "center",
-    paddingVertical: spacing.xxl,
-    gap: spacing.sm,
-    marginBottom: spacing.md,
+  heroSubtitle: {
+    marginTop: 8,
+    fontSize: typography.fontSize.sm,
+    lineHeight: 22,
   },
-  pickBtn: { alignItems: "center", gap: spacing.sm },
-  pickIcon: { fontSize: 64 },
-  pickTitle: { fontSize: typography.fontSize.xl, fontWeight: "700" },
-  pickSubtitle: { fontSize: typography.fontSize.sm },
-  pickDivider: { width: "60%", height: 1, marginVertical: spacing.sm },
-  pickOr: { fontSize: typography.fontSize.sm },
-  canvasCard: { marginBottom: spacing.md, padding: 0, overflow: "hidden" },
-  canvas: {
-    height: 280,
-    borderRadius: radius.lg,
-    borderWidth: 1,
+  logoWrap: {
+    width: 138,
+    height: 138,
     justifyContent: "center",
     alignItems: "center",
-    overflow: "hidden",
   },
-  imagePlaceholder: { alignItems: "center", gap: 8 },
-  demoLabel: { fontSize: typography.fontSize.xs },
+  logo: { width: 132, height: 132 },
+  sectionTag: {
+    fontSize: typography.fontSize.xs,
+    fontWeight: "800",
+    letterSpacing: 2,
+    marginBottom: 8,
+  },
+  pickCard: { marginBottom: spacing.md },
+  pickTitle: { fontSize: typography.fontSize.xl, fontWeight: "800" },
+  pickText: { marginTop: 8, lineHeight: 21, fontSize: typography.fontSize.sm },
+  canvasCard: { marginBottom: spacing.md },
+  canvas: {
+    borderWidth: 1,
+    borderRadius: radius.md,
+    minHeight: 340,
+    overflow: "hidden",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
+  },
+  imagePlaceholder: { alignItems: "center", justifyContent: "center" },
+  canvasEmoji: { fontSize: 78, marginBottom: 10 },
+  demoLabel: { fontSize: typography.fontSize.sm },
   overlayText: {
     position: "absolute",
-    width: "100%",
-    textAlign: "center",
+    left: 16,
+    right: 16,
+    color: "#FFFFFF",
     fontSize: typography.fontSize.xl,
     fontWeight: "900",
-    letterSpacing: 1,
-    paddingHorizontal: spacing.md,
-    textShadowColor: "rgba(0,0,0,0.9)",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 4,
-  },
-  textTop: { top: 16 },
-  textCenter: { top: "45%" },
-  textBottom: { bottom: 16 },
-  filterCard: { marginBottom: spacing.sm },
-  sectionLabel: {
-    fontSize: typography.fontSize.xs,
-    fontWeight: "700",
-    letterSpacing: 2,
+    textAlign: "center",
     textTransform: "uppercase",
-    marginBottom: spacing.sm,
+    letterSpacing: 0.7,
+    textShadowColor: "rgba(0,0,0,0.8)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 10,
   },
-  filterRow: { gap: spacing.sm, paddingBottom: 4 },
-  filterChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: radius.full,
-    borderWidth: 1.5,
-    gap: 6,
+  textTop: { top: 18 },
+  textCenter: { top: "45%" },
+  textBottom: { bottom: 18 },
+  controlsCard: { marginBottom: spacing.md },
+  subHeading: {
+    fontSize: typography.fontSize.md,
+    fontWeight: "800",
+    marginBottom: 8,
   },
-  filterEmoji: { fontSize: 16 },
-  filterLabel: { fontSize: typography.fontSize.sm, fontWeight: "600" },
-  textCard: { marginBottom: spacing.md },
   textInput: {
+    minHeight: 92,
     borderWidth: 1.5,
     borderRadius: radius.md,
     padding: spacing.md,
     fontSize: typography.fontSize.md,
-    marginBottom: spacing.md,
+    textAlignVertical: "top",
   },
-  posRow: { flexDirection: "row", gap: spacing.sm },
-  posBtn: {
-    flex: 1,
-    paddingVertical: 8,
+  filterRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+  filterChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1,
     borderRadius: radius.md,
-    borderWidth: 1.5,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  filterEmoji: { fontSize: 18 },
+  filterLabel: { fontSize: typography.fontSize.xs, fontWeight: "800" },
+  positionRow: { flexDirection: "row", gap: spacing.sm },
+  positionBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    paddingVertical: 12,
     alignItems: "center",
   },
-  posLabel: { fontSize: typography.fontSize.xs, fontWeight: "600" },
-  actions: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm },
+  positionText: { fontSize: typography.fontSize.sm, fontWeight: "800" },
+  actionRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  loadingCard: {
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  loadingTitle: {
+    fontSize: typography.fontSize.lg,
+    fontWeight: "800",
+    marginTop: spacing.sm,
+  },
+  loadingText: { textAlign: "center", lineHeight: 20 },
+  resultCard: { marginBottom: spacing.md },
+  resultTitle: {
+    fontSize: typography.fontSize.xl,
+    fontWeight: "800",
+    marginBottom: spacing.md,
+  },
+  enhancementsList: { gap: spacing.sm },
+  enhancementItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.md,
+  },
+  enhancementIndex: {
+    fontSize: typography.fontSize.md,
+    fontWeight: "900",
+    minWidth: 18,
+  },
+  enhancementText: {
+    flex: 1,
+    lineHeight: 20,
+    fontSize: typography.fontSize.sm,
+  },
 });
 
 export default StatusRemixerScreen;

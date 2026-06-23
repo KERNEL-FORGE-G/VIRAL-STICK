@@ -1,13 +1,4 @@
-/**
- * VoiceToMemeScreen — Audio recorder → Gemini transcription → Meme
- * Viral Stick | KERNEL FORGE — 2026
- *
- * Companion: ubu
- * Note: Audio recording uses react-native-audio-recorder-player (to be installed)
- * Fallback simulation mode included for demo without native module.
- */
-
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -17,7 +8,8 @@ import {
   Animated,
   TouchableOpacity,
   Alert,
-  Platform,
+  Image,
+  ActivityIndicator,
 } from "react-native";
 import axios from "axios";
 import { useTheme, spacing, radius, typography, createShadow } from "../theme";
@@ -25,45 +17,44 @@ import GlassCard from "../components/GlassCard";
 import AnimatedButton from "../components/AnimatedButton";
 import CompanionAvatar from "../components/CompanionAvatar";
 
-const UBU_MESSAGES = [
-  "🤖 Parle ! Je transforme ta voix en légende !",
-  "🎙️ Appuie sur le micro et dis quelque chose de drôle...",
-  "💥 Ta voix = mème explosif garanti !",
-  "🎤 Ubu à l'écoute, 24/7 !",
+const API_BASE = "https://viral-stick.vercel.app";
+
+const DEMO_LINES = [
+  "Je voulais juste faire une petite sieste et je me suis réveillé avec 43 appels manqués.",
+  "J'ai dit à tout le monde que j'avais fini le projet alors que j'avais juste renommé le dossier final_final_v2.",
+  "Ma connexion coupe toujours exactement quand je commence à avoir raison dans le débat.",
 ];
 
-// Waveform bar component
 const WaveBar = ({ index, isRecording, theme }) => {
-  const anim = useRef(new Animated.Value(0.3)).current;
+  const anim = useRef(new Animated.Value(0.25)).current;
 
   useEffect(() => {
+    let loop;
     if (isRecording) {
-      const delay = index * 80;
-      const loop = Animated.loop(
+      loop = Animated.loop(
         Animated.sequence([
           Animated.timing(anim, {
-            toValue: Math.random() * 0.7 + 0.3,
-            duration: 300 + Math.random() * 200,
-            delay,
+            toValue: 0.5 + ((index % 5) + 2) / 10,
+            duration: 220 + index * 18,
             useNativeDriver: true,
           }),
           Animated.timing(anim, {
-            toValue: 0.2,
-            duration: 300,
+            toValue: 0.18,
+            duration: 240,
             useNativeDriver: true,
           }),
         ]),
       );
       loop.start();
-      return () => loop.stop();
     } else {
       Animated.timing(anim, {
-        toValue: 0.3,
-        duration: 200,
+        toValue: 0.25,
+        duration: 180,
         useNativeDriver: true,
       }).start();
     }
-  }, [isRecording]);
+    return () => loop?.stop();
+  }, [anim, index, isRecording]);
 
   return (
     <Animated.View
@@ -71,7 +62,6 @@ const WaveBar = ({ index, isRecording, theme }) => {
         styles.waveBar,
         {
           backgroundColor: theme.secondary,
-          scaleY: anim,
           transform: [{ scaleY: anim }],
         },
       ]}
@@ -86,21 +76,14 @@ const VoiceToMemeScreen = ({ navigate }) => {
   const [meme, setMeme] = useState(null);
   const [loading, setLoading] = useState(false);
   const [duration, setDuration] = useState(0);
-  const [companionMsg, setCompanionMsg] = useState(UBU_MESSAGES[0]);
+  const [companionMsg, setCompanionMsg] = useState(
+    "Donne-moi une phrase dite à chaud. Je garde l'énergie et je fabrique la chute.",
+  );
   const timerRef = useRef(null);
   const micScale = useRef(new Animated.Value(1)).current;
   const resultAnim = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    if (!isRecording && !loading && !meme) {
-      const t = setInterval(() => {
-        setCompanionMsg(
-          UBU_MESSAGES[Math.floor(Math.random() * UBU_MESSAGES.length)],
-        );
-      }, 5500);
-      return () => clearInterval(t);
-    }
-  }, [isRecording, loading, meme]);
+  useEffect(() => () => clearInterval(timerRef.current), []);
 
   const startRecording = () => {
     setIsRecording(true);
@@ -108,19 +91,20 @@ const VoiceToMemeScreen = ({ navigate }) => {
     setMeme(null);
     setDuration(0);
     resultAnim.setValue(0);
-    setCompanionMsg("🎙️ Je t'écoute attentivement !");
+    setCompanionMsg(
+      "Parle comme tu le sens. Plus c'est spontané, mieux c'est.",
+    );
 
-    // Pulse mic animation
     Animated.loop(
       Animated.sequence([
         Animated.timing(micScale, {
-          toValue: 1.15,
-          duration: 600,
+          toValue: 1.14,
+          duration: 520,
           useNativeDriver: true,
         }),
         Animated.timing(micScale, {
           toValue: 1,
-          duration: 600,
+          duration: 520,
           useNativeDriver: true,
         }),
       ]),
@@ -134,53 +118,59 @@ const VoiceToMemeScreen = ({ navigate }) => {
     micScale.stopAnimation();
     micScale.setValue(1);
     clearInterval(timerRef.current);
-    setCompanionMsg("⌛ Analyse de ta voix en cours...");
+    setCompanionMsg(
+      "J'extrais l'intention, le rythme et le meilleur moment de bascule.",
+    );
 
-    // Simulate transcription (in real app, this would be an API call with audio file)
     setTimeout(() => {
-      const demo = [
-        "Mon prof a confondu Python et le serpent, il a appelé le zoo !",
-        "La WiFi de la fac est tellement lente que les mails arrivent à la semaine suivante.",
-        "J'ai codé toute la nuit et mon programme dit 'Hello World' en 3 jours.",
-      ];
-      setTranscription(demo[Math.floor(Math.random() * demo.length)]);
-      setCompanionMsg("✅ J'ai tout compris ! On crée le mème ?");
+      const sample = DEMO_LINES[Math.floor(Math.random() * DEMO_LINES.length)];
+      setTranscription(sample);
+      setCompanionMsg(
+        "Transcription prête. On peut maintenant la transformer en mème.",
+      );
     }, 1200);
   };
 
   const generateMeme = async () => {
     if (!transcription.trim()) {
-      setCompanionMsg("⚠️ Dis-moi quelque chose d'abord !");
-      Alert.alert("Viral Stick", "Enregistre d'abord ta voix !");
+      setCompanionMsg("Il me faut d'abord une parole à remixer.");
+      Alert.alert(
+        "Viral Stick",
+        "Enregistre ou génère d'abord une transcription.",
+      );
       return;
     }
+
     setLoading(true);
     setMeme(null);
-    setCompanionMsg("🤖 Ubu transforme tes paroles en légende épique...");
+    setCompanionMsg(
+      "Je garde le ton de la voix et j'écris une vraie chute, pas une copie plate.",
+    );
+
     try {
-      const res = await axios.post(
-        "https://viral-stick.vercel.app/api/memes/voice-to-meme",
-        {
-          transcription: transcription,
-        },
-      );
+      const res = await axios.post(`${API_BASE}/api/memes/voice-to-meme`, {
+        transcription,
+      });
       setMeme(res.data);
-      if (res.data.companionComment) {
-        setCompanionMsg(res.data.companionComment);
-      } else {
-        setCompanionMsg(
-          "🔥 Boom ! Voilà un mème vocal qui va briser internet !",
-        );
-      }
+      setCompanionMsg(
+        res.data?.companionComment ||
+          "L'énergie est préservée. Le rendu est plus net et plus postable.",
+      );
+      resultAnim.setValue(0);
       Animated.spring(resultAnim, {
         toValue: 1,
         tension: 70,
-        friction: 7,
+        friction: 8,
         useNativeDriver: true,
       }).start();
     } catch {
-      setCompanionMsg("❌ Zut, petit problème technique. On réessaie ?");
-      Alert.alert("Erreur", "Connexion au serveur impossible.");
+      setCompanionMsg(
+        "Le module vocal n'a pas répondu. On peut retenter immédiatement.",
+      );
+      Alert.alert(
+        "Erreur",
+        "Connexion au serveur impossible pour la génération du mème.",
+      );
     } finally {
       setLoading(false);
     }
@@ -195,29 +185,48 @@ const VoiceToMemeScreen = ({ navigate }) => {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={[styles.screenTag, { color: theme.textMuted }]}>
-              MODULE 2
-            </Text>
-            <Text style={[styles.title, { color: theme.textPrimary }]}>
-              Voice <Text style={{ color: theme.secondaryLight }}>→ Mème</Text>
-            </Text>
+        <GlassCard animate style={styles.heroCard}>
+          <View style={styles.heroTop}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.kicker, { color: theme.textMuted }]}>
+                MODULE 02 · VOICE CAPTURE
+              </Text>
+              <Text style={[styles.heroTitle, { color: theme.textPrimary }]}>
+                Voice{" "}
+                <Text style={{ color: theme.secondaryLight }}>→ Mème</Text>
+              </Text>
+              <Text
+                style={[styles.heroSubtitle, { color: theme.textSecondary }]}
+              >
+                Transforme un moment parlé en punchline exploitable, tout en
+                gardant la nervosité de l'oral.
+              </Text>
+            </View>
+            <View style={styles.logoWrap}>
+              <Image
+                source={require("../../assets/logo/logo_sans_fond.png")}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
           </View>
-          <CompanionAvatar
-            companion="ubu"
-            size={136}
-            floating
-            message={companionMsg}
-          />
-        </View>
 
-        {/* Recorder Card */}
-        <GlassCard animate delay={100} style={styles.recorderCard}>
-          {/* Waveform */}
+          <View style={styles.heroBottom}>
+            <CompanionAvatar
+              companion="ubu"
+              size={116}
+              floating
+              message={companionMsg}
+            />
+          </View>
+        </GlassCard>
+
+        <GlassCard animate delay={80} style={styles.recorderCard}>
+          <Text style={[styles.sectionTag, { color: theme.secondaryLight }]}>
+            RECORDER STUDIO
+          </Text>
           <View style={styles.waveform}>
-            {Array.from({ length: 24 }).map((_, i) => (
+            {Array.from({ length: 28 }).map((_, i) => (
               <WaveBar
                 key={i}
                 index={i}
@@ -227,7 +236,6 @@ const VoiceToMemeScreen = ({ navigate }) => {
             ))}
           </View>
 
-          {/* Duration */}
           <Text
             style={[
               styles.duration,
@@ -239,7 +247,6 @@ const VoiceToMemeScreen = ({ navigate }) => {
               : formatDuration(duration)}
           </Text>
 
-          {/* Mic button */}
           <Animated.View style={{ transform: [{ scale: micScale }] }}>
             <TouchableOpacity
               onPress={isRecording ? stopRecording : startRecording}
@@ -249,42 +256,55 @@ const VoiceToMemeScreen = ({ navigate }) => {
                   backgroundColor: isRecording ? theme.danger : theme.primary,
                   ...createShadow(
                     isRecording ? theme.danger : theme.primary,
-                    16,
+                    18,
                   ),
                 },
               ]}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
             >
               <Text style={styles.micIcon}>{isRecording ? "⏹" : "🎙️"}</Text>
             </TouchableOpacity>
           </Animated.View>
 
-          <Text style={[styles.micLabel, { color: theme.textMuted }]}>
-            {isRecording ? "Appuie pour arrêter" : "Appuie pour enregistrer"}
+          <Text style={[styles.helper, { color: theme.textSecondary }]}>
+            {isRecording
+              ? "Parle normalement. L'objectif est de capturer le naturel, pas la perfection."
+              : "Appuie pour lancer une prise vocale démo, puis transforme la transcription en mème."}
           </Text>
         </GlassCard>
 
-        {/* Transcription */}
         {transcription.length > 0 && (
-          <GlassCard animate style={styles.transcriptCard}>
-            <Text style={[styles.transcriptLabel, { color: theme.secondary }]}>
-              📝 TRANSCRIPTION
+          <GlassCard animate delay={120} style={styles.transcriptCard}>
+            <Text style={[styles.sectionTag, { color: theme.secondaryLight }]}>
+              TRANSCRIPTION
             </Text>
             <Text style={[styles.transcriptText, { color: theme.textPrimary }]}>
-              "{transcription}"
+              “{transcription}”
             </Text>
             <AnimatedButton
-              title={loading ? "Génération..." : "✨ Transformer en mème"}
+              title={loading ? "Transformation..." : "Transformer en mème"}
               onPress={generateMeme}
               loading={loading}
               disabled={loading}
-              size="md"
+              size="lg"
               style={{ marginTop: spacing.md }}
             />
           </GlassCard>
         )}
 
-        {/* Result */}
+        {loading && (
+          <GlassCard animate style={styles.loadingCard}>
+            <ActivityIndicator color={theme.secondary} size="large" />
+            <Text style={[styles.loadingTitle, { color: theme.textPrimary }]}>
+              Remix vocal en cours
+            </Text>
+            <Text style={[styles.loadingText, { color: theme.textMuted }]}>
+              Préservation de la spontanéité, nettoyage léger et recherche de la
+              meilleure chute.
+            </Text>
+          </GlassCard>
+        )}
+
         {meme && (
           <Animated.View
             style={{
@@ -293,7 +313,7 @@ const VoiceToMemeScreen = ({ navigate }) => {
                 {
                   translateY: resultAnim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [30, 0],
+                    outputRange: [28, 0],
                   }),
                 },
               ],
@@ -301,10 +321,14 @@ const VoiceToMemeScreen = ({ navigate }) => {
           >
             <GlassCard style={styles.resultCard}>
               <Text
-                style={[styles.resultTitle, { color: theme.secondaryLight }]}
+                style={[styles.sectionTag, { color: theme.secondaryLight }]}
               >
-                💥 Mème Vocal Généré !
+                SORTIE IA
               </Text>
+              <Text style={[styles.resultTitle, { color: theme.textPrimary }]}>
+                Mème vocal prêt à poser
+              </Text>
+
               <View
                 style={[
                   styles.memeBox,
@@ -317,25 +341,44 @@ const VoiceToMemeScreen = ({ navigate }) => {
                 <Text style={[styles.memeTop, { color: theme.textPrimary }]}>
                   {meme.topText}
                 </Text>
-                <View style={styles.memeImage}>
-                  <Text style={{ fontSize: 52 }}>🎙️</Text>
+                <View style={styles.voiceScene}>
+                  <Text style={styles.voiceEmoji}>🎤</Text>
+                  <Text
+                    style={[
+                      styles.voiceDescription,
+                      { color: theme.textSecondary },
+                    ]}
+                  >
+                    {meme.descriptionImage}
+                  </Text>
                 </View>
                 <Text style={[styles.memeBottom, { color: theme.textPrimary }]}>
                   {meme.bottomText}
                 </Text>
               </View>
-              <AnimatedButton
-                title="🔁 Recréer"
-                onPress={generateMeme}
-                variant="ghost"
-                size="sm"
-                style={{ marginTop: spacing.sm }}
-              />
+
+              <View
+                style={[
+                  styles.subtitleCard,
+                  { backgroundColor: theme.backgroundSecondary },
+                ]}
+              >
+                <Text
+                  style={[styles.subtitleLabel, { color: theme.textMuted }]}
+                >
+                  SOUS-TITRE ORIGINAL NETTOYÉ
+                </Text>
+                <Text
+                  style={[styles.subtitleText, { color: theme.textPrimary }]}
+                >
+                  {meme.original_transcript_subtitle}
+                </Text>
+              </View>
             </GlassCard>
           </Animated.View>
         )}
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 110 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -344,91 +387,140 @@ const VoiceToMemeScreen = ({ navigate }) => {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   scroll: { paddingHorizontal: spacing.md, paddingTop: 80 },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: spacing.lg,
-  },
-  screenTag: {
+  heroCard: { padding: spacing.lg, marginBottom: spacing.md },
+  heroTop: { flexDirection: "row", gap: spacing.md, alignItems: "center" },
+  heroBottom: { marginTop: spacing.md, alignItems: "center" },
+  kicker: {
     fontSize: typography.fontSize.xs,
+    fontWeight: "800",
     letterSpacing: 2,
-    textTransform: "uppercase",
-    fontWeight: "600",
   },
-  title: {
-    fontSize: typography.fontSize.xxl,
+  heroTitle: {
+    fontSize: typography.fontSize.xxxl,
     fontWeight: "900",
-    letterSpacing: -0.5,
+    letterSpacing: -0.8,
   },
-  recorderCard: {
-    alignItems: "center",
-    paddingVertical: spacing.xl,
-    marginBottom: spacing.md,
-    gap: spacing.md,
+  heroSubtitle: {
+    marginTop: 8,
+    fontSize: typography.fontSize.sm,
+    lineHeight: 22,
   },
-  waveform: { flexDirection: "row", alignItems: "center", height: 60, gap: 4 },
-  waveBar: { width: 4, height: 50, borderRadius: 4 },
-  duration: {
-    fontSize: typography.fontSize.lg,
-    fontWeight: "700",
-    letterSpacing: 2,
-  },
-  micBtn: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+  logoWrap: {
+    width: 138,
+    height: 138,
     justifyContent: "center",
     alignItems: "center",
   },
-  micIcon: { fontSize: 38 },
-  micLabel: { fontSize: typography.fontSize.xs, letterSpacing: 1 },
-  transcriptCard: { marginBottom: spacing.md },
-  transcriptLabel: {
+  logo: { width: 132, height: 132 },
+  sectionTag: {
     fontSize: typography.fontSize.xs,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 2,
-    marginBottom: spacing.sm,
+    marginBottom: 8,
   },
+  recorderCard: {
+    alignItems: "center",
+    gap: spacing.md,
+    marginBottom: spacing.md,
+  },
+  waveform: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    width: "100%",
+    height: 72,
+  },
+  waveBar: { width: 5, height: 52, borderRadius: 6 },
+  duration: {
+    fontSize: typography.fontSize.lg,
+    fontWeight: "800",
+    letterSpacing: 2,
+  },
+  micBtn: {
+    width: 108,
+    height: 108,
+    borderRadius: 54,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  micIcon: { fontSize: 42 },
+  helper: {
+    textAlign: "center",
+    lineHeight: 20,
+    paddingHorizontal: spacing.sm,
+  },
+  transcriptCard: { marginBottom: spacing.md },
   transcriptText: {
     fontSize: typography.fontSize.md,
     lineHeight: 24,
     fontStyle: "italic",
   },
+  loadingCard: {
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  loadingTitle: {
+    fontSize: typography.fontSize.lg,
+    fontWeight: "800",
+    marginTop: spacing.sm,
+  },
+  loadingText: { textAlign: "center", lineHeight: 20 },
   resultCard: { marginBottom: spacing.md },
   resultTitle: {
     fontSize: typography.fontSize.xl,
     fontWeight: "800",
-    textAlign: "center",
     marginBottom: spacing.md,
   },
   memeBox: {
-    borderRadius: radius.md,
     borderWidth: 1,
+    borderRadius: radius.md,
     padding: spacing.md,
     alignItems: "center",
+    marginBottom: spacing.md,
   },
   memeTop: {
     fontSize: typography.fontSize.lg,
-    fontWeight: "800",
+    fontWeight: "900",
     textTransform: "uppercase",
     textAlign: "center",
-    marginBottom: spacing.sm,
+    lineHeight: 24,
   },
-  memeImage: {
+  voiceScene: {
     width: "100%",
-    height: 140,
-    alignItems: "center",
+    minHeight: 160,
     justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.1)",
+    alignItems: "center",
+    marginVertical: spacing.md,
     borderRadius: radius.md,
+    backgroundColor: "rgba(255,255,255,0.03)",
+    padding: spacing.md,
+  },
+  voiceEmoji: { fontSize: 56, marginBottom: 10 },
+  voiceDescription: {
+    textAlign: "center",
+    fontSize: typography.fontSize.sm,
+    lineHeight: 20,
   },
   memeBottom: {
     fontSize: typography.fontSize.lg,
-    fontWeight: "800",
+    fontWeight: "900",
     textTransform: "uppercase",
     textAlign: "center",
-    marginTop: spacing.sm,
+    lineHeight: 24,
+  },
+  subtitleCard: { borderRadius: radius.md, padding: spacing.md },
+  subtitleLabel: {
+    fontSize: typography.fontSize.xs,
+    fontWeight: "800",
+    letterSpacing: 1.4,
+    marginBottom: 6,
+  },
+  subtitleText: {
+    fontSize: typography.fontSize.sm,
+    lineHeight: 20,
+    fontStyle: "italic",
   },
 });
 

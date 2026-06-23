@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import CompanionAvatarWeb from "../components/CompanionAvatarWeb";
 import WebShell, { pageStyles } from "../components/WebShell";
+import PremiumButton from "../components/PremiumButton";
+import WhatsAppShareButton from "../components/WhatsAppShareButton";
+import AppIcon from "../components/AppIcon";
 import { colors } from "../theme/tokens";
 
 const RemixPage = () => {
@@ -79,13 +82,13 @@ const RemixPage = () => {
               justifyContent: "flex-end",
             }}
           >
-            <button
+            <PremiumButton
               onClick={handleRemix}
               disabled={loading || !remixText.trim()}
-              style={pageStyles.buttonPrimary}
+              icon={<AppIcon name="remix" size={18} color="#fff" />}
             >
               {loading ? "Remix..." : "Créer le remix"}
-            </button>
+            </PremiumButton>
           </div>
         </div>
 
@@ -119,6 +122,34 @@ const RemixPage = () => {
               {result?.descriptionImage ||
                 "Le moteur peut ensuite servir de base à un export sticker ou à une génération d'image plus poussée."}
             </p>
+            <div
+              style={{
+                display: "flex",
+                gap: 12,
+                flexWrap: "wrap",
+                marginTop: 16,
+              }}
+            >
+              <WhatsAppShareButton
+                text={
+                  result ? `${result.topText}\n${result.bottomText}` : remixText
+                }
+                url={window.location.href}
+                label="Partager le remix sur WhatsApp"
+              />
+              <PremiumButton
+                variant="ghost"
+                icon={
+                  <AppIcon
+                    name="global"
+                    size={18}
+                    color={colors.textSecondary}
+                  />
+                }
+              >
+                Bientôt : partager au statut WhatsApp
+              </PremiumButton>
+            </div>
           </div>
         </div>
       </section>

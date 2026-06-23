@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import CompanionAvatarWeb from "../components/CompanionAvatarWeb";
 import WebShell, { pageStyles } from "../components/WebShell";
+import PremiumButton from "../components/PremiumButton";
+import AppIcon from "../components/AppIcon";
+import WhatsAppShareButton from "../components/WhatsAppShareButton";
 import { colors } from "../theme/tokens";
 
 const ContextPage = () => {
@@ -53,23 +56,34 @@ const ContextPage = () => {
 
           <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
             {[
-              ["text", "📝 Texte"],
-              ["image", "🖼️ Image décrite"],
-            ].map(([value, label]) => (
-              <button
+              ["text", "Texte", "context"],
+              ["image", "Image décrite", "gallery"],
+            ].map(([value, label, icon]) => (
+              <PremiumButton
                 key={value}
                 onClick={() => setInputType(value)}
+                variant={inputType === value ? "secondary" : "ghost"}
+                icon={
+                  <AppIcon
+                    name={icon}
+                    size={16}
+                    color={
+                      inputType === value ? colors.text : colors.textSecondary
+                    }
+                  />
+                }
                 style={{
-                  ...pageStyles.buttonGhost,
                   background:
                     inputType === value
-                      ? "rgba(124,58,237,0.16)"
+                      ? "linear-gradient(135deg, rgba(139,92,246,0.28), rgba(34,211,238,0.18))"
                       : "rgba(255,255,255,0.04)",
                   border: `1px solid ${inputType === value ? colors.brandPrimary : colors.border}`,
+                  minHeight: 46,
+                  padding: "12px 18px",
                 }}
               >
                 {label}
-              </button>
+              </PremiumButton>
             ))}
           </div>
 
@@ -115,14 +129,43 @@ const ContextPage = () => {
             <div style={{ color: colors.textMuted }}>
               {context.length} caractères
             </div>
-            <button
+            <PremiumButton
               onClick={generateMeme}
               disabled={loading || !context.trim()}
-              style={pageStyles.buttonPrimary}
+              icon={<AppIcon name="studio" size={18} color="#fff" />}
             >
               {loading ? "Génération..." : "Générer un mème plus fort"}
-            </button>
+            </PremiumButton>
           </div>
+
+          {result ? (
+            <div
+              style={{
+                display: "flex",
+                gap: 12,
+                flexWrap: "wrap",
+                marginTop: 14,
+              }}
+            >
+              <WhatsAppShareButton
+                text={`${result.topText}\n${result.bottomText}`}
+                url={window.location.href}
+                label="Partager ce mème sur WhatsApp"
+              />
+              <PremiumButton
+                variant="ghost"
+                icon={
+                  <AppIcon
+                    name="global"
+                    size={18}
+                    color={colors.textSecondary}
+                  />
+                }
+              >
+                Bientôt : partage statut WhatsApp
+              </PremiumButton>
+            </div>
+          ) : null}
         </div>
 
         <div style={{ ...pageStyles.panel, padding: 28 }}>
