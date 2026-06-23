@@ -7,7 +7,7 @@ export const typography = {
   fontSize: { xs: 12, sm: 14, md: 16, lg: 18, xl: 22, xxl: 28, xxxl: 36 },
 };
 
-export const createShadow = (color = "#3f8f01", elevation = 4) => ({
+export const createShadow = (color = "#1899d6", elevation = 4) => ({
   shadowColor: color,
   shadowOffset: { width: 0, height: elevation },
   shadowOpacity: 0.22,
@@ -22,11 +22,12 @@ export const theme = {
   textPrimary:         colors.almostBlack,
   textSecondary:       colors.charcoal,
   textMuted:           colors.silver,
-  primary:             colors.duoGreen,
-  primaryLight:        colors.duoGreenLight,
-  primaryDark:         colors.duoGreenDark,
-  secondary:           colors.skyBlue,
-  secondaryLight:      colors.skyBlue,
+  // Bleu comme couleur principale
+  primary:             colors.duoBlue,
+  primaryLight:        colors.duoBlueLight,
+  primaryDark:         colors.duoBlueDark,
+  secondary:           colors.duoGreen,
+  secondaryLight:      colors.duoGreenLight,
   warning:             colors.sunshineYellow,
   danger:              colors.danger,
   border:              colors.cloudGray,

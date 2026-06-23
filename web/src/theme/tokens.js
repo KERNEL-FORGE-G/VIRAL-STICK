@@ -4,11 +4,17 @@
  */
 
 export const colors = {
-  // ── Brand ──────────────────────────────────
+  // ── Primary : Bleu Duo ──────────────────────
+  duoBlue:       "#1cb0f6",
+  duoBlueDark:   "#1899d6",
+  duoBlueLight:  "#d0f0fd",
+
+  // ── Success ────────────────────────────────
   duoGreen:       "#58cc02",
   duoGreenDark:   "#3f8f01",
   duoGreenLight:  "#d7ffb8",
-  skyBlue:        "#1cb0f6",
+
+  skyBlue:        "#1cb0f6",   // alias
   skyBlueDark:    "#1899d6",
   sunshineYellow: "#ffc700",
   grapeSoda:      "#a570ff",
@@ -35,13 +41,13 @@ export const colors = {
   danger:        "#ee2a2a",
 
   // ── Compagnons ─────────────────────────────
-  arch: "#58cc02",
-  art:  "#ffc700",
-  bio:  "#a570ff",
-  data: "#1cb0f6",
-  para: "#ff9600",
-  secu: "#cc348d",
-  ubu:  "#ce82ff",
+  arch: "#1cb0f6",   // bleu
+  art:  "#ffc700",   // jaune
+  bio:  "#a570ff",   // violet
+  data: "#58cc02",   // vert
+  para: "#ff9600",   // orange
+  secu: "#cc348d",   // rose
+  ubu:  "#ce82ff",   // lavande
 };
 
 export const spacing = {
@@ -66,9 +72,9 @@ export const radius = {
 };
 
 export const shadows = {
-  // Signature Duolingo : ombre solide en bas = effet bouton pressable
-  btnPrimary:   "0 4px 0 #3f8f01",
-  btnBlue:      "0 4px 0 #1899d6",
+  // Signature style : ombre solide en bas = effet bouton physique
+  btnPrimary:   "0 4px 0 #1899d6",   // bleu
+  btnGreen:     "0 4px 0 #3f8f01",   // vert (success)
   btnGray:      "0 4px 0 #b5b5b5",
   card:         "0 2px 0 0 #e5e5e5",
   cardHover:    "0 4px 0 0 #d0d0d0",

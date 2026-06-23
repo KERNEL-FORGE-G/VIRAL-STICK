@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   drawerInner: { flex: 1, paddingHorizontal: spacing.md, paddingBottom: spacing.lg },
   brand:       { alignItems: "center", paddingVertical: spacing.lg, marginBottom: spacing.md, borderBottomWidth: 2, borderBottomColor: colors.cloudGray },
   brandLogo:   { width: 60, height: 60, marginBottom: 8 },
-  brandTitle:  { fontSize: 22, fontWeight: "900", color: colors.duoGreen, letterSpacing: 0.5 },
+  brandTitle:  { fontSize: 22, fontWeight: "900", color: colors.duoBlue, letterSpacing: 0.5 },
   brandSub:    { fontSize: 11, fontWeight: "700", color: colors.silver, marginTop: 2 },
   navList:     { flex: 1, gap: 6 },
   navItem:     { flexDirection: "row", alignItems: "center", paddingVertical: 12, paddingHorizontal: spacing.md, borderRadius: radius.md, borderWidth: 2, gap: 10 },

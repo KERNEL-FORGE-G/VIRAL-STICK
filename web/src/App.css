@@ -78,7 +78,6 @@ button, input, textarea, select { font: inherit; }
   border-color: #1cb0f6;
   box-shadow: 0 0 0 3px rgba(28,176,246,0.15);
 }
-
 .nav-item {
   display: flex;
   align-items: center;
@@ -93,7 +92,7 @@ button, input, textarea, select { font: inherit; }
   text-decoration: none;
 }
 .nav-item:hover  { background: #f7f7f7; color: #3c3c3c; }
-.nav-item.active { background: #d7ffb8; color: #3f8f01; }
+.nav-item.active { background: #d0f0fd; color: #1899d6; }
 
 .tag {
   display: inline-block;

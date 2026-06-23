@@ -1,413 +1,147 @@
 import React, { useEffect, useRef, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  SafeAreaView,
-  Animated,
-  TouchableOpacity,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  Image,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, StyleSheet, FlatList, SafeAreaView, Animated, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Image, ActivityIndicator, StatusBar } from "react-native";
 import axios from "axios";
-import { useTheme, spacing, radius, typography, createShadow } from "../theme";
-import GlassCard from "../components/GlassCard";
+import { spacing, radius } from "../theme";
+import { colors } from "../theme/tokens";
 import { COMPANIONS, COMPANION_NAMES } from "../components/CompanionAvatar";
 import { apiUrl } from "../config/api";
 
-const COMPANION_COLORS = {
-  arch: "#3B82F6",
-  para: "#22C55E",
-  secu: "#EF4444",
-  data: "#F59E0B",
-  bio: "#A855F7",
-  ubu: "#84CC16",
-  art: "#FB923C",
-};
-
-const ALL_COMPANIONS = [
+const ALL = [
   { id: "arch", name: "Archlord", role: "Cap produit" },
-  { id: "data", name: "Data", role: "Analyse" },
-  { id: "para", name: "Para", role: "Clarté UX" },
-  { id: "secu", name: "Secu", role: "Risque" },
-  { id: "bio", name: "Bio", role: "Énergie" },
-  { id: "ubu", name: "Ubu", role: "Chute" },
-  { id: "art", name: "Art", role: "Visuel" },
+  { id: "data", name: "Data",     role: "Analyse" },
+  { id: "para", name: "Para",     role: "Clarté UX" },
+  { id: "secu", name: "Secu",     role: "Risque" },
+  { id: "bio",  name: "Bio",      role: "Énergie" },
+  { id: "ubu",  name: "Ubu",      role: "Humour" },
+  { id: "art",  name: "Art",      role: "Visuel" },
 ];
 
-const MultiChatBubble = ({ msg, theme }) => {
-  const anim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.spring(anim, {
-      toValue: 1,
-      tension: 80,
-      friction: 8,
-      useNativeDriver: true,
-    }).start();
-  }, [anim]);
-
-  const isUser = msg.sender === "user";
-  const companionColor = COMPANION_COLORS[msg.companion] || theme.primary;
-
-  return (
-    <Animated.View
-      style={[
-        styles.bubbleRow,
-        isUser ? styles.bubbleRight : styles.bubbleLeft,
-        {
-          opacity: anim,
-          transform: [
-            {
-              scale: anim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0.92, 1],
-              }),
-            },
-          ],
-        },
-      ]}
-    >
-      {!isUser && (
-        <Image
-          source={COMPANIONS[msg.companion]}
-          style={[styles.bubbleAvatar, { borderColor: companionColor }]}
-          resizeMode="contain"
-        />
-      )}
-      <View
-        style={[
-          styles.bubble,
-          {
-            backgroundColor: isUser
-              ? `${theme.primary}D9`
-              : theme.backgroundCard,
-            borderColor: isUser ? "transparent" : `${companionColor}99`,
-            borderWidth: isUser ? 0 : 1,
-          },
-        ]}
-      >
-        {!isUser && (
-          <Text style={[styles.companionName, { color: companionColor }]}>
-            {COMPANION_NAMES[msg.companion]}
-          </Text>
-        )}
-        <Text
-          style={[
-            styles.bubbleText,
-            { color: isUser ? "#fff" : theme.textPrimary },
-          ]}
-        >
-          {msg.text}
-        </Text>
-        <Text
-          style={[
-            styles.bubbleTime,
-            { color: isUser ? "rgba(255,255,255,0.68)" : theme.textMuted },
-          ]}
-        >
-          {msg.time}
-        </Text>
-      </View>
-    </Animated.View>
-  );
-};
-
-const CompanionStatus = ({ companion, status, theme }) => {
-  const color = COMPANION_COLORS[companion.id] || theme.primary;
-  const statusColor =
-    status === "loading"
-      ? "#FCD34D"
-      : status === "done"
-        ? "#34D399"
-        : status === "error"
-          ? "#F87171"
-          : theme.textMuted;
-  const statusLabel =
-    status === "loading"
-      ? "répond"
-      : status === "done"
-        ? "ok"
-        : status === "error"
-          ? "off"
-          : "idle";
-
-  return (
-    <View
-      style={[
-        styles.statusItem,
-        { borderColor: `${color}35`, backgroundColor: `${color}12` },
-      ]}
-    >
-      <Image
-        source={COMPANIONS[companion.id]}
-        style={[styles.statusAvatar, { borderColor: color }]}
-        resizeMode="contain"
-      />
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.statusName, { color }]}>{companion.name}</Text>
-        <Text style={[styles.statusRole, { color: theme.textMuted }]}>
-          {companion.role}
-        </Text>
-      </View>
-      <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-      <Text style={[styles.statusLabel, { color: statusColor }]}>
-        {statusLabel}
-      </Text>
-    </View>
-  );
-};
+const fmt = () => new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
 const MultiChatScreen = ({ navigate }) => {
-  const { theme } = useTheme();
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [companionStatuses, setCompanionStatuses] = useState(
-    Object.fromEntries(ALL_COMPANIONS.map((c) => [c.id, "idle"])),
-  );
-  const flatRef = useRef(null);
+  const [messages, setMessages]     = useState([]);
+  const [input, setInput]           = useState("");
+  const [loading, setLoading]       = useState(false);
+  const [statuses, setStatuses]     = useState({});
+  const flatRef                     = useRef(null);
 
-  useEffect(() => {
-    loadGreetings();
-  }, []);
+  useEffect(() => { loadGreetings(); }, []);
 
   const loadGreetings = async () => {
     setLoading(true);
-    const greets = [];
-    const statuses = { ...companionStatuses };
-
-    await Promise.all(
-      ALL_COMPANIONS.map(async (c) => {
-        statuses[c.id] = "loading";
-        setCompanionStatuses({ ...statuses });
-        try {
-          const res = await axios.post(apiUrl("/api/memes/chat/greeting"), {
-            companionId: c.id,
-          });
-          greets.push({
-            id: `g-${c.id}`,
-            text: res.data.reply,
-            sender: c.id,
-            companion: c.id,
-            time: "maintenant",
-          });
-          statuses[c.id] = "done";
-        } catch {
-          greets.push({
-            id: `g-${c.id}`,
-            text: `${c.name} est prêt à intervenir.`,
-            sender: c.id,
-            companion: c.id,
-            time: "maintenant",
-          });
-          statuses[c.id] = "done";
-        }
-        setCompanionStatuses({ ...statuses });
-      }),
-    );
-
-    greets.sort(
-      (a, b) =>
-        ALL_COMPANIONS.findIndex((c) => c.id === a.companion) -
-        ALL_COMPANIONS.findIndex((c) => c.id === b.companion),
-    );
-    setMessages(greets);
-    setLoading(false);
+    const greets = []; const st = {};
+    await Promise.all(ALL.map(async (c) => {
+      st[c.id] = "loading"; setStatuses({ ...st });
+      try {
+        const r = await axios.post(apiUrl("/api/memes/chat/greeting"), { companionId: c.id });
+        greets.push({ id: `g-${c.id}`, text: r.data.reply, sender: c.id, companion: c.id, time: fmt() });
+        st[c.id] = "done";
+      } catch {
+        greets.push({ id: `g-${c.id}`, text: `${c.name} est prêt à intervenir.`, sender: c.id, companion: c.id, time: fmt() });
+        st[c.id] = "done";
+      }
+      setStatuses({ ...st });
+    }));
+    greets.sort((a, b) => ALL.findIndex((c) => c.id === a.companion) - ALL.findIndex((c) => c.id === b.companion));
+    setMessages(greets); setLoading(false);
   };
 
   const sendToAll = async () => {
     if (!input.trim() || loading) return;
-
-    const currentInput = input.trim();
-    const now = new Date().toLocaleTimeString("fr-FR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const txt = input.trim();
+    const now = fmt();
     setInput("");
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        text: currentInput,
-        sender: "user",
-        companion: "user",
-        time: now,
-      },
-    ]);
+    setMessages((p) => [...p, { id: Date.now().toString(), text: txt, sender: "user", companion: "user", time: now }]);
     setLoading(true);
-
-    const statuses = { ...companionStatuses };
-    const replies = [];
-
-    await Promise.all(
-      ALL_COMPANIONS.map(async (c) => {
-        statuses[c.id] = "loading";
-        setCompanionStatuses({ ...statuses });
-        try {
-          const res = await axios.post(apiUrl("/api/memes/chat"), {
-            companionId: c.id,
-            message: currentInput,
-          });
-          replies.push({
-            id: `${Date.now()}-${c.id}`,
-            text: res.data.reply,
-            sender: c.id,
-            companion: c.id,
-            time: new Date().toLocaleTimeString("fr-FR", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-          });
-          statuses[c.id] = "done";
-        } catch {
-          replies.push({
-            id: `${Date.now()}-${c.id}`,
-            text: `${c.name} n'a pas pu répondre pour l'instant.`,
-            sender: c.id,
-            companion: c.id,
-            time: "maintenant",
-          });
-          statuses[c.id] = "error";
-        }
-        setCompanionStatuses({ ...statuses });
-      }),
-    );
-
-    replies.sort(
-      (a, b) =>
-        ALL_COMPANIONS.findIndex((c) => c.id === a.companion) -
-        ALL_COMPANIONS.findIndex((c) => c.id === b.companion),
-    );
-    setMessages((prev) => [...prev, ...replies]);
+    const st = {}; const replies = [];
+    await Promise.all(ALL.map(async (c) => {
+      st[c.id] = "loading"; setStatuses({ ...st });
+      try {
+        const r = await axios.post(apiUrl("/api/memes/chat"), { companionId: c.id, message: txt });
+        replies.push({ id: `${Date.now()}-${c.id}`, text: r.data.reply, sender: c.id, companion: c.id, time: fmt() });
+        st[c.id] = "done";
+      } catch {
+        replies.push({ id: `${Date.now()}-${c.id}`, text: `${c.name} n'a pas pu répondre.`, sender: c.id, companion: c.id, time: fmt() });
+        st[c.id] = "error";
+      }
+      setStatuses({ ...st });
+    }));
+    replies.sort((a, b) => ALL.findIndex((c) => c.id === a.companion) - ALL.findIndex((c) => c.id === b.companion));
+    setMessages((p) => [...p, ...replies]);
     setLoading(false);
     setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <View style={styles.page}>
-        <GlassCard style={styles.heroCard}>
-          <View style={styles.heroTop}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.kicker, { color: theme.textMuted }]}>
-                MULTI COMPANION BOARD
-              </Text>
-              <Text style={[styles.heroTitle, { color: theme.textPrimary }]}>
-                Les{" "}
-                <Text style={{ color: theme.primaryLight }}>7 compagnons</Text>{" "}
-                à la fois
-              </Text>
-              <Text
-                style={[styles.heroSubtitle, { color: theme.textSecondary }]}
-              >
-                Une seule question, plusieurs angles : produit, risque, style,
-                humour, clarté et direction visuelle.
-              </Text>
-            </View>
-            <View style={styles.heroLogo}>
-              <Image
-                source={require("../../assets/logo/logo_sans_fond.png")}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-            </View>
-          </View>
-        </GlassCard>
+        {/* Status grid */}
+        <View style={styles.grid}>
+          {ALL.map((c) => {
+            const st  = statuses[c.id] || "idle";
+            const col = colors[c.id] || colors.duoGreen;
+            const stColor = st === "done" ? colors.duoGreen : st === "loading" ? colors.sunshineYellow : st === "error" ? colors.danger : colors.silver;
+            return (
+              <View key={c.id} style={[styles.statusCard, { borderColor: `${col}44`, backgroundColor: `${col}0d` }]}>
+                <Image source={COMPANIONS[c.id]} style={[styles.statusAvatar, { borderColor: col }]} resizeMode="contain" />
+                <Text style={[styles.statusName, { color: col }]}>{COMPANION_NAMES[c.id]}</Text>
+                <View style={[styles.statusDot, { backgroundColor: stColor }]} />
+              </View>
+            );
+          })}
+        </View>
 
+        {/* Messages */}
         <FlatList
-          data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <MultiChatBubble msg={item} theme={theme} />
-          )}
-          ref={flatRef}
-          contentContainerStyle={styles.chatContent}
+          ref={flatRef} data={messages} keyExtractor={(m) => m.id}
+          renderItem={({ item }) => {
+            const isUser = item.sender === "user";
+            const meta   = ALL.find((c) => c.id === item.companion);
+            const col    = meta ? (colors[meta.id] || colors.duoGreen) : colors.silver;
+            return (
+              <View style={[styles.msgRow, isUser ? styles.msgRight : styles.msgLeft]}>
+                {!isUser && meta && (
+                  <Image source={COMPANIONS[meta.id]} style={[styles.msgAvatar, { borderColor: col }]} resizeMode="contain" />
+                )}
+                <View style={[styles.msgBubble, {
+                  backgroundColor: isUser ? colors.duoGreen : "#ffffff",
+                  borderColor: isUser ? colors.duoGreen : colors.cloudGray,
+                  shadowColor: isUser ? colors.duoGreenDark : "#aaa",
+                  shadowOffset: { width: 0, height: isUser ? 3 : 2 },
+                  shadowOpacity: 0.3, shadowRadius: 0, elevation: 3,
+                }]}>
+                  {!isUser && meta && <Text style={[styles.msgCompName, { color: col }]}>{COMPANION_NAMES[meta.id]}</Text>}
+                  <Text style={[styles.msgText, { color: isUser ? "#ffffff" : colors.almostBlack }]}>{item.text}</Text>
+                  <Text style={[styles.msgTime, { color: isUser ? "rgba(255,255,255,0.7)" : colors.silver }]}>{item.time}</Text>
+                </View>
+              </View>
+            );
+          }}
+          contentContainerStyle={{ padding: spacing.md, gap: 10 }}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={() =>
-            flatRef.current?.scrollToEnd({ animated: true })
-          }
-          ListHeaderComponent={
-            <>
-              <View style={styles.statusGrid}>
-                {ALL_COMPANIONS.map((c) => (
-                  <CompanionStatus
-                    key={c.id}
-                    companion={c}
-                    status={companionStatuses[c.id] || "idle"}
-                    theme={theme}
-                  />
-                ))}
-              </View>
-              <Text style={[styles.boardHint, { color: theme.textMuted }]}>
-                Conseil : pose une vraie question produit, créative ou technique
-                pour obtenir des réponses vraiment différentes.
-              </Text>
-            </>
-          }
-          ListFooterComponent={
-            loading ? (
-              <View style={styles.loadingWrap}>
-                <ActivityIndicator color={theme.primary} size="small" />
-                <Text style={[styles.loadingText, { color: theme.textMuted }]}>
-                  Le board consolide les réponses…
-                </Text>
-              </View>
-            ) : null
-          }
+          onContentSizeChange={() => flatRef.current?.scrollToEnd({ animated: true })}
+          ListFooterComponent={loading ? (
+            <View style={styles.loadWrap}>
+              <ActivityIndicator color={colors.duoGreen} size="small" />
+              <Text style={styles.loadText}>Le board consolide les réponses…</Text>
+            </View>
+          ) : null}
         />
       </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={90}
-      >
-        <View
-          style={[
-            styles.inputBar,
-            {
-              backgroundColor: theme.backgroundCard,
-              borderTopColor: theme.divider,
-            },
-          ]}
-        >
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={90}>
+        <View style={styles.inputBar}>
           <TextInput
-            style={[
-              styles.input,
-              {
-                color: theme.textPrimary,
-                backgroundColor: theme.backgroundSecondary,
-                borderColor: theme.border,
-              },
-            ]}
-            value={input}
-            onChangeText={setInput}
-            placeholder="Pose une question à tout le board..."
-            placeholderTextColor={theme.textMuted}
-            onSubmitEditing={sendToAll}
-            returnKeyType="send"
-            editable={!loading}
+            style={styles.input} value={input} onChangeText={setInput}
+            placeholder="Pose une question au board..." placeholderTextColor={colors.silver}
+            onSubmitEditing={sendToAll} returnKeyType="send" editable={!loading}
           />
           <TouchableOpacity
-            onPress={sendToAll}
-            disabled={loading}
-            style={[
-              styles.sendBtn,
-              {
-                backgroundColor: loading ? theme.divider : theme.primary,
-                ...createShadow(theme.primary, 10),
-              },
-            ]}
+            onPress={sendToAll} disabled={loading}
+            style={[styles.sendBtn, { backgroundColor: loading ? colors.cloudGray : colors.duoGreen, shadowColor: colors.duoGreenDark, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.35, shadowRadius: 0, elevation: 3 }]}
           >
-            {loading ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text style={styles.sendIcon}>➤</Text>
-            )}
+            {loading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.sendIcon}>➤</Text>}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -416,106 +150,27 @@ const MultiChatScreen = ({ navigate }) => {
 };
 
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  page: { flex: 1, paddingTop: 70, paddingHorizontal: spacing.md },
-  heroCard: { marginBottom: spacing.md },
-  heroTop: { flexDirection: "row", gap: spacing.md, alignItems: "center" },
-  kicker: {
-    fontSize: typography.fontSize.xs,
-    fontWeight: "800",
-    letterSpacing: 2,
-  },
-  heroTitle: {
-    fontSize: typography.fontSize.xxl,
-    fontWeight: "900",
-    letterSpacing: -0.6,
-  },
-  heroSubtitle: {
-    marginTop: 8,
-    fontSize: typography.fontSize.sm,
-    lineHeight: 21,
-  },
-  heroLogo: {
-    width: 110,
-    height: 110,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  logo: { width: 104, height: 104 },
-  statusGrid: { gap: spacing.sm, marginBottom: spacing.md },
-  statusItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    borderWidth: 1,
-    borderRadius: radius.md,
-    padding: spacing.sm,
-  },
-  statusAvatar: { width: 42, height: 42, borderRadius: 21, borderWidth: 1 },
-  statusName: { fontSize: typography.fontSize.sm, fontWeight: "900" },
-  statusRole: { fontSize: typography.fontSize.xs, marginTop: 2 },
-  statusDot: { width: 8, height: 8, borderRadius: 4 },
-  statusLabel: { fontSize: 11, fontWeight: "800", textTransform: "uppercase" },
-  boardHint: {
-    fontSize: typography.fontSize.xs,
-    lineHeight: 18,
-    marginBottom: spacing.md,
-  },
-  chatContent: { paddingBottom: spacing.md },
-  bubbleRow: {
-    flexDirection: "row",
-    marginBottom: spacing.sm,
-    alignItems: "flex-end",
-  },
-  bubbleLeft: { justifyContent: "flex-start" },
-  bubbleRight: { justifyContent: "flex-end" },
-  bubbleAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    marginRight: 8,
-    borderWidth: 1,
-  },
-  bubble: { maxWidth: "82%", borderRadius: radius.md, padding: spacing.md },
-  companionName: {
-    fontSize: typography.fontSize.xs,
-    fontWeight: "900",
-    marginBottom: 6,
-    letterSpacing: 0.6,
-  },
-  bubbleText: { fontSize: typography.fontSize.sm, lineHeight: 20 },
-  bubbleTime: { marginTop: 8, fontSize: 11, fontWeight: "700" },
-  loadingWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-  },
-  loadingText: { fontSize: typography.fontSize.xs },
-  inputBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderTopWidth: 1,
-    gap: spacing.sm,
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: radius.md,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: typography.fontSize.sm,
-  },
-  sendBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  sendIcon: { color: "#fff", fontSize: 18, fontWeight: "900" },
+  safe:      { flex: 1, backgroundColor: "#ffffff" },
+  page:      { flex: 1, paddingTop: 70 },
+  grid:      { flexDirection: "row", flexWrap: "wrap", gap: 8, padding: spacing.md, borderBottomWidth: 2, borderBottomColor: colors.cloudGray },
+  statusCard:{ width: "12.5%", minWidth: 70, alignItems: "center", gap: 5, padding: 8, borderRadius: radius.md, borderWidth: 2 },
+  statusAvatar:{ width: 36, height: 36, borderRadius: 18, borderWidth: 2 },
+  statusName:  { fontSize: 10, fontWeight: "900" },
+  statusDot:   { width: 8, height: 8, borderRadius: 4 },
+  msgRow:    { flexDirection: "row", alignItems: "flex-end", marginBottom: 2 },
+  msgLeft:   { justifyContent: "flex-start" },
+  msgRight:  { justifyContent: "flex-end" },
+  msgAvatar: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, marginRight: 8 },
+  msgBubble: { maxWidth: "82%", borderRadius: 14, padding: 11, borderWidth: 2 },
+  msgCompName:{ fontSize: 10, fontWeight: "900", marginBottom: 4, letterSpacing: 0.4 },
+  msgText:   { fontSize: 14, lineHeight: 19, fontWeight: "600" },
+  msgTime:   { fontSize: 10, fontWeight: "700", marginTop: 5 },
+  loadWrap:  { flexDirection: "row", alignItems: "center", gap: 8, padding: spacing.sm },
+  loadText:  { fontSize: 12, color: colors.silver, fontWeight: "700" },
+  inputBar:  { flexDirection: "row", alignItems: "center", paddingHorizontal: spacing.md, paddingVertical: 10, borderTopWidth: 2, borderTopColor: colors.cloudGray, gap: 10, backgroundColor: "#ffffff" },
+  input:     { flex: 1, borderWidth: 2, borderRadius: radius.pill, paddingHorizontal: 16, paddingVertical: 11, fontSize: 14, color: colors.almostBlack, borderColor: colors.cloudGray, backgroundColor: colors.bgSecondary },
+  sendBtn:   { width: 46, height: 46, borderRadius: 23, justifyContent: "center", alignItems: "center" },
+  sendIcon:  { color: "#fff", fontSize: 16, fontWeight: "900" },
 });
 
 export default MultiChatScreen;

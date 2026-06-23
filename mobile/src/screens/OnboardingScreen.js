@@ -1,235 +1,94 @@
 import React, { useRef, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  Animated,
-  TouchableOpacity,
-  Image,
-  StatusBar,
-  Platform,
-} from "react-native";
+import { View, Text, StyleSheet, Dimensions, Animated, TouchableOpacity, Image, StatusBar, Platform } from "react-native";
+import { colors, borderRadius } from "../theme/tokens";
 
 const { width, height } = Dimensions.get("window");
 
 const PAGES = [
-  {
-    key: "welcome",
-    icon: "🎨",
-    companion: "art",
-    title: "Bienvenue sur Viral Stick",
-    subtitle: "Générateur IA Multimodal",
-    description:
-      "Transformez vos textes, voix et images en mèmes et stickers virals avec nos 7 compagnons IA uniques.",
-  },
-  {
-    key: "context",
-    icon: "📝",
-    companion: "art",
-    title: "Context Reader",
-    subtitle: "Texte → Mème",
-    description:
-      "Collez un extrait de discussion et laissez l'IA générer le mème parfait adapté à votre culture.",
-  },
-  {
-    key: "voice",
-    icon: "🎤",
-    companion: "ubu",
-    title: "Voice to Meme",
-    subtitle: "Voix → Mème",
-    description:
-      "Parlez et notre IA transformera vos mots en mèmes hilarants en temps réel.",
-  },
-  {
-    key: "remix",
-    icon: "🖼️",
-    companion: "bio",
-    title: "Status Remixer",
-    subtitle: "Image → Mème",
-    description:
-      "Importez une image et laissez Bio créer un remix visuel unique.",
-  },
-  {
-    key: "chat",
-    icon: "💬",
-    companion: "data",
-    title: "Companion Chat",
-    subtitle: "Discutez avec l'IA",
-    description:
-      "Échangez avec nos 7 compagnons IA pour des conversations personnalisées et divertissantes.",
-  },
-  {
-    key: "ready",
-    icon: "🚀",
-    companion: "arch",
-    title: "Prêt à commencer ?",
-    subtitle: "L'aventure commence",
-    description:
-      "Explorez toutes les fonctionnalités et créez du contenu viral dès maintenant !",
-  },
+  { key: "welcome", icon: "🎨", companion: "art",  title: "Bienvenue sur Viral Stick", subtitle: "Studio IA de mèmes", desc: "Transformez textes, voix et images en mèmes viraux avec vos 7 compagnons IA." },
+  { key: "context", icon: "📝", companion: "art",  title: "Context Reader", subtitle: "Texte → Mème", desc: "Collez un extrait de discussion — l'IA génère le mème adapté à votre culture." },
+  { key: "voice",   icon: "🎤", companion: "ubu",  title: "Voice to Meme", subtitle: "Voix → Mème", desc: "Parlez et l'IA transforme vos mots en mèmes hilarants en temps réel." },
+  { key: "remix",   icon: "🖼️", companion: "bio",  title: "Status Remixer", subtitle: "Image → Mème", desc: "Importez une image et laissez Bio créer un remix visuel unique." },
+  { key: "chat",    icon: "💬", companion: "data", title: "Companion Chat", subtitle: "Discutez avec l'IA", desc: "Échangez avec 7 compagnons spécialisés pour des conversations créatives." },
+  { key: "ready",   icon: "🚀", companion: "arch", title: "Prêt à commencer ?", subtitle: "L'aventure commence", desc: "Explorez toutes les fonctionnalités et créez du contenu viral dès maintenant !" },
 ];
 
-const COMPANION_IMAGES = {
+const IMGS = {
   arch: require("../../assets/companions/arch_sans_fond.png"),
-  art: require("../../assets/companions/art_sans_fond.png"),
-  bio: require("../../assets/companions/bio_sans_fond.png"),
+  art:  require("../../assets/companions/art_sans_fond.png"),
+  bio:  require("../../assets/companions/bio_sans_fond.png"),
   data: require("../../assets/companions/data_sans_fond.png"),
   para: require("../../assets/companions/para_sans_fond.png"),
   secu: require("../../assets/companions/secu_sans_fond.png"),
-  ubu: require("../../assets/companions/ubu_sans_fond.png"),
+  ubu:  require("../../assets/companions/ubu_sans_fond.png"),
 };
 
 const OnboardingScreen = ({ onFinish }) => {
   const scrollX = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [idx, setIdx] = useState(0);
 
-  const handleScroll = Animated.event(
-    [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-    { useNativeDriver: false },
-  );
-
-  const handleMomentumEnd = (e) => {
-    const idx = Math.round(e.nativeEvent.contentOffset.x / width);
-    setCurrentIndex(idx);
-  };
+  const handleScroll = Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: false });
 
   const goNext = () => {
-    if (currentIndex < PAGES.length - 1) {
-      const next = currentIndex + 1;
+    if (idx < PAGES.length - 1) {
+      const next = idx + 1;
       scrollRef.current?.scrollTo({ x: next * width, animated: true });
-      setCurrentIndex(next);
-    } else {
-      onFinish();
-    }
+      setIdx(next);
+    } else { onFinish(); }
   };
-
-  const goSkip = () => {
-    onFinish();
-  };
-
-  const isLast = currentIndex === PAGES.length - 1;
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0A0A1A" />
+    <View style={styles.root}>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
-      {/* Skip button */}
-      <TouchableOpacity
-        onPress={goSkip}
-        style={styles.skipBtn}
-        activeOpacity={0.7}
-      >
+      <TouchableOpacity onPress={onFinish} style={styles.skip}>
         <Text style={styles.skipText}>Passer</Text>
       </TouchableOpacity>
 
-      {/* Pages */}
       <Animated.ScrollView
-        ref={scrollRef}
-        horizontal
-        pagingEnabled
+        ref={scrollRef} horizontal pagingEnabled
         showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        onMomentumScrollEnd={handleMomentumEnd}
-        scrollEventThrottle={16}
-        bounces={false}
+        onScroll={handleScroll} onMomentumScrollEnd={(e) => setIdx(Math.round(e.nativeEvent.contentOffset.x / width))}
+        scrollEventThrottle={16} bounces={false}
       >
-        {PAGES.map((page, index) => {
-          const inputRange = [
-            (index - 1) * width,
-            index * width,
-            (index + 1) * width,
-          ];
-
-          const scale = scrollX.interpolate({
-            inputRange,
-            outputRange: [0.6, 1, 0.6],
-          });
-          const opacity = scrollX.interpolate({
-            inputRange,
-            outputRange: [0.3, 1, 0.3],
-          });
-
+        {PAGES.map((page, i) => {
+          const inputRange = [(i - 1) * width, i * width, (i + 1) * width];
+          const scale   = scrollX.interpolate({ inputRange, outputRange: [0.7, 1, 0.7], extrapolate: "clamp" });
+          const opacity = scrollX.interpolate({ inputRange, outputRange: [0.3, 1, 0.3], extrapolate: "clamp" });
+          const col = colors[page.companion] || colors.duoGreen;
           return (
             <View key={page.key} style={styles.page}>
-              <Animated.View
-                style={[
-                  styles.illustration,
-                  { opacity, transform: [{ scale }] },
-                ]}
-              >
-                <View style={styles.glowCircle}>
-                  <Image
-                    source={COMPANION_IMAGES[page.companion]}
-                    style={styles.companionImage}
-                    resizeMode="contain"
-                  />
+              <Animated.View style={[styles.illustration, { opacity, transform: [{ scale }] }]}>
+                <View style={[styles.circle, { backgroundColor: `${col}18`, borderColor: `${col}33` }]}>
+                  <Image source={IMGS[page.companion]} style={styles.companionImg} resizeMode="contain" />
                 </View>
                 <Text style={styles.pageIcon}>{page.icon}</Text>
               </Animated.View>
-
               <Animated.View style={{ opacity }}>
                 <Text style={styles.pageTitle}>{page.title}</Text>
-                <Text style={styles.pageSubtitle}>{page.subtitle}</Text>
-                <Text style={styles.pageDescription}>{page.description}</Text>
+                <Text style={[styles.pageSub, { color: col }]}>{page.subtitle}</Text>
+                <Text style={styles.pageDesc}>{page.desc}</Text>
               </Animated.View>
             </View>
           );
         })}
       </Animated.ScrollView>
 
-      {/* Bottom section */}
-      <View style={styles.bottomSection}>
-        {/* Page dots */}
-        <View style={styles.dotsRow}>
+      <View style={styles.bottom}>
+        <View style={styles.dots}>
           {PAGES.map((_, i) => {
-            const dotWidth = scrollX.interpolate({
-              inputRange: [(i - 1) * width, i * width, (i + 1) * width],
-              outputRange: [8, 28, 8],
-              extrapolate: "clamp",
-            });
-            const dotOpacity = scrollX.interpolate({
-              inputRange: [(i - 1) * width, i * width, (i + 1) * width],
-              outputRange: [0.3, 1, 0.3],
-              extrapolate: "clamp",
-            });
-            return (
-              <Animated.View
-                key={i}
-                style={[
-                  styles.dot,
-                  {
-                    width: dotWidth,
-                    opacity: dotOpacity,
-                    backgroundColor:
-                      i === currentIndex ? "#7C3AED" : "rgba(255,255,255,0.2)",
-                  },
-                ]}
-              />
-            );
+            const w = scrollX.interpolate({ inputRange: [(i-1)*width, i*width, (i+1)*width], outputRange: [8, 26, 8], extrapolate: "clamp" });
+            const op = scrollX.interpolate({ inputRange: [(i-1)*width, i*width, (i+1)*width], outputRange: [0.35, 1, 0.35], extrapolate: "clamp" });
+            return <Animated.View key={i} style={[styles.dot, { width: w, opacity: op, backgroundColor: i === idx ? colors.duoGreen : colors.cloudGray }]} />;
           })}
         </View>
-
-        {/* Next / Get Started */}
-        <TouchableOpacity
-          onPress={goNext}
-          style={styles.nextBtn}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.nextText}>
-            {isLast ? "Commencer 🚀" : "Suivant"}
-          </Text>
+        <TouchableOpacity onPress={goNext} style={styles.nextBtn} activeOpacity={0.85}>
+          <Text style={styles.nextText}>{idx === PAGES.length - 1 ? "Commencer 🚀" : "Suivant"}</Text>
         </TouchableOpacity>
-
-        {/* Login hint */}
-        {isLast && (
-          <TouchableOpacity
-            onPress={goSkip}
-            style={styles.loginHint}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.loginHintText}>Se connecter plus tard</Text>
+        {idx === PAGES.length - 1 && (
+          <TouchableOpacity onPress={onFinish} style={styles.laterBtn}>
+            <Text style={styles.laterText}>Se connecter plus tard</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -238,132 +97,24 @@ const OnboardingScreen = ({ onFinish }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0A0A1A",
-  },
-  skipBtn: {
-    position: "absolute",
-    top: 60,
-    right: 20,
-    zIndex: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.15)",
-  },
-  skipText: {
-    color: "rgba(255,255,255,0.5)",
-    fontSize: 13,
-    fontWeight: "600",
-    letterSpacing: 0.5,
-  },
-  page: {
-    width,
-    paddingHorizontal: 32,
-    paddingTop: height * 0.12,
-    alignItems: "center",
-  },
-  illustration: {
-    width: width * 0.7,
-    height: width * 0.7,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 40,
-  },
-  glowCircle: {
-    width: width * 0.8,
-    height: width * 0.8,
-    borderRadius: width * 0.4,
-    backgroundColor: "rgba(124, 58, 237, 0.12)",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(124, 58, 237, 0.2)",
-  },
-  companionImage: {
-    width: width * 0.6,
-    height: width * 0.6,
-  },
-  pageIcon: {
-    position: "absolute",
-    bottom: 10,
-    right: 10,
-    fontSize: 40,
-  },
-  pageTitle: {
-    color: "#F3F4F6",
-    fontSize: 28,
-    fontWeight: "900",
-    textAlign: "center",
-    marginBottom: 6,
-    letterSpacing: -0.5,
-  },
-  pageSubtitle: {
-    color: "#A78BFA",
-    fontSize: 14,
-    fontWeight: "600",
-    textAlign: "center",
-    marginBottom: 16,
-    letterSpacing: 0.5,
-  },
-  pageDescription: {
-    color: "rgba(255,255,255,0.55)",
-    fontSize: 15,
-    lineHeight: 24,
-    textAlign: "center",
-    paddingHorizontal: 10,
-  },
-  bottomSection: {
-    position: "absolute",
-    bottom: 60,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    gap: 20,
-  },
-  dotsRow: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-    height: 12,
-  },
-  dot: {
-    height: 8,
-    borderRadius: 4,
-  },
-  nextBtn: {
-    backgroundColor: "#7C3AED",
-    paddingHorizontal: 48,
-    paddingVertical: 16,
-    borderRadius: 30,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#7C3AED",
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.4,
-        shadowRadius: 16,
-      },
-      android: {
-        elevation: 12,
-      },
-    }),
-  },
-  nextText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-  },
-  loginHint: {
-    marginTop: 4,
-  },
-  loginHintText: {
-    color: "rgba(255,255,255,0.3)",
-    fontSize: 13,
-    fontWeight: "500",
-  },
+  root:        { flex: 1, backgroundColor: "#ffffff" },
+  skip:        { position: "absolute", top: 60, right: 20, zIndex: 10, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 2, borderColor: colors.cloudGray },
+  skipText:    { fontSize: 13, fontWeight: "700", color: colors.silver },
+  page:        { width, paddingHorizontal: 32, paddingTop: height * 0.1, alignItems: "center" },
+  illustration:{ width: width * 0.68, height: width * 0.68, alignItems: "center", justifyContent: "center", marginBottom: 36 },
+  circle:      { width: width * 0.72, height: width * 0.72, borderRadius: width * 0.36, borderWidth: 3, alignItems: "center", justifyContent: "center" },
+  companionImg:{ width: width * 0.52, height: width * 0.52 },
+  pageIcon:    { position: "absolute", bottom: 8, right: 8, fontSize: 36 },
+  pageTitle:   { color: colors.almostBlack, fontSize: 26, fontWeight: "900", textAlign: "center", marginBottom: 6, letterSpacing: -0.5 },
+  pageSub:     { fontSize: 14, fontWeight: "800", textAlign: "center", marginBottom: 14, letterSpacing: 0.3 },
+  pageDesc:    { color: colors.graphite, fontSize: 15, lineHeight: 23, textAlign: "center", paddingHorizontal: 8, fontWeight: "600" },
+  bottom:      { position: "absolute", bottom: 56, left: 0, right: 0, alignItems: "center", gap: 18 },
+  dots:        { flexDirection: "row", gap: 7, alignItems: "center", height: 12 },
+  dot:         { height: 8, borderRadius: 4 },
+  nextBtn:     { backgroundColor: colors.duoGreen, paddingHorizontal: 46, paddingVertical: 15, borderRadius: 30, shadowColor: colors.duoGreenDark, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 0, elevation: 4 },
+  nextText:    { color: "#ffffff", fontSize: 16, fontWeight: "800", letterSpacing: 0.3 },
+  laterBtn:    { marginTop: 2 },
+  laterText:   { color: colors.silver, fontSize: 13, fontWeight: "600" },
 });
 
 export default OnboardingScreen;

@@ -37,9 +37,9 @@ const SplashScreen = ({ onFinish }) => {
 const styles = StyleSheet.create({
   root:    { flex: 1, backgroundColor: "#ffffff", alignItems: "center", justifyContent: "center" },
   logoWrap:{ marginBottom: 28 },
-  circle:  { width: 130, height: 130, borderRadius: 65, backgroundColor: colors.duoGreenLight, borderWidth: 3, borderColor: `${colors.duoGreen}44`, alignItems: "center", justifyContent: "center" },
+  circle:  { width: 130, height: 130, borderRadius: 65, backgroundColor: colors.duoBlueLight, borderWidth: 3, borderColor: `${colors.duoBlue}44`, alignItems: "center", justifyContent: "center" },
   logo:    { width: 90, height: 90 },
-  title:   { fontSize: 36, fontWeight: "900", color: colors.duoGreen, letterSpacing: 1, marginBottom: 8 },
+  title:   { fontSize: 36, fontWeight: "900", color: colors.duoBlue, letterSpacing: 1, marginBottom: 8 },
   tag:     { fontSize: 15, fontWeight: "700", color: colors.silver, letterSpacing: 0.5, marginBottom: 0 },
   footer:  { position: "absolute", bottom: 48, fontSize: 11, fontWeight: "800", color: colors.silver, letterSpacing: 2, textTransform: "uppercase" },
 });

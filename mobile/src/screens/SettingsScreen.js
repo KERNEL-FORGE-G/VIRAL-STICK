@@ -1,233 +1,111 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  SafeAreaView,
-  Animated,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-} from "react-native";
-import { useTheme, spacing, radius, typography, createShadow } from "../theme";
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, Animated, TouchableOpacity, TextInput, Alert, StatusBar } from "react-native";
+import { spacing, radius } from "../theme";
+import { colors } from "../theme/tokens";
 import GlassCard from "../components/GlassCard";
 import AnimatedButton from "../components/AnimatedButton";
 import CompanionAvatar from "../components/CompanionAvatar";
 
 const PROVIDERS = [
-  {
-    key: "gemini",
-    label: "Gemini",
-    desc: "Provider principal pour le texte et potentiellement l’image",
-    color: "#7C3AED",
-  },
-  {
-    key: "mistral",
-    label: "Mistral",
-    desc: "Fallback texte pour maintenir la génération",
-    color: "#06B6D4",
-  },
-  {
-    key: "deepseek",
-    label: "DeepSeek",
-    desc: "Deuxième fallback texte pour la continuité de service",
-    color: "#84CC16",
-  },
+  { key: "gemini",   label: "Gemini",   emoji: "💎", color: "#7C3AED", desc: "Provider principal — texte et image." },
+  { key: "mistral",  label: "Mistral",  emoji: "🌊", color: "#06B6D4", desc: "Fallback texte — garantit la génération." },
+  { key: "deepseek", label: "DeepSeek", emoji: "🔍", color: colors.duoGreen, desc: "Deuxième fallback texte." },
 ];
 
 const SettingsScreen = ({ navigate }) => {
-  const { theme } = useTheme();
-  const [geminiKey, setGeminiKey] = useState("");
-  const [mistralKey, setMistralKey] = useState("");
-  const [deepseekKey, setDeepseekKey] = useState("");
-  const [showSecret, setShowSecret] = useState(false);
-  const [status, setStatus] = useState("");
-  const contentAnim = useRef(new Animated.Value(0)).current;
+  const [gemini, setGemini]     = useState("");
+  const [mistral, setMistral]   = useState("");
+  const [deepseek, setDeepseek] = useState("");
+  const [show, setShow]         = useState(false);
+  const [status, setStatus]     = useState("");
+  const anim                    = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.spring(contentAnim, {
-      toValue: 1,
-      tension: 60,
-      friction: 8,
-      useNativeDriver: true,
-    }).start();
-  }, [contentAnim]);
+    Animated.spring(anim, { toValue: 1, tension: 60, friction: 8, useNativeDriver: true }).start();
+  }, [anim]);
 
-  const saveKeys = () => {
-    if (!geminiKey.trim() && !mistralKey.trim() && !deepseekKey.trim()) {
-      Alert.alert(
-        "Viral Stick",
-        "Entre au moins une clé API avant d'enregistrer.",
-      );
-      return;
+  const save = () => {
+    if (!gemini.trim() && !mistral.trim() && !deepseek.trim()) {
+      Alert.alert("Viral Stick", "Entre au moins une clé API avant d'enregistrer."); return;
     }
-    setStatus("Clés enregistrées localement pour la session (simulation UI).");
+    setStatus("✅ Clés enregistrées pour cette session.");
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        <Animated.View
-          style={{
-            opacity: contentAnim,
-            transform: [
-              {
-                translateY: contentAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [-24, 0],
-                }),
-              },
-            ],
-          }}
-        >
-          <GlassCard animate style={styles.heroCard}>
-            <View style={styles.heroTop}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.screenTag, { color: theme.textMuted }]}>
-                  PARAMÈTRES IA
-                </Text>
-                <Text style={[styles.title, { color: theme.textPrimary }]}>
-                  Con
-                  <Text style={{ color: theme.secondaryLight }}>
-                    figuration
-                  </Text>
-                </Text>
-                <Text style={[styles.heroDesc, { color: theme.textSecondary }]}>
-                  Ici, l’interface se comporte comme une vraie console produit :
-                  présence de marque, hiérarchie claire et rappel du rôle de
-                  chaque provider.
-                </Text>
-              </View>
-              <View style={styles.logoShell}>
-                <ImageLogo />
-              </View>
-            </View>
-            <View style={{ marginTop: spacing.md, alignItems: "center" }}>
-              <CompanionAvatar
-                companion="para"
-                size={108}
-                floating
-                message="Je garde les réglages lisibles, propres et prêts pour l’exploitation."
-              />
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <Animated.View style={{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0,1], outputRange: [-20,0] }) }] }}>
+
+          {/* Hero */}
+          <GlassCard animate style={styles.hero}>
+            <View style={styles.badge}><Text style={styles.badgeText}>PARAMÈTRES IA</Text></View>
+            <Text style={styles.title}>Configu<Text style={{ color: colors.para }}>ration</Text></Text>
+            <Text style={styles.sub}>Gère les clés API pour activer les moteurs d'intelligence artificielle.</Text>
+            <View style={{ alignItems: "center", marginTop: spacing.md }}>
+              <CompanionAvatar companion="para" size={88} floating message="Je garde les réglages clairs et prêts pour l'exploitation." />
             </View>
           </GlassCard>
 
-          <GlassCard animate delay={120} style={{ marginTop: spacing.md }}>
-            <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>
-              🧠 Providers actifs
-            </Text>
-            {PROVIDERS.map((provider) => (
-              <View
-                key={provider.key}
-                style={[
-                  styles.providerRow,
-                  {
-                    borderColor: `${provider.color}55`,
-                    backgroundColor: `${provider.color}12`,
-                  },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.providerDot,
-                    { backgroundColor: provider.color },
-                  ]}
-                />
+          {/* Providers actifs */}
+          <GlassCard animate delay={100} style={styles.card}>
+            <Text style={styles.sectionTitle}>🧠 Providers actifs</Text>
+            {PROVIDERS.map((p) => (
+              <View key={p.key} style={[styles.providerRow, { backgroundColor: `${p.color}10`, borderColor: `${p.color}33` }]}>
+                <View style={[styles.providerDot, { backgroundColor: p.color }]} />
+                <Text style={styles.providerEmoji}>{p.emoji}</Text>
                 <View style={{ flex: 1 }}>
-                  <Text
-                    style={[styles.providerName, { color: theme.textPrimary }]}
-                  >
-                    {provider.label}
-                  </Text>
-                  <Text
-                    style={[styles.providerDesc, { color: theme.textMuted }]}
-                  >
-                    {provider.desc}
-                  </Text>
+                  <Text style={styles.providerName}>{p.label}</Text>
+                  <Text style={styles.providerDesc}>{p.desc}</Text>
                 </View>
               </View>
             ))}
           </GlassCard>
 
-          <GlassCard animate delay={220} style={{ marginTop: spacing.md }}>
-            <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>
-              🔑 Clés API
-            </Text>
+          {/* Clés API */}
+          <GlassCard animate delay={200} style={styles.card}>
+            <View style={styles.keyHeader}>
+              <Text style={styles.sectionTitle}>🔑 Clés API</Text>
+              <TouchableOpacity
+                onPress={() => setShow((v) => !v)}
+                style={styles.toggleBtn}
+              >
+                <Text style={styles.toggleText}>{show ? "🙈 Masquer" : "👁️ Afficher"}</Text>
+              </TouchableOpacity>
+            </View>
+
             {[
-              ["Gemini API Key", geminiKey, setGeminiKey, "AIza..."],
-              ["Mistral API Key", mistralKey, setMistralKey, "mistral-..."],
-              ["DeepSeek API Key", deepseekKey, setDeepseekKey, "sk-..."],
-            ].map(([label, value, setter, placeholder]) => (
-              <View key={label} style={{ marginBottom: 14 }}>
-                <Text
-                  style={[styles.fieldLabel, { color: theme.textSecondary }]}
-                >
-                  {label}
-                </Text>
+              ["Gemini API Key", gemini, setGemini, "AIza..."],
+              ["Mistral API Key", mistral, setMistral, "mistral-..."],
+              ["DeepSeek API Key", deepseek, setDeepseek, "sk-..."],
+            ].map(([label, value, setter, ph]) => (
+              <View key={label} style={{ marginBottom: 16 }}>
+                <Text style={styles.fieldLabel}>{label}</Text>
                 <TextInput
-                  style={[
-                    styles.apiInput,
-                    {
-                      color: theme.textPrimary,
-                      borderColor: theme.border,
-                      backgroundColor: theme.backgroundSecondary,
-                    },
-                  ]}
-                  value={value}
-                  onChangeText={setter}
-                  placeholder={placeholder}
-                  placeholderTextColor={theme.textMuted}
-                  secureTextEntry={!showSecret}
-                  autoCapitalize="none"
-                  autoCorrect={false}
+                  style={styles.input} value={value} onChangeText={setter}
+                  placeholder={ph} placeholderTextColor={colors.silver}
+                  secureTextEntry={!show} autoCapitalize="none" autoCorrect={false}
                 />
               </View>
             ))}
-            <TouchableOpacity
-              onPress={() => setShowSecret((v) => !v)}
-              style={[
-                styles.toggleBtn,
-                {
-                  borderColor: theme.border,
-                  backgroundColor: theme.backgroundCard,
-                },
-              ]}
-            >
-              <Text style={{ color: theme.textPrimary, fontWeight: "700" }}>
-                {showSecret ? "Masquer les clés" : "Afficher les clés"}
-              </Text>
-            </TouchableOpacity>
-            <AnimatedButton
-              title="Enregistrer les clés"
-              onPress={saveKeys}
-              size="md"
-              style={{ marginTop: spacing.md }}
-            />
-            <Text style={[styles.status, { color: theme.textMuted }]}>
-              {status ||
-                "Les clés sont gérées localement côté UI. La sécurisation serveur doit être faite côté backend."}
-            </Text>
+
+            {!!status && (
+              <View style={[styles.statusBox, { backgroundColor: colors.duoGreenLight, borderColor: `${colors.duoGreen}44` }]}>
+                <Text style={[styles.statusText, { color: colors.duoGreenDark }]}>{status}</Text>
+              </View>
+            )}
+
+            <AnimatedButton title="Enregistrer les clés" onPress={save} size="lg" style={{ marginTop: spacing.sm }} />
           </GlassCard>
 
-          <GlassCard animate delay={320} style={{ marginTop: spacing.md }}>
-            <TouchableOpacity
-              onPress={() => navigate && navigate("About")}
-              style={styles.aboutRow}
-              activeOpacity={0.8}
-            >
+          {/* Lien à propos */}
+          <GlassCard animate delay={300} style={styles.card}>
+            <TouchableOpacity onPress={() => navigate?.("About")} activeOpacity={0.8} style={styles.aboutRow}>
               <View>
-                <Text style={[styles.aboutLabel, { color: theme.textPrimary }]}>
-                  ℹ️ À propos du produit
-                </Text>
-                <Text style={[styles.aboutDesc, { color: theme.textMuted }]}>
-                  Identité, stack, positionnement et vision
-                </Text>
+                <Text style={styles.aboutLabel}>ℹ️ À propos du produit</Text>
+                <Text style={styles.aboutDesc}>Identité, stack, équipe et vision.</Text>
               </View>
-              <Text style={[styles.arrow, { color: theme.primary }]}>›</Text>
+              <Text style={[styles.arrow, { color: colors.skyBlue }]}>›</Text>
             </TouchableOpacity>
           </GlassCard>
 
@@ -238,99 +116,32 @@ const SettingsScreen = ({ navigate }) => {
   );
 };
 
-const ImageLogo = () => {
-  const { theme } = useTheme();
-  return (
-    <View
-      style={{
-        width: 160,
-        height: 160,
-        borderRadius: 28,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "rgba(255,255,255,0.06)",
-        ...createShadow(theme.primary, 18),
-      }}
-    >
-      <Animated.Image
-        source={require("../../assets/logo/logo_sans_fond.png")}
-        style={{ width: 128, height: 128 }}
-        resizeMode="contain"
-      />
-    </View>
-  );
-};
-
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  scroll: { paddingHorizontal: spacing.md, paddingTop: 82 },
-  heroCard: { padding: spacing.lg },
-  heroTop: { flexDirection: "row", gap: spacing.md, alignItems: "center" },
-  logoShell: { justifyContent: "center", alignItems: "center" },
-  screenTag: {
-    fontSize: typography.fontSize.xs,
-    letterSpacing: 2,
-    textTransform: "uppercase",
-    fontWeight: "800",
-  },
-  title: {
-    fontSize: typography.fontSize.xxxl,
-    fontWeight: "900",
-    letterSpacing: -1,
-  },
-  heroDesc: { fontSize: typography.fontSize.sm, lineHeight: 22, marginTop: 8 },
-  sectionTitle: {
-    fontSize: typography.fontSize.lg,
-    fontWeight: "800",
-    marginBottom: spacing.md,
-  },
-  providerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    padding: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    marginBottom: spacing.sm,
-  },
-  providerDot: { width: 12, height: 12, borderRadius: 6 },
-  providerName: { fontSize: typography.fontSize.md, fontWeight: "800" },
-  providerDesc: {
-    fontSize: typography.fontSize.xs,
-    marginTop: 3,
-    lineHeight: 18,
-  },
-  fieldLabel: {
-    fontSize: typography.fontSize.sm,
-    fontWeight: "700",
-    marginBottom: 8,
-  },
-  apiInput: {
-    borderWidth: 1.5,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    fontSize: typography.fontSize.sm,
-  },
-  toggleBtn: {
-    borderWidth: 1,
-    borderRadius: radius.md,
-    paddingVertical: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  status: {
-    fontSize: typography.fontSize.xs,
-    lineHeight: 18,
-    marginTop: spacing.md,
-  },
-  aboutRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  aboutLabel: { fontSize: typography.fontSize.md, fontWeight: "800" },
-  aboutDesc: { fontSize: typography.fontSize.xs, marginTop: 4 },
-  arrow: { fontSize: 28, fontWeight: "300" },
+  safe:        { flex: 1, backgroundColor: "#ffffff" },
+  scroll:      { paddingHorizontal: spacing.md, paddingTop: 80 },
+  hero:        { padding: spacing.lg, marginBottom: spacing.md },
+  badge:       { backgroundColor: colors.duoGreenLight, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4, alignSelf: "flex-start", marginBottom: 10 },
+  badgeText:   { fontSize: 10, fontWeight: "800", color: colors.duoGreenDark, letterSpacing: 1 },
+  title:       { fontSize: 32, fontWeight: "900", color: colors.almostBlack, letterSpacing: -0.5 },
+  sub:         { fontSize: 14, color: colors.graphite, marginTop: 6, lineHeight: 20 },
+  card:        { marginBottom: spacing.md },
+  sectionTitle:{ fontSize: 18, fontWeight: "800", color: colors.almostBlack, marginBottom: spacing.md },
+  providerRow: { flexDirection: "row", alignItems: "center", gap: 10, padding: 14, borderRadius: radius.md, borderWidth: 2, marginBottom: 8 },
+  providerDot: { width: 10, height: 10, borderRadius: 5 },
+  providerEmoji:{ fontSize: 18 },
+  providerName:{ fontSize: 15, fontWeight: "800", color: colors.almostBlack },
+  providerDesc:{ fontSize: 12, color: colors.silver, marginTop: 2, lineHeight: 16 },
+  keyHeader:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.md },
+  toggleBtn:   { borderWidth: 2, borderColor: colors.cloudGray, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: colors.bgSecondary },
+  toggleText:  { fontSize: 13, fontWeight: "700", color: colors.charcoal },
+  fieldLabel:  { fontSize: 14, fontWeight: "800", color: colors.charcoal, marginBottom: 8 },
+  input:       { borderWidth: 2, borderColor: colors.cloudGray, borderRadius: radius.md, padding: spacing.md, fontSize: 14, color: colors.almostBlack, backgroundColor: colors.bgSecondary },
+  statusBox:   { borderWidth: 2, borderRadius: radius.md, padding: 12, marginBottom: spacing.sm },
+  statusText:  { fontSize: 14, fontWeight: "700", lineHeight: 19 },
+  aboutRow:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  aboutLabel:  { fontSize: 16, fontWeight: "800", color: colors.almostBlack },
+  aboutDesc:   { fontSize: 13, color: colors.silver, marginTop: 4 },
+  arrow:       { fontSize: 28, fontWeight: "300" },
 });
 
 export default SettingsScreen;

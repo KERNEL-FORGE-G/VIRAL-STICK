@@ -7,21 +7,21 @@ import { colors } from "../theme/tokens";
 
 const VARIANTS = {
   primary: {
-    bg:     colors.duoGreen,
-    shadow: colors.duoGreenDark,
+    bg:     colors.duoBlue,
+    shadow: colors.duoBlueDark,
     color:  "#ffffff",
     border: "transparent",
   },
-  blue: {
-    bg:     colors.skyBlue,
-    shadow: colors.skyBlueDark,
+  green: {
+    bg:     colors.duoGreen,
+    shadow: colors.duoGreenDark,
     color:  "#ffffff",
     border: "transparent",
   },
   ghost: {
     bg:     "#ffffff",
     shadow: "#b5b5b5",
-    color:  colors.skyBlue,
+    color:  colors.duoBlue,
     border: colors.cloudGray,
   },
   danger: {

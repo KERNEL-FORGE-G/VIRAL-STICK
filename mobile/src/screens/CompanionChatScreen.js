@@ -1,460 +1,167 @@
 import React, { useEffect, useRef, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  SafeAreaView,
-  Animated,
-  TouchableOpacity,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  Image,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, StyleSheet, FlatList, SafeAreaView, Animated, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Image, ActivityIndicator, StatusBar } from "react-native";
 import axios from "axios";
-import { useTheme, spacing, radius, typography, createShadow } from "../theme";
+import { spacing, radius } from "../theme";
+import { colors } from "../theme/tokens";
 import GlassCard from "../components/GlassCard";
 import { COMPANIONS, COMPANION_NAMES } from "../components/CompanionAvatar";
 import { apiUrl } from "../config/api";
 
-const COMPANION_LIST = [
+const LIST = [
   { id: "arch", role: "Direction produit" },
   { id: "data", role: "Support & structure" },
   { id: "para", role: "Réglages & onboarding" },
   { id: "secu", role: "Sécurité & vigilance" },
-  { id: "bio", role: "Énergie visuelle" },
-  { id: "ubu", role: "Humour & imprévu" },
-  { id: "art", role: "Direction artistique" },
+  { id: "bio",  role: "Énergie visuelle" },
+  { id: "ubu",  role: "Humour & imprévu" },
+  { id: "art",  role: "Direction artistique" },
 ];
 
-const GREETINGS = {
-  arch: [
-    "Bienvenue dans le studio Viral Stick.",
-    "On va structurer ton idée proprement.",
-  ],
-  data: ["Data en ligne.", "Je peux clarifier, trier et résoudre."],
-  para: [
-    "Para ici.",
-    "On peut remettre de l'ordre dans les réglages ou le parcours.",
-  ],
-  secu: [
-    "Secu active la veille.",
-    "On vérifie que tout tient debout avant d'avancer.",
-  ],
-  bio: ["Bio en scène.", "On va rendre ton contenu plus vivant."],
-  ubu: ["Ubu débarque.", "Si ta demande a du potentiel comique, je le trouve."],
-  art: ["Art est prêt.", "Montre-moi l'idée, je juge le rendu."],
+const FALLBACK = {
+  arch: ["Décision nette : on peut améliorer ça.", "Le produit gagne quand le message est clair."],
+  data: ["Je reformule : distingue le problème, puis l'action.", "On peut rendre ça lisible immédiatement."],
+  para: ["Je te propose l'option la plus simple.", "On peut fluidifier ce parcours."],
+  secu: ["Je vois un point de vigilance à traiter.", "Mieux vaut verrouiller l'essentiel maintenant."],
+  bio:  ["Il manque un peu de relief, mais la base est là.", "On peut injecter plus de rythme visuel."],
+  ubu:  ["Il y a clairement une chute à sortir de ça.", "Avec un angle plus nerveux, ça part."],
+  art:  ["La composition mentale est là, mais il faut plus de contraste.", "Je veux une image plus nette."],
 };
 
-const AUTO_REPLIES = {
-  arch: [
-    "Décision nette : on peut améliorer ça sans le compliquer.",
-    "Le produit gagne quand le message devient plus clair et plus fort.",
-  ],
-  data: [
-    "Je reformule : il faut distinguer le problème, puis l'action.",
-    "On peut rendre ça plus lisible immédiatement.",
-  ],
-  para: [
-    "Je te propose l'option la plus simple d'abord.",
-    "On peut fluidifier ce parcours sans perdre en contrôle.",
-  ],
-  secu: [
-    "Je vois surtout un point de vigilance à traiter avant la suite.",
-    "Mieux vaut verrouiller l'essentiel maintenant.",
-  ],
-  bio: [
-    "Il manque un peu de relief, mais la base a du potentiel.",
-    "On peut injecter plus de rythme visuel dans cette idée.",
-  ],
-  ubu: [
-    "Il y a clairement une chute à sortir de ça.",
-    "C'est presque drôle. Avec un angle plus nerveux, ça part.",
-  ],
-  art: [
-    "La composition mentale est là, mais il faut un meilleur contraste.",
-    "Je veux une image plus nette et une phrase plus iconique.",
-  ],
-};
+const fmt = () => new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
-const COMPANION_COLORS = {
-  arch: "#3B82F6",
-  para: "#22C55E",
-  secu: "#EF4444",
-  data: "#F59E0B",
-  bio: "#A855F7",
-  ubu: "#84CC16",
-  art: "#FB923C",
-};
-
-const PROMPT_SUGGESTIONS = [
-  "Aide-moi à améliorer un prompt mème.",
-  "Quel compagnon est le meilleur pour un visuel ?",
-  "Comment rendre un post plus viral sans le surcharger ?",
-];
-
-const ChatBubble = ({ msg, theme }) => {
+const Bubble = ({ msg, accentColor }) => {
   const anim = useRef(new Animated.Value(0)).current;
-
   useEffect(() => {
-    Animated.spring(anim, {
-      toValue: 1,
-      tension: 80,
-      friction: 8,
-      useNativeDriver: true,
-    }).start();
+    Animated.spring(anim, { toValue: 1, tension: 80, friction: 8, useNativeDriver: true }).start();
   }, [anim]);
-
   const isUser = msg.sender === "user";
-  const companionColor = COMPANION_COLORS[msg.companion] || theme.primary;
-
   return (
-    <Animated.View
-      style={[
-        styles.bubbleRow,
-        isUser ? styles.bubbleRight : styles.bubbleLeft,
-        {
-          opacity: anim,
-          transform: [
-            {
-              scale: anim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0.92, 1],
-              }),
-            },
-          ],
-        },
-      ]}
-    >
+    <Animated.View style={[styles.bubbleRow, isUser ? styles.right : styles.left, { opacity: anim, transform: [{ scale: anim.interpolate({ inputRange: [0,1], outputRange: [0.9,1] }) }] }]}>
       {!isUser && (
-        <Image
-          source={COMPANIONS[msg.companion]}
-          style={[styles.bubbleAvatar, { borderColor: companionColor }]}
-          resizeMode="contain"
-        />
+        <Image source={COMPANIONS[msg.companion]} style={[styles.bubbleAvatar, { borderColor: accentColor }]} resizeMode="contain" />
       )}
-      <View
-        style={[
-          styles.bubble,
-          {
-            backgroundColor: isUser
-              ? `${theme.primary}D9`
-              : theme.backgroundCard,
-            borderColor: isUser ? "transparent" : `${companionColor}99`,
-            alignSelf: isUser ? "flex-end" : "flex-start",
-            borderWidth: isUser ? 0 : 1,
-          },
-        ]}
-      >
+      <View style={[styles.bubble, {
+        backgroundColor: isUser ? colors.duoGreen : "#ffffff",
+        borderColor: isUser ? colors.duoGreen : colors.cloudGray,
+        borderWidth: 2,
+        shadowColor: isUser ? colors.duoGreenDark : "#aaa",
+        shadowOffset: { width: 0, height: isUser ? 3 : 2 },
+        shadowOpacity: 0.3, shadowRadius: 0, elevation: 3,
+      }]}>
         {!isUser && (
-          <Text style={[styles.companionName, { color: companionColor }]}>
-            {COMPANION_NAMES[msg.companion]}
-          </Text>
+          <Text style={[styles.compName, { color: accentColor }]}>{COMPANION_NAMES[msg.companion]}</Text>
         )}
-        <Text
-          style={[
-            styles.bubbleText,
-            { color: isUser ? "#fff" : theme.textPrimary },
-          ]}
-        >
-          {msg.text}
-        </Text>
-        <Text
-          style={[
-            styles.bubbleTime,
-            { color: isUser ? "rgba(255,255,255,0.68)" : theme.textMuted },
-          ]}
-        >
-          {msg.time}
-        </Text>
+        <Text style={[styles.bubbleText, { color: isUser ? "#ffffff" : colors.almostBlack }]}>{msg.text}</Text>
+        <Text style={[styles.bubbleTime, { color: isUser ? "rgba(255,255,255,0.7)" : colors.silver }]}>{msg.time}</Text>
       </View>
     </Animated.View>
   );
 };
 
-const CompanionChatScreen = ({ navigate }) => {
-  const { theme } = useTheme();
-  const [activeCompanion, setActiveCompanion] = useState("arch");
+const CompanionChatScreen = () => {
+  const [active, setActive] = useState("arch");
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
+  const [input, setInput]   = useState("");
   const [loading, setLoading] = useState(false);
-  const flatRef = useRef(null);
+  const flatRef             = useRef(null);
 
   useEffect(() => {
-    const fetchGreeting = async () => {
-      setLoading(true);
-      try {
-        const res = await axios.post(apiUrl("/api/memes/chat/greeting"), {
-          companionId: activeCompanion,
-        });
-        setMessages([
-          {
-            id: `g-${activeCompanion}`,
-            text: res.data.reply,
-            sender: activeCompanion,
-            companion: activeCompanion,
-            time: "maintenant",
-          },
-        ]);
-      } catch {
-        const fallback = (GREETINGS[activeCompanion] || ["Bonjour."]).map(
-          (text, i) => ({
-            id: `${activeCompanion}-${i}`,
-            text,
-            sender: activeCompanion,
-            companion: activeCompanion,
-            time: "maintenant",
-          }),
-        );
-        setMessages(fallback);
-      } finally {
-        setLoading(false);
-      }
-    };
+    setMessages([]); setLoading(true);
+    axios.post(apiUrl("/api/memes/chat/greeting"), { companionId: active })
+      .then((r) => setMessages([{ id: `g-${active}`, text: r.data.reply, sender: active, companion: active, time: fmt() }]))
+      .catch(() => setMessages([{ id: `g-${active}`, text: "Bonjour ! Je suis prêt.", sender: active, companion: active, time: fmt() }]))
+      .finally(() => setLoading(false));
+  }, [active]);
 
-    fetchGreeting();
-  }, [activeCompanion]);
-
-  const sendMessage = async () => {
+  const send = async () => {
     if (!input.trim() || loading) return;
-
-    const now = new Date().toLocaleTimeString("fr-FR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-
-    const currentInput = input.trim();
-    const userMsg = {
-      id: Date.now().toString(),
-      text: currentInput,
-      sender: "user",
-      companion: activeCompanion,
-      time: now,
-    };
-
-    setInput("");
-    setMessages((prev) => [...prev, userMsg]);
-    setLoading(true);
-
+    const txt = input.trim();
+    setMessages((p) => [...p, { id: Date.now().toString(), text: txt, sender: "user", companion: active, time: fmt() }]);
+    setInput(""); setLoading(true);
     try {
-      const history = messages.slice(-6).map((m) => ({
-        role: m.sender === "user" ? "user" : "model",
-        parts: [{ text: m.text }],
-      }));
-
-      const res = await axios.post(apiUrl("/api/memes/chat"), {
-        companionId: activeCompanion,
-        message: currentInput,
-        history,
-      });
-
-      const reply = {
-        id: `${Date.now()}-reply`,
-        text: res.data.reply,
-        sender: activeCompanion,
-        companion: activeCompanion,
-        time: new Date().toLocaleTimeString("fr-FR", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
-      setMessages((prev) => [...prev, reply]);
+      const r = await axios.post(apiUrl("/api/memes/chat"), { companionId: active, message: txt });
+      setMessages((p) => [...p, { id: `${Date.now()}-r`, text: r.data.reply, sender: active, companion: active, time: fmt() }]);
     } catch {
-      const replies = AUTO_REPLIES[activeCompanion] || [
-        "Réessaie dans un instant.",
-      ];
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `${Date.now()}-fallback`,
-          text: replies[Math.floor(Math.random() * replies.length)],
-          sender: activeCompanion,
-          companion: activeCompanion,
-          time: "maintenant",
-        },
-      ]);
+      const f = FALLBACK[active] || ["Réessaie dans un instant."];
+      setMessages((p) => [...p, { id: `${Date.now()}-f`, text: f[Math.floor(Math.random() * f.length)], sender: active, companion: active, time: fmt() }]);
     } finally {
       setLoading(false);
       setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 100);
     }
   };
 
-  const accentColor = COMPANION_COLORS[activeCompanion] || theme.primary;
-  const activeRole = COMPANION_LIST.find((c) => c.id === activeCompanion)?.role;
+  const accent = colors[active] || colors.duoGreen;
+  const info   = LIST.find((c) => c.id === active);
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <View style={styles.page}>
-        <GlassCard style={styles.heroCard}>
-          <View style={styles.heroTop}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.kicker, { color: theme.textMuted }]}>
-                COMPANION CONSOLE
-              </Text>
-              <Text style={[styles.heroTitle, { color: theme.textPrimary }]}>
-                Chat <Text style={{ color: accentColor }}>compagnon</Text>
-              </Text>
-              <Text
-                style={[styles.heroSubtitle, { color: theme.textSecondary }]}
-              >
-                Un interlocuteur dédié selon le besoin : produit, sécurité,
-                humour, visuel ou structure.
-              </Text>
-            </View>
-            <View style={[styles.heroLogo, { shadowColor: accentColor }]}>
-              <Image
-                source={require("../../assets/logo/logo_sans_fond.png")}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-            </View>
-          </View>
-
-          <View style={styles.activeCompanionRow}>
-            <Image
-              source={COMPANIONS[activeCompanion]}
-              style={[styles.activeAvatar, { borderColor: accentColor }]}
-              resizeMode="contain"
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.activeName, { color: accentColor }]}>
-                {COMPANION_NAMES[activeCompanion]}
-              </Text>
-              <Text style={[styles.activeRole, { color: theme.textSecondary }]}>
-                {activeRole}
-              </Text>
-            </View>
-          </View>
-        </GlassCard>
-
+        {/* Sélecteur compagnons */}
         <View style={styles.selectorWrap}>
           <FlatList
-            data={COMPANION_LIST}
-            horizontal
-            keyExtractor={(item) => item.id}
+            data={LIST} horizontal keyExtractor={(i) => i.id}
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.selectorContent}
+            contentContainerStyle={{ gap: 8, paddingHorizontal: spacing.md, paddingBottom: 4 }}
             renderItem={({ item }) => {
-              const active = item.id === activeCompanion;
-              const color = COMPANION_COLORS[item.id] || theme.primary;
+              const isA = item.id === active;
+              const col = colors[item.id] || colors.duoGreen;
               return (
                 <TouchableOpacity
-                  onPress={() => setActiveCompanion(item.id)}
-                  style={[
-                    styles.selectorItem,
-                    {
-                      borderColor: active ? color : theme.border,
-                      backgroundColor: active
-                        ? `${color}18`
-                        : theme.backgroundCard,
-                    },
-                  ]}
+                  onPress={() => setActive(item.id)}
+                  style={[styles.selectorItem, { borderColor: isA ? col : colors.cloudGray, backgroundColor: isA ? `${col}18` : "#ffffff", shadowColor: isA ? col : "#aaa", shadowOffset: { width: 0, height: isA ? 3 : 2 }, shadowOpacity: 0.3, shadowRadius: 0, elevation: isA ? 3 : 2 }]}
                 >
-                  <Image
-                    source={COMPANIONS[item.id]}
-                    style={styles.selectorAvatar}
-                    resizeMode="contain"
-                  />
-                  <Text
-                    style={[
-                      styles.selectorName,
-                      { color: active ? color : theme.textMuted },
-                    ]}
-                  >
-                    {COMPANION_NAMES[item.id]}
-                  </Text>
+                  <Image source={COMPANIONS[item.id]} style={styles.selectorAvatar} resizeMode="contain" />
+                  <Text style={[styles.selectorName, { color: isA ? col : colors.silver }]}>{COMPANION_NAMES[item.id]}</Text>
                 </TouchableOpacity>
               );
             }}
           />
         </View>
 
-        <View style={styles.suggestionsRow}>
-          {PROMPT_SUGGESTIONS.map((item) => (
-            <Text
-              key={item}
-              style={[
-                styles.suggestionChip,
-                { color: theme.textSecondary, borderColor: theme.border },
-              ]}
-              onPress={() => setInput(item)}
-            >
-              {item}
-            </Text>
-          ))}
+        {/* Header compagnon actif */}
+        <View style={[styles.chatHeader, { borderBottomColor: `${accent}44`, backgroundColor: `${accent}0d` }]}>
+          <Image source={COMPANIONS[active]} style={[styles.headerAvatar, { borderColor: accent }]} resizeMode="contain" />
+          <View>
+            <Text style={[styles.headerName, { color: accent }]}>{COMPANION_NAMES[active]}</Text>
+            <Text style={styles.headerRole}>{info?.role}</Text>
+          </View>
+          <View style={[styles.onlineBadge, { backgroundColor: colors.duoGreenLight }]}>
+            <View style={[styles.onlineDot, { backgroundColor: colors.duoGreen }]} />
+            <Text style={styles.onlineText}>En ligne</Text>
+          </View>
         </View>
 
+        {/* Messages */}
         <FlatList
-          ref={flatRef}
-          data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <ChatBubble msg={item} theme={theme} />}
-          contentContainerStyle={styles.chatContent}
+          ref={flatRef} data={messages} keyExtractor={(m) => m.id}
+          renderItem={({ item }) => <Bubble msg={item} accentColor={accent} />}
+          contentContainerStyle={{ padding: spacing.md, gap: 12 }}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={() =>
-            flatRef.current?.scrollToEnd({ animated: true })
-          }
-          ListFooterComponent={
-            loading ? (
-              <View style={styles.loadingBubble}>
-                <ActivityIndicator size="small" color={accentColor} />
-                <Text style={[styles.loadingText, { color: theme.textMuted }]}>
-                  {COMPANION_NAMES[activeCompanion]} prépare sa réponse…
-                </Text>
-              </View>
-            ) : null
-          }
+          onContentSizeChange={() => flatRef.current?.scrollToEnd({ animated: true })}
+          ListFooterComponent={loading ? (
+            <View style={styles.loadingBubble}>
+              <ActivityIndicator size="small" color={accent} />
+              <Text style={[styles.loadingText, { color: accent }]}>{COMPANION_NAMES[active]} répond...</Text>
+            </View>
+          ) : null}
         />
       </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={90}
-      >
-        <View
-          style={[
-            styles.inputBar,
-            {
-              backgroundColor: theme.backgroundCard,
-              borderTopColor: theme.divider,
-            },
-          ]}
-        >
+      {/* Input */}
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} keyboardVerticalOffset={90}>
+        <View style={styles.inputBar}>
           <TextInput
-            style={[
-              styles.input,
-              {
-                color: theme.textPrimary,
-                backgroundColor: theme.backgroundSecondary,
-                borderColor: theme.border,
-              },
-            ]}
-            value={input}
-            onChangeText={setInput}
-            placeholder={`Écrire à ${COMPANION_NAMES[activeCompanion]}...`}
-            placeholderTextColor={theme.textMuted}
-            onSubmitEditing={sendMessage}
-            returnKeyType="send"
-            editable={!loading}
+            style={styles.input} value={input} onChangeText={setInput}
+            placeholder={`Écrire à ${COMPANION_NAMES[active]}…`}
+            placeholderTextColor={colors.silver}
+            onSubmitEditing={send} returnKeyType="send" editable={!loading}
           />
           <TouchableOpacity
-            onPress={sendMessage}
-            disabled={loading}
-            style={[
-              styles.sendBtn,
-              {
-                backgroundColor: loading ? theme.divider : accentColor,
-                ...createShadow(accentColor, 10),
-              },
-            ]}
+            onPress={send} disabled={loading}
+            style={[styles.sendBtn, { backgroundColor: loading ? colors.cloudGray : colors.duoGreen, shadowColor: colors.duoGreenDark, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.35, shadowRadius: 0, elevation: 3 }]}
           >
-            {loading ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text style={styles.sendIcon}>➤</Text>
-            )}
+            {loading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.sendIcon}>➤</Text>}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -463,123 +170,33 @@ const CompanionChatScreen = ({ navigate }) => {
 };
 
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  page: { flex: 1, paddingTop: 70, paddingHorizontal: spacing.md },
-  heroCard: { marginBottom: spacing.md },
-  heroTop: { flexDirection: "row", gap: spacing.md, alignItems: "center" },
-  kicker: {
-    fontSize: typography.fontSize.xs,
-    fontWeight: "800",
-    letterSpacing: 2,
-  },
-  heroTitle: {
-    fontSize: typography.fontSize.xxl,
-    fontWeight: "900",
-    letterSpacing: -0.6,
-  },
-  heroSubtitle: {
-    marginTop: 8,
-    fontSize: typography.fontSize.sm,
-    lineHeight: 21,
-  },
-  heroLogo: {
-    width: 110,
-    height: 110,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  logo: { width: 104, height: 104 },
-  activeCompanionRow: {
-    marginTop: spacing.md,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-  },
-  activeAvatar: { width: 72, height: 72, borderRadius: 36, borderWidth: 1.5 },
-  activeName: { fontSize: typography.fontSize.lg, fontWeight: "900" },
-  activeRole: { marginTop: 4, fontSize: typography.fontSize.sm },
-  selectorWrap: { marginBottom: spacing.sm },
-  selectorContent: { gap: spacing.sm, paddingRight: spacing.md },
-  selectorItem: {
-    width: 92,
-    borderWidth: 1,
-    borderRadius: radius.md,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    alignItems: "center",
-    gap: 6,
-  },
-  selectorAvatar: { width: 44, height: 44 },
-  selectorName: { fontSize: typography.fontSize.xs, fontWeight: "800" },
-  suggestionsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  suggestionChip: {
-    borderWidth: 1,
-    borderRadius: radius.md,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: typography.fontSize.xs,
-    overflow: "hidden",
-  },
-  chatContent: { paddingBottom: spacing.md, gap: spacing.sm },
-  bubbleRow: {
-    flexDirection: "row",
-    marginBottom: spacing.sm,
-    alignItems: "flex-end",
-  },
-  bubbleLeft: { justifyContent: "flex-start" },
-  bubbleRight: { justifyContent: "flex-end" },
-  bubbleAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    marginRight: 8,
-    borderWidth: 1,
-  },
-  bubble: { maxWidth: "82%", borderRadius: radius.md, padding: spacing.md },
-  companionName: {
-    fontSize: typography.fontSize.xs,
-    fontWeight: "900",
-    marginBottom: 6,
-    letterSpacing: 0.6,
-  },
-  bubbleText: { fontSize: typography.fontSize.sm, lineHeight: 20 },
-  bubbleTime: { marginTop: 8, fontSize: 11, fontWeight: "700" },
-  loadingBubble: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-  },
-  loadingText: { fontSize: typography.fontSize.xs },
-  inputBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderTopWidth: 1,
-    gap: spacing.sm,
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: radius.md,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: typography.fontSize.sm,
-  },
-  sendBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  sendIcon: { color: "#fff", fontSize: 18, fontWeight: "900" },
+  safe:         { flex: 1, backgroundColor: "#ffffff" },
+  page:         { flex: 1, paddingTop: 70 },
+  selectorWrap: { paddingVertical: 8, borderBottomWidth: 2, borderBottomColor: colors.cloudGray },
+  selectorItem: { width: 80, borderWidth: 2, borderRadius: radius.md, paddingVertical: 10, paddingHorizontal: 6, alignItems: "center", gap: 6 },
+  selectorAvatar:{ width: 40, height: 40 },
+  selectorName: { fontSize: 11, fontWeight: "800" },
+  chatHeader:   { flexDirection: "row", alignItems: "center", gap: spacing.md, paddingHorizontal: spacing.md, paddingVertical: 12, borderBottomWidth: 2 },
+  headerAvatar: { width: 48, height: 48, borderRadius: 24, borderWidth: 2 },
+  headerName:   { fontSize: 17, fontWeight: "900" },
+  headerRole:   { fontSize: 12, color: colors.silver, fontWeight: "600", marginTop: 2 },
+  onlineBadge:  { marginLeft: "auto", flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
+  onlineDot:    { width: 7, height: 7, borderRadius: 3.5 },
+  onlineText:   { fontSize: 11, fontWeight: "800", color: colors.duoGreenDark },
+  bubbleRow:    { flexDirection: "row", alignItems: "flex-end", marginBottom: 2 },
+  left:         { justifyContent: "flex-start" },
+  right:        { justifyContent: "flex-end" },
+  bubbleAvatar: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, marginRight: 8 },
+  bubble:       { maxWidth: "80%", borderRadius: 16, padding: 12 },
+  compName:     { fontSize: 11, fontWeight: "900", marginBottom: 5, letterSpacing: 0.5 },
+  bubbleText:   { fontSize: 14, lineHeight: 20, fontWeight: "600" },
+  bubbleTime:   { fontSize: 10, fontWeight: "700", marginTop: 6 },
+  loadingBubble:{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 8, paddingHorizontal: spacing.md },
+  loadingText:  { fontSize: 13, fontWeight: "700" },
+  inputBar:     { flexDirection: "row", alignItems: "center", paddingHorizontal: spacing.md, paddingVertical: 10, borderTopWidth: 2, borderTopColor: colors.cloudGray, gap: 10, backgroundColor: "#ffffff" },
+  input:        { flex: 1, borderWidth: 2, borderRadius: radius.pill, paddingHorizontal: 16, paddingVertical: 11, fontSize: 14, color: colors.almostBlack, borderColor: colors.cloudGray, backgroundColor: colors.bgSecondary },
+  sendBtn:      { width: 46, height: 46, borderRadius: 23, justifyContent: "center", alignItems: "center" },
+  sendIcon:     { color: "#fff", fontSize: 16, fontWeight: "900" },
 });
 
 export default CompanionChatScreen;

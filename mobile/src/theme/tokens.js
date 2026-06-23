@@ -1,19 +1,31 @@
-// Viral Stick Mobile — Design Tokens — Style Duolingo
+// Viral Stick Mobile — Design Tokens — Style Duo Blue
 export const colors = {
+  // ── Primary : Bleu Duo ─────────────────────
+  duoBlue:       "#1cb0f6",
+  duoBlueDark:   "#1899d6",
+  duoBlueLight:  "#d0f0fd",
+
+  // ── Success / validation ───────────────────
   duoGreen:      "#58cc02",
   duoGreenDark:  "#3f8f01",
   duoGreenLight: "#d7ffb8",
-  skyBlue:       "#1cb0f6",
+
+  // ── Accents illustration ───────────────────
+  skyBlue:       "#1cb0f6",   // alias
   skyBlueDark:   "#1899d6",
   sunshineYellow:"#ffc700",
   grapeSoda:     "#a570ff",
   bubblegumPink: "#cc348d",
-  snowWhite:     "#ffffff",
-  cloudGray:     "#e5e5e5",
-  silver:        "#afafaf",
-  graphite:      "#777777",
-  charcoal:      "#4b4b4b",
-  almostBlack:   "#3c3c3c",
+
+  // ── Neutrals ──────────────────────────────
+  snowWhite:   "#ffffff",
+  cloudGray:   "#e5e5e5",
+  silver:      "#afafaf",
+  graphite:    "#777777",
+  charcoal:    "#4b4b4b",
+  almostBlack: "#3c3c3c",
+
+  // ── Semantic ──────────────────────────────
   bg:            "#ffffff",
   bgSecondary:   "#f7f7f7",
   border:        "#e5e5e5",
@@ -23,8 +35,15 @@ export const colors = {
   success:       "#58cc02",
   warning:       "#ffc700",
   danger:        "#ee2a2a",
-  arch: "#58cc02", art: "#ffc700", bio: "#a570ff",
-  data: "#1cb0f6", para: "#ff9600", secu: "#cc348d", ubu: "#ce82ff",
+
+  // ── Compagnons ────────────────────────────
+  arch: "#1cb0f6",   // bleu
+  art:  "#ffc700",   // jaune
+  bio:  "#a570ff",   // violet
+  data: "#58cc02",   // vert
+  para: "#ff9600",   // orange
+  secu: "#cc348d",   // rose
+  ubu:  "#ce82ff",   // lavande
 };
 
 export const spacing = {
@@ -37,5 +56,5 @@ export const borderRadius = {
 
 export const shadows = {
   card: { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
-  btn:  { shadowColor: "#3f8f01", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 0, elevation: 0 },
+  btn:  { shadowColor: "#1899d6", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 0, elevation: 0 },
 };
