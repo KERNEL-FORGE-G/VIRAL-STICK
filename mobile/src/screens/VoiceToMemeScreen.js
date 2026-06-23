@@ -148,7 +148,7 @@ const VoiceToMemeScreen = ({ navigate }) => {
     setMeme(null);
     setCompanionMsg('🤖 Ubu transforme tes paroles en légende épique...');
     try {
-      const res = await axios.post('http://10.0.2.2:3000/api/memes/voice-to-meme', {
+      const res = await axios.post('https://viral-stick.vercel.app/api/memes/voice-to-meme', {
         transcription: transcription,
       });
       setMeme(res.data);

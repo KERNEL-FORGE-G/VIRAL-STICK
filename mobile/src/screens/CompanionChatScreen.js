@@ -25,7 +25,7 @@ import axios from 'axios';
 import { useTheme, spacing, radius, typography, createShadow } from '../theme';
 import { COMPANIONS, COMPANION_NAMES } from '../components/CompanionAvatar';
 
-const API_BASE = 'http://10.0.2.2:3000'; // Android emulator → localhost
+const API_BASE = 'https://viral-stick.vercel.app';
 
 const COMPANION_LIST = [
   { id: 'arch', role: 'PDG & Admin système' },

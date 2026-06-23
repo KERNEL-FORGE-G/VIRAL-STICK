@@ -25,7 +25,7 @@ import GlassCard from '../components/GlassCard';
 import AnimatedButton from '../components/AnimatedButton';
 import CompanionAvatar from '../components/CompanionAvatar';
 
-const API_BASE = 'http://10.0.2.2:3000'; // Android emulator → localhost
+const API_BASE = 'https://viral-stick.vercel.app';
 
 const ART_MESSAGES = [
   '🎨 Donne-moi un contexte et je crée la légende !',

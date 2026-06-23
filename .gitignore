@@ -9,7 +9,11 @@ build/
 .next/
 out/
 android/app/build/
+android/.gradle/
 ios/build/
+
+# Android local config
+local.properties
 
 # Environment files
 .env

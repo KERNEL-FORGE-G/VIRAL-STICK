@@ -94,7 +94,7 @@ const HomeScreen = ({ navigate }) => {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle={theme.isDark ? 'light-content' : 'dark-content'} translucent />
+      <StatusBar barStyle="light-content" translucent />
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -110,7 +110,7 @@ const HomeScreen = ({ navigate }) => {
             <Text style={[styles.greeting, { color: theme.textMuted }]}>Bienvenue sur</Text>
             <Text style={[styles.title, { color: theme.textPrimary }]}>
               Viral{' '}
-              <Text style={{ color: theme.primaryLight }}>Stick</Text>
+              <Text style={{ color: theme.textAccent }}>Stick</Text>
             </Text>
             <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
               Générateur IA Multimodal

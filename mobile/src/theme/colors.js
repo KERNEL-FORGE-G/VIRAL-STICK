@@ -1,69 +1,43 @@
 /**
- * General Intelligence Company — Design System Colors
- * Adapted for Viral Stick React Native App
+ * Viral Stick — Design System Colors
+ * Unified for Mobile and Web
  */
 
 export const colors = {
-  hudsonBlue: '#0081c0',
-  slateCyan: '#41a1cf',
-  graphiteNight: '#282834',
-  ink: '#171717',
-  carbon: '#2c2c2c',
-  iron: '#444141',
-  steel: '#646464',
-  fog: '#b4b8b4',
-  ash: '#a5afaf',
-  mist: '#cfd3cf',
-  sage: '#dee2de',
-  cream: '#fefffc',
-  linen: '#f9faf7',
-  paper: '#ffffff',
-  obsidian: '#1f1f29',
+  primary: '#7c3aed',
+  primaryLight: '#a78bfa',
+  primaryDark: '#5b21b6',
+  secondary: '#3b82f6',
+  accent1: '#06b6d4',
+  accent2: '#f59e0b',
+  accent3: '#ef4444',
+  bg: '#0a0a1a',
+  bgCard: 'rgba(255, 255, 255, 0.04)',
+  bgCardHover: 'rgba(255, 255, 255, 0.08)',
+  text: '#f3f4f6',
+  textSecondary: 'rgba(255, 255, 255, 0.6)',
+  textMuted: 'rgba(255, 255, 255, 0.35)',
+  border: 'rgba(255, 255, 255, 0.08)',
 };
 
-export const lightTheme = {
+export const theme = {
   // Surfaces & Backgrounds
-  background: colors.cream,
-  backgroundCard: colors.paper,
-  glassBackground: 'rgba(255, 255, 255, 0.6)',
-  glassBorder: colors.sage,
-
+  background: colors.bg,
+  backgroundCard: colors.bgCard,
+  backgroundSecondary: 'rgba(255, 255, 255, 0.08)', // Add this
+  
   // Text
-  textPrimary: colors.ink,
-  textSecondary: colors.carbon,
-  textMuted: colors.steel,
-  textAccent: colors.hudsonBlue,
-
+  textPrimary: colors.text,
+  textSecondary: colors.textSecondary,
+  textMuted: colors.textMuted,
+  textAccent: colors.primaryLight,
+  primaryLight: colors.primaryLight, // Add this
+  
   // Accents / Actions
-  primaryAction: colors.obsidian, // Primary button fill
-  secondaryAction: colors.slateCyan, // Outlined borders
-  accent: colors.hudsonBlue,
+  primaryAction: colors.primary,
+  secondaryAction: colors.secondary,
+  primary: colors.primary, // Add this for consistency
 
   // Borders
-  border: colors.sage,
-  divider: colors.fog,
-
-  // Shadow
-  shadowColor: colors.ink,
-  
-  isDark: false,
-};
-
-// Dark theme is kept as a minimal fallback, adapted to maintain the GIC style
-export const darkTheme = {
-  background: colors.graphiteNight,
-  backgroundCard: colors.obsidian,
-  glassBackground: 'rgba(40, 40, 52, 0.7)',
-  glassBorder: colors.iron,
-  textPrimary: colors.paper,
-  textSecondary: colors.mist,
-  textMuted: colors.steel,
-  textAccent: colors.slateCyan,
-  primaryAction: colors.paper,
-  secondaryAction: colors.slateCyan,
-  accent: colors.hudsonBlue,
-  border: colors.iron,
-  divider: colors.iron,
-  shadowColor: '#000000',
-  isDark: true,
+  border: colors.border,
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
+import { generateMemeFromText } from "./api";
 
 const FEATURES = [
   {
@@ -46,6 +47,22 @@ const COMPANIONS = [
 
 function App() {
   const [scrolled, setScrolled] = useState(false);
+  const [text, setText] = useState("");
+  const [meme, setMeme] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleGenerate = async () => {
+    if (!text.trim()) return;
+    setLoading(true);
+    try {
+      const result = await generateMemeFromText(text);
+      setMeme(result);
+    } catch (error) {
+      alert("Erreur lors de la génération");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -182,6 +199,30 @@ function App() {
         </div>
       </section>
 
+      {/* ── Test Section ───────────────────────────── */}
+      <section id="test" style={{ padding: '60px 24px', textAlign: 'center' }}>
+        <h2 className="section-title">Test la génération (Web)</h2>
+        <div style={{ maxWidth: '500px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <textarea 
+            value={text} 
+            onChange={(e) => setText(e.target.value)} 
+            placeholder="Entre ton texte ici..."
+            style={{ width: '100%', height: '100px', padding: '15px', borderRadius: '10px' }}
+          />
+          <button onClick={handleGenerate} disabled={loading} className="btn-primary">
+            {loading ? "Génération..." : "Générer"}
+          </button>
+          {meme && (
+            <div style={{ marginTop: '20px', padding: '20px', background: '#222', borderRadius: '10px' }}>
+              <h3>Mème:</h3>
+              <p>{meme.topText}</p>
+              <p>{meme.bottomText}</p>
+              <p><em>{meme.companionComment}</em></p>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* ── CTA ─────────────────────────────────────── */}
       <section className="cta">
         <div className="cta-glow" />
@@ -191,7 +232,7 @@ function App() {
         </p>
         <div className="cta-actions">
           <a
-            href="https://github.com/Archlord12345/VIRAL-STICK"
+            href="https://github.com/KERNEL-FORGE-G/VIRAL-STICK.git"
             target="_blank"
             rel="noreferrer"
             className="btn-primary"
