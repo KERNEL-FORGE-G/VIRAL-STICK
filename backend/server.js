@@ -10,7 +10,8 @@ app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true, limit: "20mb" }));
 
 // Routes
-app.use("/api/memes", require("./routes/memeRoutes"));
+app.use('/api/memes', require('./routes/memeRoutes'));
+app.use('/api/context-reader', require('./routes/contextReader'));
 
 if (process.env.NODE_ENV === "development") {
   app.post("/api/debug/update-keys", (req, res) => {
@@ -38,36 +39,25 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "OK" });
 });
 
-app.get("/debug", (req, res) => {
-  const envStatus = {
-    GEMINI_API_KEY: !!process.env.GEMINI_API_KEY,
-    MISTRAL_API_KEY: !!process.env.MISTRAL_API_KEY,
-    DEEPSEEK_API_KEY: !!process.env.DEEPSEEK_API_KEY,
-    OPENROUTER_API_KEY: !!process.env.OPENROUTER_API_KEY,
-    HUGGING_FACE_KEY: !!(process.env.HUGGING_FACE_KEY || process.env.HF_TOKEN),
-    NODE_ENV: process.env.NODE_ENV,
-    PORT: process.env.PORT,
-  };
-  let depsStatus = {};
-  try {
-    require.resolve("axios");
-    depsStatus.axios = true;
-  } catch (e) {
-    depsStatus.axios = false;
-  }
-  try {
-    require.resolve("@mistralai/mistralai");
-    depsStatus.mistral = true;
-  } catch (e) {
-    depsStatus.mistral = false;
-  }
-  res.json({ env: envStatus, deps: depsStatus });
+// Route 404 generique pour les endpoints inconnus
+app.use((req, res) => {
+  res.status(404).json({ error: 'Endpoint introuvable' });
 });
 
-if (process.env.NODE_ENV !== "production") {
-  app.listen(PORT, () => {
-    console.log(`Serveur Viral Stick en écoute sur le port ${PORT}`);
-  });
-}
+// Gestionnaire d'erreurs centralise — garantit du JSON, jamais de page HTML
+// (utile pour Multer notamment : Voice-to-Meme et Status Remixer en dependent)
+app.use((err, req, res, next) => {
+  console.error('[errorHandler]', err.message);
 
-module.exports = app;
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ error: 'Fichier trop volumineux.' });
+  }
+  if (err.message && err.message.includes('non supporte')) {
+    return res.status(400).json({ error: err.message });
+  }
+  return res.status(500).json({ error: 'Erreur interne du serveur.' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Serveur Viral Stick en écoute sur le port ${PORT}`);
+});
