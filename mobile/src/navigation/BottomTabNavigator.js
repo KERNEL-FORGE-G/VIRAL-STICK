@@ -9,7 +9,7 @@ const TAB_ITEMS = [
   { key: "ContextReader",  label: "Context",   icon: "📖", accent: colors.art },
   { key: "VoiceToMeme",    label: "Voice",     icon: "🎙️", accent: colors.duoGreen },
   { key: "StatusRemixer",  label: "Remix",     icon: "🎨", accent: colors.bio },
-  { key: "CompanionChat",  label: "Chat",      icon: "💬", accent: colors.data },
+  { key: "Menu",           label: "Menu",      icon: "☰",  accent: colors.silver },
 ];
 
 const BottomTabNavigator = ({ children, currentScreen, onNavigate }) => {

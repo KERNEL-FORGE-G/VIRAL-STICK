@@ -9,10 +9,10 @@
 import { Platform } from "react-native";
 
 // ──────────────────────────────────────────────
-// Mets à true si tu veux forcer le backend local
-// même quand l'app est buildée en mode release.
+// Mets à true pour forcer le backend de production
+// même en mode développement local.
 // ──────────────────────────────────────────────
-const FORCE_LOCAL = false;
+const USE_PROD_IN_DEV = true;
 
 const PRODUCTION_URL = "https://viral-stick.vercel.app";
 
@@ -28,7 +28,9 @@ const LOCAL_URL =
  * @returns {string}
  */
 export function apiUrl(path = "") {
-  const base = __DEV__ || FORCE_LOCAL ? LOCAL_URL : PRODUCTION_URL;
+  const isDev = __DEV__;
+  const base = (isDev && !USE_PROD_IN_DEV) ? LOCAL_URL : PRODUCTION_URL;
+
   // Évite les doubles slashes
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
   return `${base}${cleanPath}`;

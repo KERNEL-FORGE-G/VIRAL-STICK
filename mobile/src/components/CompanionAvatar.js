@@ -42,8 +42,9 @@ const CompanionAvatar = ({
   const [showBubble, setShowBubble] = useState(!!message);
 
   useEffect(() => {
+    let loop;
     if (floating) {
-      Animated.loop(
+      loop = Animated.loop(
         Animated.sequence([
           Animated.timing(floatAnim, {
             toValue: -8,
@@ -56,7 +57,8 @@ const CompanionAvatar = ({
             useNativeDriver: true,
           }),
         ]),
-      ).start();
+      );
+      loop.start();
     }
 
     Animated.spring(scaleAnim, {
@@ -65,6 +67,10 @@ const CompanionAvatar = ({
       friction: 7,
       useNativeDriver: true,
     }).start();
+
+    return () => {
+      if (loop) loop.stop();
+    };
   }, [floating, floatAnim, scaleAnim]);
 
   useEffect(() => {

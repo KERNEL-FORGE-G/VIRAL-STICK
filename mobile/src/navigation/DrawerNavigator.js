@@ -26,19 +26,19 @@ const DrawerNavigator = ({ children, currentScreen, onNavigate }) => {
 
   const openDrawer = () => {
     setIsOpen(true);
-    // Animations natives (transform)
+    // Animations non-natives pour éviter le conflit sur le même View
     Animated.parallel([
-      Animated.timing(translateX, { toValue: DW,  duration: 300, useNativeDriver: true }),
-      Animated.timing(scale,      { toValue: 0.92, duration: 300, useNativeDriver: true }),
+      Animated.timing(translateX, { toValue: DW,  duration: 300, useNativeDriver: false }),
+      Animated.timing(scale,      { toValue: 0.92, duration: 300, useNativeDriver: false }),
     ]).start();
-    // borderRadius séparé (ne supporte pas nativeDriver)
+    // borderRadius ne supporte pas nativeDriver
     Animated.timing(borderR, { toValue: 20, duration: 300, useNativeDriver: false }).start();
   };
 
   const closeDrawer = () => {
     Animated.parallel([
-      Animated.timing(translateX, { toValue: 0, duration: 280, useNativeDriver: true }),
-      Animated.timing(scale,      { toValue: 1, duration: 280, useNativeDriver: true }),
+      Animated.timing(translateX, { toValue: 0, duration: 280, useNativeDriver: false }),
+      Animated.timing(scale,      { toValue: 1, duration: 280, useNativeDriver: false }),
     ]).start(() => setIsOpen(false));
     Animated.timing(borderR, { toValue: 0, duration: 280, useNativeDriver: false }).start();
   };
