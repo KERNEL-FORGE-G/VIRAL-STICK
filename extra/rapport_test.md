@@ -1,6 +1,6 @@
 # raport de test QA - 24 juin 2026
 ## 1.version android  (github actions)
-* **Statut :** ECHEC (Buuild FAILED) rouge
+* **Statut :** ECHEC (Build FAILED) rouge
 * **Erreur constatée :** Le build automatique échoue à l'étape du packaging final.
 * **cause précise :** 'KeytoolException : Failed to read key from store...keystore password was incorrect'. Le mot de passe configuré pour le fichier keystore est incorrect.
 
@@ -25,3 +25,4 @@
 * **Statut :** SUCCES TOTAL VERT
 * **Test effectué :** Envoi d'une question globale via la fonction "broadcast" aux 7 compagnons en meme temps.
 * **Remarque :** Le traitement asynchrone  et simultané est parfait. Les 7 IA répondent toutes en  conversant fidèlement leur ligne directrice, leur personnalité et leur jargon technicque respectif sans aucune collision ni de bug  d'afficharge. le scroll de l'interface suit bien le flux de génération.
+
