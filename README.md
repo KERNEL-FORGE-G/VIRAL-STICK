@@ -36,6 +36,7 @@ cd ../web && npm install
 cd ../mobile && npm install
 ```
 
+
 ## 🔐 Variables d’environnement IA
 
 Le backend lit dynamiquement les variables suivantes :
