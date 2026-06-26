@@ -7,7 +7,8 @@ const ForumController = {
   getMemes: async (req, res) => {
     try {
       if (!db) {
-        return res.status(500).json({ error: "Base de données non initialisée" });
+        console.error("[Forum] Firestore non initialisé (vérifiez FIREBASE_SERVICE_ACCOUNT)");
+        return res.status(200).json([]); // On renvoie une liste vide au lieu d'une erreur 500
       }
 
       const snapshot = await db.collection("memes")
@@ -22,8 +23,9 @@ const ForumController = {
 
       res.json(memes);
     } catch (e) {
-      console.error("[forumController.getMemes]", e);
-      res.status(500).json({ error: "Erreur lors de la récupération du forum" });
+      console.error("[forumController.getMemes] Erreur détaillée:", e.message);
+      // Si l'erreur est liée à un index manquant, Firestore donne un lien dans le message d'erreur
+      res.status(500).json({ error: e.message });
     }
   },
 
@@ -42,7 +44,6 @@ const ForumController = {
         return res.status(404).json({ error: "Mème introuvable" });
       }
 
-      // Utilisation d'un incrément atomique
       const admin = require("firebase-admin");
       await memeRef.update({
         likes: admin.firestore.FieldValue.increment(1)
@@ -50,8 +51,8 @@ const ForumController = {
 
       res.json({ id, success: true });
     } catch (e) {
-      console.error("[forumController.likeMeme]", e);
-      res.status(500).json({ error: "Erreur lors du like" });
+      console.error("[forumController.likeMeme]", e.message);
+      res.status(500).json({ error: e.message });
     }
   }
 };

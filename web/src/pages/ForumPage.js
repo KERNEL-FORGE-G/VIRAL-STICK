@@ -17,9 +17,10 @@ const ForumPage = () => {
     try {
       const res = await fetch("/api/forum/memes");
       const data = await res.json();
-      setMemes(data);
+      setMemes(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error("Erreur forum", e);
+      setMemes([]);
     } finally {
       setLoading(false);
     }
