@@ -83,7 +83,7 @@ const VoiceToMemeScreen = ({ navigate }) => {
   const publishToForum = async () => {
     if (!meme || published) return;
     try {
-      await axios.post(apiUrl("/api/forum/publish"), {
+      const res = await axios.post(apiUrl("/api/forum/publish"), {
         shareId: meme.share?.shareId,
         imageUrl: meme.share?.publicUrl || meme.imageUrl,
         topText: meme.topText,
@@ -92,7 +92,8 @@ const VoiceToMemeScreen = ({ navigate }) => {
       setPublished(true);
       Alert.alert("Succès", "Mème vocal propulsé sur le Forum !");
     } catch (e) {
-      Alert.alert("Erreur", "Impossible de publier sur le forum.");
+      const errorMsg = e.response?.data?.error || e.message;
+      Alert.alert("Erreur publication", errorMsg);
     }
   };
 

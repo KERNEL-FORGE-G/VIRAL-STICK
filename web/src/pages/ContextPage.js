@@ -51,8 +51,16 @@ const ContextPage = () => {
           bottomText: result.bottomText
         }),
       });
-      if (res.ok) setPublished(true);
-    } catch (e) { console.error(e); }
+      if (res.ok) {
+        setPublished(true);
+      } else {
+        const errData = await res.json();
+        alert("Erreur publication: " + (errData.error || res.statusText));
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Erreur réseau lors de la publication");
+    }
   };
 
   return (
