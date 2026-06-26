@@ -2,7 +2,6 @@ import React from "react";
 import PremiumButton from "./PremiumButton";
 import AppIcon from "./AppIcon";
 
-<<<<<<< HEAD
 async function dataUrlToFile(dataUrl, filename = "viral-stick-meme.jpg") {
   const res = await fetch(dataUrl);
   const blob = await res.blob();
@@ -38,12 +37,6 @@ const WhatsAppShareButton = ({
     }
 
     const encoded = encodeURIComponent(shareText || text || url || "");
-=======
-const WhatsAppShareButton = ({ text, url, label = "Partager sur WhatsApp", variant = "secondary", style }) => {
-  const handleShare = () => {
-    const payload = [text, url].filter(Boolean).join("\n\n");
-    const encoded = encodeURIComponent(payload);
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
     window.open(`https://wa.me/?text=${encoded}`, "_blank", "noopener,noreferrer");
   };
 
