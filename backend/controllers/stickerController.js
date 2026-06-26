@@ -197,6 +197,23 @@ const StickerController = {
         bottomText = "",
       } = req.body;
 
+      let effectiveTop = String(topText || "").trim();
+      let effectiveBottom = String(bottomText || "").trim();
+      const instr = String(instruction || "").trim();
+
+      if (instr && !effectiveTop && !effectiveBottom) {
+        const words = instr.split(/\s+/);
+        if (words.length > 8) {
+          const mid = Math.ceil(words.length / 2);
+          effectiveTop = words.slice(0, mid).join(" ");
+          effectiveBottom = words.slice(mid).join(" ");
+        } else {
+          effectiveTop = instr;
+        }
+      } else if (instr && !effectiveTop) {
+        effectiveTop = instr;
+      }
+
       let workingBuffer = files.sticker[0].buffer;
 
       if (files.face && files.face[0]) {
@@ -206,8 +223,11 @@ const StickerController = {
         workingBuffer = faceResult.buffer;
       }
 
-      if (topText || bottomText) {
-        const textResult = await applyMemeText(workingBuffer, { topText, bottomText });
+      if (effectiveTop || effectiveBottom) {
+        const textResult = await applyMemeText(workingBuffer, {
+          topText: effectiveTop,
+          bottomText: effectiveBottom,
+        });
         workingBuffer = textResult.buffer;
       }
 
@@ -225,7 +245,9 @@ const StickerController = {
         width: result.width,
         height: result.height,
         format: outputFormat,
-        instruction: instruction || null,
+        instruction: instr || null,
+        topText: effectiveTop || null,
+        bottomText: effectiveBottom || null,
         provider: result.provider,
         frames: result.frames || null,
       });

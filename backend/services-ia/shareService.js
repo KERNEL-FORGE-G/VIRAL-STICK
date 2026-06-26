@@ -5,6 +5,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const axios = require("axios");
 const { v4: uuid } = require("uuid");
 const { applyMemeText } = require("./providers/sticker");
 
@@ -24,19 +25,30 @@ function dataUrlToBuffer(dataUrl) {
   return { mimeType: match[1], buffer: Buffer.from(match[2], "base64") };
 }
 
-function resolveImageBuffer({ imageUrl, imageBase64 }) {
+async function resolveImageBuffer({ imageUrl, imageBase64 }) {
   if (imageBase64) {
     return { buffer: Buffer.from(imageBase64, "base64"), mimeType: "image/jpeg" };
   }
   if (imageUrl) {
     const parsed = dataUrlToBuffer(imageUrl);
     if (parsed) return parsed;
+
+    const url = String(imageUrl);
+    if (/^https?:\/\//i.test(url)) {
+      try {
+        const res = await axios.get(url, { responseType: "arraybuffer", timeout: 30000 });
+        const mimeType = res.headers["content-type"] || "image/jpeg";
+        return { buffer: Buffer.from(res.data), mimeType };
+      } catch (e) {
+        console.warn("[Share] Impossible de télécharger l'image distante:", e.message);
+      }
+    }
   }
   return null;
 }
 
 async function composeMemeImage({ imageUrl, imageBase64, topText = "", bottomText = "" }) {
-  const resolved = resolveImageBuffer({ imageUrl, imageBase64 });
+  const resolved = await resolveImageBuffer({ imageUrl, imageBase64 });
   if (!resolved) return null;
 
   const top = String(topText || "").trim();

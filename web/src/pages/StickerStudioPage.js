@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import CompanionAvatarWeb from "../components/CompanionAvatarWeb";
 import WebShell from "../components/WebShell";
 import PremiumButton from "../components/PremiumButton";
+import WhatsAppShareButton from "../components/WhatsAppShareButton";
 import { colors, radius } from "../theme/tokens";
 
 const ANIMATIONS = [
@@ -198,11 +199,15 @@ const StickerStudioPage = () => {
         <div className="duo-card" style={{ padding: 24, textAlign: "center" }}>
           <CompanionAvatarWeb companion="art" size={64} />
           <h3 style={{ fontFamily: "'Fredoka One', cursive", margin: "16px 0" }}>Sticker prêt !</h3>
-          <img src={result.dataUrl} alt="Résultat" style={{ maxWidth: 320, borderRadius: radius.lg, border: `2px solid ${colors.cloudGray}` }} />
-          <div style={{ marginTop: 20 }}>
+          <img src={result.dataUrl} alt="Résultat" style={{ maxWidth: "100%", maxHeight: 480, borderRadius: radius.lg, border: `2px solid ${colors.cloudGray}`, objectFit: "contain" }} />
+          <div style={{ marginTop: 20, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <PremiumButton variant="primary" onClick={download}>
               ⬇️ Télécharger {outputFormat.toUpperCase()}
             </PremiumButton>
+            <WhatsAppShareButton
+              imageDataUrl={result.dataUrl}
+              label="Partager sur WhatsApp"
+            />
           </div>
         </div>
       )}

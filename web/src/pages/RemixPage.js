@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import CompanionAvatarWeb from "../components/CompanionAvatarWeb";
 import WebShell from "../components/WebShell";
 import PremiumButton from "../components/PremiumButton";
@@ -20,12 +20,6 @@ const RemixPage = () => {
   const [loading, setLoading]                   = useState(false);
   const [result, setResult]                     = useState(null);
   const [error, setError]                       = useState("");
-
-  const shareText = useMemo(() => {
-    if (result?.share?.text) return result.share.text;
-    if (!result) return remixText;
-    return [result.meme_text, result.companionComment].filter(Boolean).join("\n\n");
-  }, [result, remixText]);
 
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
@@ -187,7 +181,7 @@ const RemixPage = () => {
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             {result?.composedImageUrl || result?.imageUrl ? (
-              <img src={result.composedImageUrl || result.imageUrl} alt="Remix" style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
+              <img src={result.composedImageUrl || result.imageUrl} alt="Remix" style={{ width: "100%", height: "100%", objectFit: "contain", position: "absolute", inset: 0 }} />
             ) : inputImageBase64 ? (
               <img src={inputImageBase64} alt="Source" style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0, opacity: 0.4 }} />
             ) : (
@@ -234,9 +228,8 @@ const RemixPage = () => {
               )}
 
               <WhatsAppShareButton
-                text={shareText}
                 imageDataUrl={result.share?.imageDataUrl || result.composedImageUrl}
-                label="Partager le remix"
+                label="Partager le remix sur WhatsApp"
                 style={{ width: "100%", justifyContent: "center" }}
               />
             </div>

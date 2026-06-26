@@ -171,47 +171,39 @@ const ContextPage = () => {
                 ✅ MÈME GÉNÉRÉ
               </div>
 
-              {/* Aperçu mème */}
+              {/* Aperçu mème — image finale avec texte intégré */}
               <div style={{
                 background: colors.almostBlack, borderRadius: radius.lg,
-                padding: 24, textAlign: "center", marginBottom: 24,
+                padding: 12, textAlign: "center", marginBottom: 24,
               }}>
-                <p style={{
-                  fontFamily: "'Fredoka One', cursive", fontSize: 22,
-                  color: "#ffffff", margin: "0 0 16px",
-                  textTransform: "uppercase", letterSpacing: 1,
-                }}>
-                  {result.topText}
-                </p>
                 <div style={{
-                  width: "100%", aspectRatio: "16/9",
+                  width: "100%", aspectRatio: "1/1",
                   background: "rgba(255,255,255,0.05)", borderRadius: radius.md,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  marginBottom: 16, border: "1px solid rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.1)",
                   overflow: "hidden", position: "relative",
                 }}>
                   {result.composedImageUrl || result.imageUrl ? (
                     <img
                       src={result.composedImageUrl || result.imageUrl}
-                      alt={result.descriptionImage}
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      alt="Mème Viral Stick"
+                      style={{ width: "100%", height: "100%", objectFit: "contain" }}
                     />
                   ) : (
-                    <div style={{ textAlign: "center" }}>
+                    <div style={{ textAlign: "center", padding: 24 }}>
                       <div style={{ fontSize: 48, marginBottom: 8 }}>🎬</div>
-                      <p style={{ fontFamily: "'Nunito', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)", margin: 0, padding: "0 16px" }}>
+                      <p style={{ fontFamily: "'Nunito', sans-serif", fontSize: 15, color: "#ffffff", margin: "0 0 8px", fontWeight: 800 }}>
+                        {result.topText}
+                      </p>
+                      <p style={{ fontFamily: "'Nunito', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)", margin: 0 }}>
                         {result.descriptionImage}
+                      </p>
+                      <p style={{ fontFamily: "'Nunito', sans-serif", fontSize: 15, color: "#ffffff", margin: "8px 0 0", fontWeight: 800 }}>
+                        {result.bottomText}
                       </p>
                     </div>
                   )}
                 </div>
-                <p style={{
-                  fontFamily: "'Fredoka One', cursive", fontSize: 22,
-                  color: "#ffffff", margin: 0,
-                  textTransform: "uppercase", letterSpacing: 1,
-                }}>
-                  {result.bottomText}
-                </p>
               </div>
 
               {/* Détails */}
@@ -233,9 +225,8 @@ const ContextPage = () => {
               </div>
 
               <WhatsAppShareButton
-                text={result.share?.text || `${result.topText}\n${result.bottomText}`}
                 imageDataUrl={result.share?.imageDataUrl || result.composedImageUrl}
-                label="Partager ce mème"
+                label="Partager ce mème sur WhatsApp"
                 style={{ width: "100%", justifyContent: "center" }}
               />
             </div>

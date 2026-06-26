@@ -179,34 +179,85 @@ async function addFaceToSticker(stickerBuffer, faceBuffer, options = {}) {
 
 // ─── Ajoute un texte mème sur une image (topText / bottomText) ────────────────
 
+function escXml(s) {
+  return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function wrapLines(text, maxChars = 24) {
+  const words = String(text || "").toUpperCase().trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  const lines = [];
+  let line = "";
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (test.length > maxChars && line) {
+      lines.push(line);
+      line = word.length > maxChars ? word.slice(0, maxChars) : word;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function computeFontSize(w, lines) {
+  const longest = Math.max(...lines.map((l) => l.length), 8);
+  const lineCount = Math.max(lines.length, 1);
+  const byWidth = Math.round(w * 0.42 / longest);
+  const byHeight = Math.round(w * 0.2 / lineCount);
+  return Math.min(Math.max(byWidth, byHeight, 20), Math.round(w * 0.11), 80);
+}
+
+function buildTextSvg(lines, w, y, fontSize, strokeW) {
+  if (!lines.length) return "";
+  const lineHeight = Math.round(fontSize * 1.18);
+  const tspans = lines
+    .map((line, i) => `<tspan x="50%" dy="${i === 0 ? 0 : lineHeight}">${escXml(line)}</tspan>`)
+    .join("");
+  return `<text x="50%" y="${y}" font-family="Impact, Arial Black, sans-serif"
+    font-size="${fontSize}px" font-weight="900" fill="white"
+    stroke="black" stroke-width="${strokeW}" stroke-linejoin="round"
+    text-anchor="middle" dominant-baseline="hanging"
+    paint-order="stroke fill" letter-spacing="0.5">${tspans}</text>`;
+}
+
 async function applyMemeText(imageBuffer, options = {}) {
   ensureDir();
 
-  const { topText = "", bottomText = "", quality = 90 } = options;
+  const { topText = "", bottomText = "", quality = 92 } = options;
   const info = await sharp(imageBuffer).metadata();
-  const w    = info.width  || 1024;
-  const h    = info.height || 1024;
+  const w = info.width || 1024;
+  const h = info.height || 1024;
 
-  const fontSize = Math.max(Math.round(w * 0.08), 32);
-  const strokeW  = Math.max(Math.round(fontSize * 0.08), 3);
-  const marginT  = Math.round(h * 0.04) + fontSize;
-  const marginB  = h - Math.round(h * 0.04);
+  const pad = Math.round(Math.min(w, h) * 0.05);
+  const topLines = wrapLines(topText, Math.round(w / 28));
+  const bottomLines = wrapLines(bottomText, Math.round(w / 28));
+  const allLines = [...topLines, ...bottomLines];
+  const fontSize = computeFontSize(w, allLines.length ? allLines : ["MEME"]);
+  const strokeW = Math.max(Math.round(fontSize * 0.1), 3);
+  const lineHeight = Math.round(fontSize * 1.18);
 
-  const escXml = (s) =>
-    (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  const topY = pad + fontSize;
+  const bottomBlockHeight = bottomLines.length * lineHeight;
+  const bottomY = h - pad - bottomBlockHeight + fontSize;
 
-  const attrs = (y) =>
-    `x="50%" y="${y}" font-family="Impact, Arial Black, sans-serif"
-     font-size="${fontSize}px" font-weight="900" fill="white"
-     stroke="black" stroke-width="${strokeW}" stroke-linejoin="round"
-     text-anchor="middle" dominant-baseline="auto"
-     paint-order="stroke fill" letter-spacing="1"`;
+  const parts = [];
+  if (topLines.length) parts.push(buildTextSvg(topLines, w, topY, fontSize, strokeW));
+  if (bottomLines.length) parts.push(buildTextSvg(bottomLines, w, bottomY, fontSize, strokeW));
+
+  if (!parts.length) {
+    const base64 = imageBuffer.toString("base64");
+    return {
+      buffer: imageBuffer,
+      base64,
+      dataUrl: `data:image/jpeg;base64,${base64}`,
+      provider: "sharp-meme-text",
+    };
+  }
 
   const svg = Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
-      ${topText    ? `<text ${attrs(marginT)}>${escXml(topText.toUpperCase())}</text>`    : ""}
-      ${bottomText ? `<text ${attrs(marginB)}>${escXml(bottomText.toUpperCase())}</text>` : ""}
-    </svg>`
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">${parts.join("")}</svg>`
   );
 
   const outBuffer = await sharp(imageBuffer)
@@ -215,9 +266,9 @@ async function applyMemeText(imageBuffer, options = {}) {
     .toBuffer();
 
   return {
-    buffer:   outBuffer,
-    base64:   outBuffer.toString("base64"),
-    dataUrl:  `data:image/jpeg;base64,${outBuffer.toString("base64")}`,
+    buffer: outBuffer,
+    base64: outBuffer.toString("base64"),
+    dataUrl: `data:image/jpeg;base64,${outBuffer.toString("base64")}`,
     provider: "sharp-meme-text",
   };
 }

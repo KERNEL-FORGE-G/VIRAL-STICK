@@ -5,28 +5,42 @@ import AppIcon from "./AppIcon";
 async function dataUrlToFile(dataUrl, filename = "viral-stick-meme.jpg") {
   const res = await fetch(dataUrl);
   const blob = await res.blob();
-  const ext = blob.type.includes("png") ? "png" : "jpg";
-  return new File([blob], filename.replace(/\.(jpg|png)$/, `.${ext}`), { type: blob.type || "image/jpeg" });
+  const ext = blob.type.includes("png") ? "png" : blob.type.includes("gif") ? "gif" : "jpg";
+  return new File([blob], filename.replace(/\.(jpg|jpeg|png|gif)$/i, `.${ext}`), {
+    type: blob.type || "image/jpeg",
+  });
+}
+
+function downloadImage(dataUrl, filename = "viral-stick-meme.jpg") {
+  const a = document.createElement("a");
+  a.href = dataUrl;
+  a.download = filename;
+  a.click();
 }
 
 const WhatsAppShareButton = ({
   text,
   url,
   imageDataUrl,
+  imageOnly = true,
   label = "Partager sur WhatsApp",
   variant = "secondary",
   style,
 }) => {
   const handleShare = async () => {
-    const shareText =
-      url && text && !text.includes(url)
-        ? [text, url].filter(Boolean).join("\n\n")
-        : (text || url || "");
+    if (!imageDataUrl) {
+      const encoded = encodeURIComponent([text, url].filter(Boolean).join("\n\n"));
+      window.open(`https://wa.me/?text=${encoded}`, "_blank", "noopener,noreferrer");
+      return;
+    }
 
-    if (imageDataUrl && navigator.share) {
+    if (navigator.share) {
       try {
         const file = await dataUrlToFile(imageDataUrl);
-        const shareData = { title: "Viral Stick", text: text || "", files: [file] };
+        const shareData = imageOnly
+          ? { files: [file] }
+          : { title: "Viral Stick", text: text || "", files: [file] };
+
         if (!navigator.canShare || navigator.canShare(shareData)) {
           await navigator.share(shareData);
           return;
@@ -36,8 +50,8 @@ const WhatsAppShareButton = ({
       }
     }
 
-    const encoded = encodeURIComponent(shareText || text || url || "");
-    window.open(`https://wa.me/?text=${encoded}`, "_blank", "noopener,noreferrer");
+    downloadImage(imageDataUrl);
+    window.open("https://wa.me/", "_blank", "noopener,noreferrer");
   };
 
   return (
