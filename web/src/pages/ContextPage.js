@@ -188,7 +188,6 @@ const ContextPage = () => {
                   background: "rgba(255,255,255,0.05)", borderRadius: radius.md,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   marginBottom: 16, border: "1px solid rgba(255,255,255,0.1)",
-<<<<<<< HEAD
                   overflow: "hidden", position: "relative",
                 }}>
                   {result.composedImageUrl || result.imageUrl ? (
@@ -205,15 +204,6 @@ const ContextPage = () => {
                       </p>
                     </div>
                   )}
-=======
-                }}>
-                  <div style={{ textAlign: "center" }}>
-                    <div style={{ fontSize: 48, marginBottom: 8 }}>🎬</div>
-                    <p style={{ fontFamily: "'Nunito', sans-serif", fontSize: 13, color: "rgba(255,255,255,0.6)", margin: 0, padding: "0 16px" }}>
-                      {result.descriptionImage}
-                    </p>
-                  </div>
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
                 </div>
                 <p style={{
                   fontFamily: "'Fredoka One', cursive", fontSize: 22,
@@ -243,12 +233,8 @@ const ContextPage = () => {
               </div>
 
               <WhatsAppShareButton
-<<<<<<< HEAD
                 text={result.share?.text || `${result.topText}\n${result.bottomText}`}
                 imageDataUrl={result.share?.imageDataUrl || result.composedImageUrl}
-=======
-                text={`${result.topText}\n${result.bottomText}`}
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
                 label="Partager ce mème"
                 style={{ width: "100%", justifyContent: "center" }}
               />

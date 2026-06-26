@@ -14,6 +14,7 @@ const NAV = [
   ["/remix",      "Remixer",         "remix"],
   ["/chat",       "Compagnons",      "chat"],
   ["/multi-chat", "Multi-Hub",       "multiChat"],
+  ["/sticker-studio", "Sticker Studio", "remix"],
   ["/settings",   "Réglages",        "settings"],
   ["/about",      "À propos",        "about"],
 ];

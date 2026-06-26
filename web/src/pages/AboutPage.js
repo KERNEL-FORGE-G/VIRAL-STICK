@@ -19,11 +19,7 @@ const TEAM = [
 const TECH = [
   ["⚛️", "React 18 + React Native 0.75"],
   ["🟢", "Node.js / Express.js"],
-<<<<<<< HEAD
   ["🖥️", "Puter AI"],
-=======
-  ["🤗", "Hugging Face Inference API"],
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
   ["💎", "Google Gemini (fallback)"],
   ["🌊", "Mistral AI (fallback)"],
   ["🎯", "7 compagnons IA personnalisés"],

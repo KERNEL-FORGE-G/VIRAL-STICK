@@ -7,6 +7,7 @@ import ContextPage from "./pages/ContextPage";
 import SettingsPage from "./pages/SettingsPage";
 import AboutPage from "./pages/AboutPage";
 import MultiChatPage from "./pages/MultiChatPage";
+import StickerStudioPage from "./pages/StickerStudioPage";
 import "./App.css";
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/multi-chat" element={<MultiChatPage />} />
+        <Route path="/sticker-studio" element={<StickerStudioPage />} />
       </Routes>
     </Router>
   );

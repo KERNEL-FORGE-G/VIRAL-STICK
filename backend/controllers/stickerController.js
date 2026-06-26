@@ -10,6 +10,7 @@
 
 const { exportSticker, compositeSticker, addFaceToSticker, applyMemeText } =
   require("../services-ia/providers/sticker");
+const { createAnimatedGif, optimizeGif } = require("../services-ia/providers/gif");
 
 const StickerController = {
 
@@ -135,6 +136,104 @@ const StickerController = {
   // ── Texte mème sur image ───────────────────────────────────────────────────
   // Entrée  : champ "image" + body { topText, bottomText }
   // Sortie  : JPEG avec texte Impact overlay
+
+  // ── Export GIF animé ───────────────────────────────────────────────────────
+  // Entrée : champ "image" (PNG/JPEG/GIF) + body { animation, frames, size }
+  // Sortie : GIF animé en base64
+
+  exportGif: async (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "Champ 'image' requis" });
+
+      const {
+        animation = "bounce",
+        frames = "12",
+        size = "512",
+        delay = "80",
+      } = req.body;
+
+      const opts = {
+        animation,
+        frames: Math.min(Math.max(parseInt(frames) || 12, 4), 30),
+        size: Math.min(Math.max(parseInt(size) || 512, 128), 1024),
+        delay: Math.min(Math.max(parseInt(delay) || 80, 40), 500),
+      };
+
+      const isGif = req.file.mimetype === "image/gif";
+      const result = isGif
+        ? await optimizeGif(req.file.buffer, opts)
+        : await createAnimatedGif(req.file.buffer, opts);
+
+      res.status(200).json({
+        message: "GIF généré",
+        dataUrl: result.dataUrl,
+        base64: result.base64,
+        width: result.width,
+        height: result.height,
+        frames: result.frames,
+        animation: result.animation || animation,
+        provider: result.provider,
+      });
+    } catch (e) {
+      console.error("[stickerController.exportGif]", e);
+      res.status(500).json({ error: "Erreur lors de la génération GIF", details: e.message });
+    }
+  },
+
+  // ── Studio complet : face swap + export PNG ou GIF ─────────────────────────
+
+  studio: async (req, res) => {
+    try {
+      const files = req.files || {};
+      if (!files.sticker || !files.sticker[0]) {
+        return res.status(400).json({ error: "Champ 'sticker' requis" });
+      }
+
+      const {
+        instruction = "",
+        outputFormat = "png",
+        animation = "bounce",
+        topText = "",
+        bottomText = "",
+      } = req.body;
+
+      let workingBuffer = files.sticker[0].buffer;
+
+      if (files.face && files.face[0]) {
+        const faceResult = await addFaceToSticker(workingBuffer, files.face[0].buffer, {
+          outputSize: 512,
+        });
+        workingBuffer = faceResult.buffer;
+      }
+
+      if (topText || bottomText) {
+        const textResult = await applyMemeText(workingBuffer, { topText, bottomText });
+        workingBuffer = textResult.buffer;
+      }
+
+      let result;
+      if (outputFormat === "gif") {
+        result = await createAnimatedGif(workingBuffer, { animation, size: 512 });
+      } else {
+        result = await exportSticker(workingBuffer, { size: 512 });
+      }
+
+      res.status(200).json({
+        message: "Sticker studio terminé",
+        dataUrl: result.dataUrl,
+        base64: result.base64,
+        width: result.width,
+        height: result.height,
+        format: outputFormat,
+        instruction: instruction || null,
+        provider: result.provider,
+        frames: result.frames || null,
+      });
+    } catch (e) {
+      console.error("[stickerController.studio]", e);
+      res.status(500).json({ error: "Erreur studio sticker", details: e.message });
+    }
+  },
 
   addMemeText: async (req, res) => {
     try {

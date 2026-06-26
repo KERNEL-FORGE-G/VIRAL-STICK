@@ -1,10 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, Animated, Linking, Image, StatusBar } from "react-native";
 import { spacing, radius } from "../theme";
-<<<<<<< HEAD
-=======
-import { rs, wp } from "../theme/responsive";
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
 import { colors } from "../theme/tokens";
 import GlassCard from "../components/GlassCard";
 import AnimatedButton from "../components/AnimatedButton";
@@ -16,11 +12,7 @@ const PILLARS = [
   { emoji: "🚀", title: "Contenu viral",     text: "Chaque outil produit du contenu prêt à poster, adapté à ta culture.", color: colors.duoGreen },
 ];
 
-<<<<<<< HEAD
 const TECH = ["React Native 0.75", "Node.js / Express", "Puter AI", "Google Gemini", "Mistral AI", "7 compagnons IA"];
-=======
-const TECH = ["React Native 0.75", "Node.js / Express", "Hugging Face API", "Google Gemini", "Mistral AI", "7 compagnons IA"];
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
 
 const TEAM = [
   { name: "Ravel", role: "Lead Technique", companion: "arch", github: "@Archlord12345" },
@@ -125,7 +117,6 @@ const AboutScreen = () => {
 
 const styles = StyleSheet.create({
   safe:        { flex: 1, backgroundColor: "#ffffff" },
-<<<<<<< HEAD
   scroll:      { paddingHorizontal: spacing.md, paddingTop: 80 },
   hero:        { padding: spacing.lg, marginBottom: spacing.md },
   heroTop:     { flexDirection: "row", gap: spacing.md, alignItems: "center" },
@@ -151,33 +142,6 @@ const styles = StyleSheet.create({
   footer:      { alignItems: "center", paddingVertical: spacing.xl, gap: 4 },
   footerMain:  { fontSize: 13, fontWeight: "800", color: colors.silver, letterSpacing: 1 },
   footerSub:   { fontSize: 11, color: colors.silver },
-=======
-  scroll:      { paddingHorizontal: spacing.md, paddingTop: spacing.md },
-  hero:        { padding: spacing.lg, marginBottom: spacing.md },
-  heroTop:     { flexDirection: "row", gap: spacing.md, alignItems: "center" },
-  badge:       { backgroundColor: colors.snowWhite, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4, alignSelf: "flex-start", marginBottom: 10, borderWidth: 1, borderColor: `${colors.duoGreen}33` },
-  badgeText:   { fontSize: rs(10), fontWeight: "800", color: colors.duoGreenDark, letterSpacing: 1 },
-  title:       { fontSize: rs(32), fontWeight: "900", color: colors.almostBlack, letterSpacing: -0.5 },
-  sub:         { fontSize: rs(13), color: colors.charcoal, marginTop: 6, lineHeight: rs(19) },
-  logo:        { width: wp(20), height: wp(20) },
-  card:        { marginBottom: spacing.md },
-  sectionTitle:{ fontSize: rs(18), fontWeight: "800", color: colors.almostBlack, marginBottom: spacing.md },
-  pillar:      { flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 14, borderRadius: radius.md, borderWidth: 2, marginBottom: 8 },
-  pillarEmoji: { fontSize: rs(22), marginTop: 1 },
-  pillarTitle: { fontSize: rs(15), fontWeight: "800", marginBottom: 4 },
-  pillarText:  { fontSize: rs(13), color: colors.graphite, lineHeight: rs(18) },
-  techGrid:    { gap: 8 },
-  techItem:    { flexDirection: "row", alignItems: "center", gap: 10, padding: 12, backgroundColor: colors.bgSecondary, borderRadius: radius.md, borderWidth: 2, borderColor: colors.cloudGray },
-  techCheck:   { fontSize: rs(14) },
-  techLabel:   { fontSize: rs(14), fontWeight: "700", color: colors.charcoal },
-  teamRow:     { flexDirection: "row", alignItems: "center", gap: spacing.md, paddingVertical: spacing.sm, borderBottomWidth: 2, borderBottomColor: colors.cloudGray, marginBottom: spacing.sm },
-  teamName:    { fontSize: rs(16), fontWeight: "800", color: colors.almostBlack },
-  teamRole:    { fontSize: rs(13), color: colors.silver, marginTop: 2 },
-  teamGithub:  { fontSize: rs(13), fontWeight: "800", marginTop: 3 },
-  footer:      { alignItems: "center", paddingVertical: spacing.xl, gap: 4 },
-  footerMain:  { fontSize: rs(13), fontWeight: "800", color: colors.silver, letterSpacing: 1 },
-  footerSub:   { fontSize: rs(11), color: colors.silver },
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
 });
 
 export default AboutScreen;

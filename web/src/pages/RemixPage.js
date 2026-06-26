@@ -22,10 +22,7 @@ const RemixPage = () => {
   const [error, setError]                       = useState("");
 
   const shareText = useMemo(() => {
-<<<<<<< HEAD
     if (result?.share?.text) return result.share.text;
-=======
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
     if (!result) return remixText;
     return [result.meme_text, result.companionComment].filter(Boolean).join("\n\n");
   }, [result, remixText]);
@@ -189,13 +186,8 @@ const RemixPage = () => {
             marginBottom: 24,
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
-<<<<<<< HEAD
             {result?.composedImageUrl || result?.imageUrl ? (
               <img src={result.composedImageUrl || result.imageUrl} alt="Remix" style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
-=======
-            {result?.imageUrl ? (
-              <img src={result.imageUrl} alt="Remix" style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
             ) : inputImageBase64 ? (
               <img src={inputImageBase64} alt="Source" style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0, opacity: 0.4 }} />
             ) : (
@@ -243,10 +235,7 @@ const RemixPage = () => {
 
               <WhatsAppShareButton
                 text={shareText}
-<<<<<<< HEAD
                 imageDataUrl={result.share?.imageDataUrl || result.composedImageUrl}
-=======
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
                 label="Partager le remix"
                 style={{ width: "100%", justifyContent: "center" }}
               />

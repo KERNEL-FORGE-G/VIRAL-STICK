@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { key: "ContextReader",  label: "Context Reader",  icon: "📖",  accent: colors.art },
   { key: "VoiceToMeme",   label: "Voice → Mème",    icon: "🎙️",  accent: colors.duoGreen },
   { key: "StatusRemixer",  label: "Status Remixer",  icon: "🎨",  accent: colors.bio },
+  { key: "StickerStudio",  label: "Sticker Studio",  icon: "🧩",  accent: colors.art },
   { key: "CompanionChat",  label: "Compagnons",      icon: "💬",  accent: colors.data },
   { key: "MultiChat",      label: "Multi-Chat",      icon: "👥",  accent: colors.para },
   { key: "Settings",       label: "Paramètres",      icon: "⚙️",  accent: colors.silver },
@@ -26,33 +27,19 @@ const DrawerNavigator = ({ children, currentScreen, onNavigate }) => {
 
   const openDrawer = () => {
     setIsOpen(true);
-<<<<<<< HEAD
     // Animations natives (transform)
     Animated.parallel([
       Animated.timing(translateX, { toValue: DW,  duration: 300, useNativeDriver: true }),
       Animated.timing(scale,      { toValue: 0.92, duration: 300, useNativeDriver: true }),
     ]).start();
     // borderRadius séparé (ne supporte pas nativeDriver)
-=======
-    // Animations non-natives pour éviter le conflit sur le même View
-    Animated.parallel([
-      Animated.timing(translateX, { toValue: DW,  duration: 300, useNativeDriver: false }),
-      Animated.timing(scale,      { toValue: 0.92, duration: 300, useNativeDriver: false }),
-    ]).start();
-    // borderRadius ne supporte pas nativeDriver
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
     Animated.timing(borderR, { toValue: 20, duration: 300, useNativeDriver: false }).start();
   };
 
   const closeDrawer = () => {
     Animated.parallel([
-<<<<<<< HEAD
       Animated.timing(translateX, { toValue: 0, duration: 280, useNativeDriver: true }),
       Animated.timing(scale,      { toValue: 1, duration: 280, useNativeDriver: true }),
-=======
-      Animated.timing(translateX, { toValue: 0, duration: 280, useNativeDriver: false }),
-      Animated.timing(scale,      { toValue: 1, duration: 280, useNativeDriver: false }),
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
     ]).start(() => setIsOpen(false));
     Animated.timing(borderR, { toValue: 0, duration: 280, useNativeDriver: false }).start();
   };

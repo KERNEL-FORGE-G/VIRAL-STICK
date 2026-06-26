@@ -1,15 +1,10 @@
-<<<<<<< HEAD
 import React, { useState, useEffect } from "react";
-=======
-import React, { useState } from "react";
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
 import CompanionAvatarWeb from "../components/CompanionAvatarWeb";
 import WebShell from "../components/WebShell";
 import PremiumButton from "../components/PremiumButton";
 import { colors, radius } from "../theme/tokens";
 
 const API_FIELDS = [
-<<<<<<< HEAD
   { key: "GEMINI_API_KEY",     label: "Google Gemini",   helper: "Primaire texte/mème — Gemini 2.5 Flash (quota généreux, fortement recommandé).", emoji: "💎" },
   { key: "GROQ_API_KEY",       label: "Groq Whisper",    helper: "Primaire audio — Whisper large-v3 gratuit et ultra-rapide. Obtenir sur console.groq.com", emoji: "🎙️" },
   { key: "MISTRAL_API_KEY",    label: "Mistral AI",      helper: "Fallback texte 1 — très bon en français.",                                          emoji: "🌊" },
@@ -42,19 +37,6 @@ const SettingsPage = () => {
       .catch(() => setUpdatable(false))
       .finally(() => setChecked(true));
   }, []);
-=======
-  { key: "HUGGING_FACE_KEY", label: "Hugging Face",  helper: "Moteur principal pour le texte, le chat et la génération d'image.", emoji: "🤗" },
-  { key: "GEMINI_API_KEY",   label: "Google Gemini", helper: "Liaison de secours pour la génération textuelle.",                   emoji: "💎" },
-  { key: "MISTRAL_API_KEY",  label: "Mistral AI",    helper: "Fallback européen pour la structure des mèmes.",                    emoji: "🌊" },
-  { key: "DEEPSEEK_API_KEY", label: "DeepSeek",      helper: "Canal de raisonnement supplémentaire.",                             emoji: "🔍" },
-];
-
-const SettingsPage = () => {
-  const [keys, setKeys]     = useState({ HUGGING_FACE_KEY: "", GEMINI_API_KEY: "", MISTRAL_API_KEY: "", DEEPSEEK_API_KEY: "" });
-  const [show, setShow]     = useState(false);
-  const [status, setStatus] = useState(null);
-  const [saving, setSaving] = useState(false);
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
 
   const handleSave = async () => {
     setSaving(true); setStatus(null);
@@ -119,7 +101,6 @@ const SettingsPage = () => {
           </button>
         </div>
 
-<<<<<<< HEAD
           {checked && !updatable && (
             <div style={{
               marginTop: 0, marginBottom: 24, padding: "12px 20px", borderRadius: radius.md,
@@ -132,8 +113,6 @@ const SettingsPage = () => {
             </div>
           )}
 
-=======
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
         <div style={{ display: "grid", gap: 24 }}>
           {API_FIELDS.map((f) => (
             <div key={f.key}>
@@ -152,10 +131,7 @@ const SettingsPage = () => {
                 onChange={(e) => setKeys({ ...keys, [f.key]: e.target.value })}
                 placeholder="Colle ta clé ici..."
                 className="duo-input"
-<<<<<<< HEAD
                 disabled={!updatable}
-=======
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
               />
               <p style={{ fontFamily: "'Nunito', sans-serif", fontSize: 13, color: colors.silver, margin: "6px 0 0", fontWeight: 600 }}>
                 {f.helper}
@@ -179,11 +155,7 @@ const SettingsPage = () => {
 
         {/* Bouton save */}
         <div style={{ marginTop: 32, display: "flex", justifyContent: "flex-end" }}>
-<<<<<<< HEAD
           <PremiumButton variant="primary" onClick={handleSave} disabled={saving || !updatable} style={{ minWidth: 220, justifyContent: "center" }}>
-=======
-          <PremiumButton variant="primary" onClick={handleSave} disabled={saving} style={{ minWidth: 220, justifyContent: "center" }}>
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
             {saving ? "Enregistrement..." : "💾 Enregistrer les clés"}
           </PremiumButton>
         </div>

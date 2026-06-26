@@ -37,6 +37,8 @@ const multi  = upload.fields([
 router.post("/export",    single("sticker"), StickerController.export);
 router.post("/composite", multi,             StickerController.composite);
 router.post("/face",      multi,             StickerController.faceSwap);
+router.post("/gif",       single("image"),   StickerController.exportGif);
+router.post("/studio",    multi,             StickerController.studio);
 router.post("/meme-text", single("image"),   StickerController.addMemeText);
 
 module.exports = router;

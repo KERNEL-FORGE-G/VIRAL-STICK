@@ -23,12 +23,23 @@ const STATUS_STYLE = {
   fail:  { bg: "#ffe0e0",            text: colors.danger,      label: "Erreur" },
 };
 
+const STATIC_GREETINGS = {
+  arch: "Archlord ici — cap produit activé. Pose ta question.",
+  data: "Data prêt à analyser ton idée.",
+  para: "Para veille à la clarté UX.",
+  secu: "Secu scanne les risques.",
+  bio: "Bio apporte l'énergie créative !",
+  ubu: "Ubu est là pour l'absurde.",
+  art: "Art peaufine le visuel.",
+};
+
 const MultiChatPage = () => {
   const [messages, setMessages] = useState([]);
-  const [input, setInput]       = useState("");
-  const [loading, setLoading]   = useState(false);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
   const [statuses, setStatuses] = useState({});
-  const scrollRef               = useRef(null);
+  const [activeCompanion, setActiveCompanion] = useState("arch");
+  const scrollRef = useRef(null);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -36,56 +47,52 @@ const MultiChatPage = () => {
 
   useEffect(() => { loadGreetings(); }, []);
 
-  const loadGreetings = async () => {
-    setLoading(true);
-    const greets = [];
-    const st     = {};
-    await Promise.all(COMPANIONS.map(async (c) => {
-      st[c.id] = "sync"; setStatuses({ ...st });
-      try {
-        const res = await fetch("/api/memes/chat/greeting", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ companionId: c.id }),
-        });
-        const d = await res.json();
-        greets.push({ id: `g-${c.id}`, text: d.reply, sender: c.id, companion: c.id, time: fmt() });
-        st[c.id] = "ready";
-      } catch {
-        greets.push({ id: `g-${c.id}`, text: `${c.name} est prêt à intervenir.`, sender: c.id, companion: c.id, time: fmt() });
-        st[c.id] = "ready";
-      }
-      setStatuses({ ...st });
+  const loadGreetings = () => {
+    const greets = COMPANIONS.map((c) => ({
+      id: `g-${c.id}`,
+      text: STATIC_GREETINGS[c.id] || `${c.name} est prêt.`,
+      sender: c.id,
+      companion: c.id,
+      time: fmt(),
     }));
-    greets.sort((a, b) => COMPANIONS.findIndex((c) => c.id === a.companion) - COMPANIONS.findIndex((c) => c.id === b.companion));
     setMessages(greets);
-    setLoading(false);
+    setStatuses(Object.fromEntries(COMPANIONS.map((c) => [c.id, "ready"])));
   };
 
-  const sendToAll = async () => {
+  const sendToActive = async () => {
     if (!input.trim() || loading) return;
     const txt = input.trim();
     setInput("");
     setMessages((p) => [...p, { id: Date.now().toString(), text: txt, sender: "user", time: fmt() }]);
     setLoading(true);
-    const st = {}; const replies = [];
-    await Promise.all(COMPANIONS.map(async (c) => {
-      st[c.id] = "sync"; setStatuses({ ...st });
-      try {
-        const res = await fetch("/api/memes/chat", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ companionId: c.id, message: txt }),
-        });
-        const d = await res.json();
-        replies.push({ id: `${Date.now()}-${c.id}`, text: d.reply, sender: c.id, companion: c.id, time: fmt() });
-        st[c.id] = "ready";
-      } catch {
-        replies.push({ id: `${Date.now()}-${c.id}`, text: `${c.name} n'a pas pu répondre.`, sender: c.id, companion: c.id, time: fmt() });
-        st[c.id] = "fail";
-      }
-      setStatuses({ ...st });
-    }));
-    replies.sort((a, b) => COMPANIONS.findIndex((c) => c.id === a.companion) - COMPANIONS.findIndex((c) => c.id === b.companion));
-    setMessages((p) => [...p, ...replies]);
+    setStatuses((s) => ({ ...s, [activeCompanion]: "sync" }));
+
+    try {
+      const res = await fetch("/api/memes/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companionId: activeCompanion, message: txt }),
+      });
+      const d = await res.json();
+      const meta = COMPANIONS.find((c) => c.id === activeCompanion);
+      setMessages((p) => [...p, {
+        id: `${Date.now()}-${activeCompanion}`,
+        text: d.reply,
+        sender: activeCompanion,
+        companion: activeCompanion,
+        time: fmt(),
+      }]);
+      setStatuses((s) => ({ ...s, [activeCompanion]: "ready" }));
+    } catch {
+      setMessages((p) => [...p, {
+        id: `${Date.now()}-err`,
+        text: "Réponse indisponible. Réessaie.",
+        sender: activeCompanion,
+        companion: activeCompanion,
+        time: fmt(),
+      }]);
+      setStatuses((s) => ({ ...s, [activeCompanion]: "fail" }));
+    }
     setLoading(false);
   };
 
@@ -100,10 +107,10 @@ const MultiChatPage = () => {
           MULTI COMPANION BOARD
         </div>
         <h1 style={{ fontFamily: "'Fredoka One', cursive", fontSize: 36, color: colors.almostBlack, margin: "0 0 8px" }}>
-          Les <span style={{ color: colors.duoGreen }}>7 compagnons</span> à la fois
+          Multi-Hub <span style={{ color: colors.duoGreen }}>compagnons</span>
         </h1>
         <p style={{ fontFamily: "'Nunito', sans-serif", fontSize: 15, color: colors.graphite, margin: 0 }}>
-          Une seule question, sept angles différents.
+          Sélectionne un compagnon actif — 1 seul appel IA par message.
         </p>
       </div>
 
@@ -114,12 +121,18 @@ const MultiChatPage = () => {
           const sty = STATUS_STYLE[st] || STATUS_STYLE.idle;
           const col = colors[c.id] || colors.duoGreen;
           return (
-            <div key={c.id} style={{
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
-              padding: 16, borderRadius: radius.lg,
-              border: `2px solid ${col}44`, background: `${col}0d`,
-              boxShadow: "0 2px 0 #e5e5e5",
-            }}>
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setActiveCompanion(c.id)}
+              style={{
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+                padding: 16, borderRadius: radius.lg, cursor: "pointer",
+                border: `2px solid ${activeCompanion === c.id ? col : col + "44"}`,
+                background: activeCompanion === c.id ? `${col}22` : `${col}0d`,
+                boxShadow: activeCompanion === c.id ? `0 3px 0 ${col}` : "0 2px 0 #e5e5e5",
+              }}
+            >
               <CompanionAvatarWeb companion={c.id} size={48} />
               <div style={{ fontFamily: "'Fredoka One', cursive", fontSize: 14, color: colors.almostBlack }}>{c.name}</div>
               <div style={{
@@ -129,7 +142,7 @@ const MultiChatPage = () => {
               }}>
                 {sty.label}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -183,13 +196,13 @@ const MultiChatPage = () => {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendToAll()}
-            placeholder="Pose une question à tout le board..."
+            onKeyDown={(e) => e.key === "Enter" && sendToActive()}
+            placeholder={`Message pour ${COMPANIONS.find((c) => c.id === activeCompanion)?.name || "le compagnon"}...`}
             className="duo-input"
             style={{ flex: 1, borderRadius: radius.pill, padding: "10px 20px" }}
           />
-          <PremiumButton onClick={sendToAll} disabled={loading || !input.trim()} variant="primary">
-            Broadcast
+          <PremiumButton onClick={sendToActive} disabled={loading || !input.trim()} variant="primary">
+            Envoyer
           </PremiumButton>
         </div>
       </div>

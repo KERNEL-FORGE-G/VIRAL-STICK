@@ -29,6 +29,14 @@ const FEATURES = [
     icon: "remix",
   },
   {
+    title: "Sticker Studio",
+    desc: "Upload un sticker, ajoute un visage, exporte en PNG ou GIF animé.",
+    companion: "art",
+    to: "/sticker-studio",
+    accent: colors.duoGreen,
+    icon: "remix",
+  },
+  {
     title: "Chat Compagnons",
     desc: "Discute avec tes compagnons IA spécialisés pour booster ta créativité.",
     companion: "ubu",

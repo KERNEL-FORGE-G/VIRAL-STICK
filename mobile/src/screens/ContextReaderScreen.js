@@ -2,10 +2,6 @@ import React, { useMemo, useRef, useState } from "react";
 import { View, Text, TextInput, StyleSheet, ScrollView, SafeAreaView, Animated, Alert, Keyboard, ActivityIndicator, StatusBar } from "react-native";
 import axios from "axios";
 import { spacing, radius, typography } from "../theme";
-<<<<<<< HEAD
-=======
-import { rs, wp } from "../theme/responsive";
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
 import { colors } from "../theme/tokens";
 import GlassCard from "../components/GlassCard";
 import AnimatedButton from "../components/AnimatedButton";
@@ -125,7 +121,6 @@ const ContextReaderScreen = ({ navigate }) => {
 
 const styles = StyleSheet.create({
   safe:        { flex: 1, backgroundColor: "#ffffff" },
-<<<<<<< HEAD
   scroll:      { paddingHorizontal: spacing.md, paddingTop: 80 },
   hero:        { padding: spacing.lg, marginBottom: spacing.md },
   badge:       { backgroundColor: colors.duoGreenLight, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4, alignSelf: "flex-start", marginBottom: 10 },
@@ -152,34 +147,6 @@ const styles = StyleSheet.create({
   gridItem:    { padding: spacing.md, backgroundColor: colors.bgSecondary, borderRadius: radius.md, borderWidth: 2, borderColor: colors.cloudGray },
   gridLabel:   { fontSize: 11, fontWeight: "800", color: colors.silver, letterSpacing: 1, marginBottom: 6 },
   gridValue:   { fontSize: 14, fontWeight: "700", color: colors.almostBlack, lineHeight: 19 },
-=======
-  scroll:      { paddingHorizontal: spacing.md, paddingTop: spacing.md },
-  hero:        { padding: spacing.lg, marginBottom: spacing.md },
-  badge:       { backgroundColor: colors.duoGreenLight, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4, alignSelf: "flex-start", marginBottom: 10 },
-  badgeText:   { fontSize: rs(10), fontWeight: "800", color: colors.duoGreenDark, letterSpacing: 1 },
-  title:       { fontSize: rs(32), fontWeight: "900", color: colors.almostBlack, letterSpacing: -0.5 },
-  sub:         { fontSize: rs(14), color: colors.graphite, marginTop: 6, lineHeight: rs(20) },
-  card:        { marginBottom: spacing.md },
-  label:       { fontSize: rs(14), fontWeight: "800", color: colors.charcoal, marginBottom: 8 },
-  input:       { minHeight: 140, borderWidth: 2, borderColor: colors.cloudGray, borderRadius: radius.md, padding: spacing.md, fontSize: rs(15), color: colors.almostBlack, backgroundColor: colors.bgSecondary },
-  meta:        { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginTop: 8 },
-  progressTrack:{ flex: 1, height: 6, backgroundColor: colors.cloudGray, borderRadius: radius.pill, overflow: "hidden" },
-  progressFill: { height: "100%", backgroundColor: colors.duoGreen, borderRadius: radius.pill },
-  counter:     { fontSize: rs(12), fontWeight: "700", color: colors.silver },
-  quickIdea:   { borderWidth: 2, borderColor: colors.cloudGray, borderRadius: radius.md, padding: 10, fontSize: rs(13), color: colors.charcoal, backgroundColor: colors.bgSecondary },
-  actions:     { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
-  loadCard:    { alignItems: "center", gap: spacing.sm, marginBottom: spacing.md },
-  loadTitle:   { fontSize: rs(17), fontWeight: "800", color: colors.almostBlack, marginTop: spacing.sm },
-  loadSub:     { textAlign: "center", fontSize: rs(13), color: colors.silver, lineHeight: rs(18) },
-  memePreview: { borderWidth: 2, borderColor: colors.cloudGray, borderRadius: radius.md, padding: spacing.md, alignItems: "center", marginBottom: spacing.md, backgroundColor: colors.bgSecondary },
-  memeText:    { fontSize: rs(17), fontWeight: "900", textTransform: "uppercase", textAlign: "center", color: colors.almostBlack, lineHeight: rs(22) },
-  memeScene:   { marginVertical: spacing.md, width: "100%", minHeight: 120, borderWidth: 2, borderColor: colors.cloudGray, borderRadius: radius.md, alignItems: "center", justifyContent: "center", padding: spacing.md, backgroundColor: "#ffffff" },
-  memeSceneText:{ textAlign: "center", fontSize: rs(13), color: colors.graphite, lineHeight: rs(19), marginTop: 8 },
-  grid:        { gap: spacing.sm },
-  gridItem:    { padding: spacing.md, backgroundColor: colors.bgSecondary, borderRadius: radius.md, borderWidth: 2, borderColor: colors.cloudGray },
-  gridLabel:   { fontSize: rs(11), fontWeight: "800", color: colors.silver, letterSpacing: 1, marginBottom: 6 },
-  gridValue:   { fontSize: rs(14), fontWeight: "700", color: colors.almostBlack, lineHeight: rs(19) },
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
 });
 
 export default ContextReaderScreen;

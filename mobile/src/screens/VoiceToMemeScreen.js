@@ -1,22 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, Animated, TouchableOpacity, Alert, ActivityIndicator, StatusBar } from "react-native";
+import {
+  View, Text, StyleSheet, ScrollView, SafeAreaView, Animated, TouchableOpacity,
+  Alert, ActivityIndicator, StatusBar, Platform,
+} from "react-native";
 import axios from "axios";
 import { spacing, radius } from "../theme";
-<<<<<<< HEAD
-=======
-import { rs, wp } from "../theme/responsive";
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
 import { colors } from "../theme/tokens";
 import GlassCard from "../components/GlassCard";
 import AnimatedButton from "../components/AnimatedButton";
 import CompanionAvatar from "../components/CompanionAvatar";
 import { apiUrl } from "../config/api";
-
-const DEMOS = [
-  "Je voulais juste faire une sieste et je me suis réveillé avec 43 appels manqués.",
-  "J'ai dit à tous que j'avais fini le projet alors que j'avais juste renommé le dossier.",
-  "Ma connexion coupe toujours quand je commence à avoir raison dans le débat.",
-];
 
 const WaveBar = ({ index, active }) => {
   const anim = useRef(new Animated.Value(0.25)).current;
@@ -28,49 +21,99 @@ const WaveBar = ({ index, active }) => {
       ]));
       loop.start();
       return () => loop.stop();
-    } else {
-      Animated.timing(anim, { toValue: 0.25, duration: 160, useNativeDriver: true }).start();
     }
+    Animated.timing(anim, { toValue: 0.25, duration: 160, useNativeDriver: true }).start();
   }, [active, anim, index]);
   return <Animated.View style={[styles.waveBar, { transform: [{ scaleY: anim }], backgroundColor: colors.duoGreen }]} />;
 };
 
-const VoiceToMemeScreen = ({ navigate }) => {
-  const [recording, setRecording]     = useState(false);
+const VoiceToMemeScreen = () => {
+  const [recording, setRecording] = useState(false);
   const [transcription, setTranscription] = useState("");
-  const [meme, setMeme]               = useState(null);
-  const [loading, setLoading]         = useState(false);
-  const [duration, setDuration]       = useState(0);
-  const [msg, setMsg]                 = useState("Donne-moi une phrase dite à chaud. Je garde l'énergie.");
-  const timerRef                      = useRef(null);
-  const micScale                      = useRef(new Animated.Value(1)).current;
-  const resultAnim                    = useRef(new Animated.Value(0)).current;
+  const [meme, setMeme] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [msg, setMsg] = useState("Donne-moi une phrase dite à chaud. Je garde l'énergie.");
+  const timerRef = useRef(null);
+  const micScale = useRef(new Animated.Value(1)).current;
+  const resultAnim = useRef(new Animated.Value(0)).current;
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const audioUriRef = useRef(null);
 
   useEffect(() => () => clearInterval(timerRef.current), []);
 
-  const startRec = () => {
-    setRecording(true); setTranscription(""); setMeme(null); setDuration(0);
+  const startRec = async () => {
+    setRecording(true);
+    setTranscription("");
+    setMeme(null);
+    setDuration(0);
+    audioChunksRef.current = [];
+    audioUriRef.current = null;
     setMsg("Parle comme tu le sens. Plus c'est spontané, mieux c'est.");
+
     Animated.loop(Animated.sequence([
       Animated.timing(micScale, { toValue: 1.12, duration: 500, useNativeDriver: true }),
-      Animated.timing(micScale, { toValue: 1,    duration: 500, useNativeDriver: true }),
+      Animated.timing(micScale, { toValue: 1, duration: 500, useNativeDriver: true }),
     ])).start();
     timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
+
+    if (typeof MediaRecorder !== "undefined" && navigator?.mediaDevices?.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mr = new MediaRecorder(stream);
+        mediaRecorderRef.current = mr;
+        mr.ondataavailable = (ev) => { if (ev.data.size) audioChunksRef.current.push(ev.data); };
+        mr.onstop = () => stream.getTracks().forEach((t) => t.stop());
+        mr.start();
+        return;
+      } catch {
+        setMsg("Micro indisponible — utilise la transcription texte.");
+      }
+    }
   };
 
-  const stopRec = () => {
-    setRecording(false); micScale.stopAnimation(); micScale.setValue(1);
+  const stopRec = async () => {
+    setRecording(false);
+    micScale.stopAnimation();
+    micScale.setValue(1);
     clearInterval(timerRef.current);
     setMsg("Transcription en cours...");
-    setTimeout(() => {
-      const s = DEMOS[Math.floor(Math.random() * DEMOS.length)];
-      setTranscription(s); setMsg("Transcription prête. Lance la transformation !");
-    }, 1200);
+
+    if (mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.stop();
+      await new Promise((r) => setTimeout(r, 400));
+      const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+      try {
+        const form = new FormData();
+        form.append("audio", blob, "voice.webm");
+        const res = await axios.post(apiUrl("/api/memes/transcribe"), form, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        setTranscription(res.data.transcription || "");
+        setMsg("Transcription prête. Lance la transformation !");
+        return;
+      } catch {
+        setMsg("Transcription échouée. Réessaie ou saisis le texte.");
+      }
+    }
+
+    Alert.alert(
+      "Mode texte",
+      "Enregistrement natif non disponible sur cet appareil. Utilise le web ou saisis ta phrase.",
+      [{ text: "OK" }]
+    );
+    setMsg("Enregistrement natif indisponible sur mobile. Utilise la version web pour la voix.");
   };
 
   const generate = async () => {
-    if (!transcription.trim()) { Alert.alert("Viral Stick", "Enregistre d'abord une prise."); return; }
-    setLoading(true); setMeme(null); setMsg("Je construis la chute à partir de ton énergie vocale...");
+    if (!transcription.trim()) {
+      Alert.alert("Viral Stick", "Enregistre d'abord une prise ou saisis une transcription.");
+      return;
+    }
+    setLoading(true);
+    setMeme(null);
+    setMsg("Je construis la chute à partir de ton énergie vocale...");
     try {
       const res = await axios.post(apiUrl("/api/memes/voice-to-meme"), { transcription });
       setMeme(res.data);
@@ -80,7 +123,9 @@ const VoiceToMemeScreen = ({ navigate }) => {
     } catch {
       setMsg("Le module vocal n'a pas répondu. Relance.");
       Alert.alert("Erreur", "Connexion backend impossible.");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
@@ -98,7 +143,6 @@ const VoiceToMemeScreen = ({ navigate }) => {
           </View>
         </GlassCard>
 
-        {/* Recorder */}
         <GlassCard animate delay={80} style={[styles.card, { alignItems: "center", gap: spacing.md }]}>
           <Text style={styles.label}>RECORDER STUDIO</Text>
           <View style={styles.wave}>
@@ -117,14 +161,16 @@ const VoiceToMemeScreen = ({ navigate }) => {
             </TouchableOpacity>
           </Animated.View>
           <Text style={styles.hint}>
-            {recording ? "Parle naturellement. Le mème naît de la spontanéité." : "Appuie pour démarrer une prise démo, puis transforme en mème."}
+            {Platform.OS === "web"
+              ? "Appuie pour enregistrer avec le micro du navigateur."
+              : "Voix complète sur web. Sur mobile, utilise la transcription backend via web."}
           </Text>
         </GlassCard>
 
         {transcription.length > 0 && (
           <GlassCard animate delay={100} style={styles.card}>
             <Text style={styles.label}>TRANSCRIPTION</Text>
-            <Text style={[styles.transcript]}>"{transcription}"</Text>
+            <Text style={styles.transcript}>"{transcription}"</Text>
             <AnimatedButton title={loading ? "Transformation..." : "Transformer en mème"} onPress={generate} loading={loading} disabled={loading} size="lg" style={{ marginTop: spacing.md }} />
           </GlassCard>
         )}
@@ -133,28 +179,23 @@ const VoiceToMemeScreen = ({ navigate }) => {
           <GlassCard animate style={[styles.card, { alignItems: "center", gap: spacing.sm }]}>
             <ActivityIndicator color={colors.duoGreen} size="large" />
             <Text style={styles.loadTitle}>Remix vocal en cours</Text>
-            <Text style={styles.loadSub}>Préservation de la spontanéité et recherche de la meilleure chute.</Text>
+            <Text style={styles.loadSub}>1 appel texte + 1 appel image — pipeline optimisé.</Text>
           </GlassCard>
         )}
 
         {meme && (
-          <Animated.View style={{ opacity: resultAnim, transform: [{ translateY: resultAnim.interpolate({ inputRange: [0,1], outputRange: [24,0] }) }] }}>
+          <Animated.View style={{ opacity: resultAnim, transform: [{ translateY: resultAnim.interpolate({ inputRange: [0, 1], outputRange: [24, 0] }) }] }}>
             <GlassCard style={styles.card}>
               <View style={styles.badge}><Text style={[styles.badgeText, { color: colors.duoGreenDark }]}>✅ MÈME VOCAL PRÊT</Text></View>
-              <View style={styles.memeBox}>
-                <Text style={styles.memeText}>{meme.topText}</Text>
+              {meme.imageUrl ? (
                 <View style={styles.memeScene}>
-                  <Text style={{ fontSize: 40 }}>🎤</Text>
-                  <Text style={styles.memeSceneText}>{meme.descriptionImage}</Text>
-                </View>
-                <Text style={styles.memeText}>{meme.bottomText}</Text>
-              </View>
-              {meme.original_transcript_subtitle ? (
-                <View style={styles.subtitleCard}>
-                  <Text style={styles.gridLabel}>SOUS-TITRE ORIGINAL</Text>
-                  <Text style={styles.subtitleText}>"{meme.original_transcript_subtitle}"</Text>
+                  <Text style={{ fontSize: 12, color: colors.silver }}>Image ({meme.imageProvider})</Text>
                 </View>
               ) : null}
+              <View style={styles.memeBox}>
+                <Text style={styles.memeText}>{meme.topText}</Text>
+                <Text style={styles.memeText}>{meme.bottomText}</Text>
+              </View>
             </GlassCard>
           </Animated.View>
         )}
@@ -165,58 +206,27 @@ const VoiceToMemeScreen = ({ navigate }) => {
 };
 
 const styles = StyleSheet.create({
-  safe:        { flex: 1, backgroundColor: "#ffffff" },
-<<<<<<< HEAD
-  scroll:      { paddingHorizontal: spacing.md, paddingTop: 80 },
-  hero:        { padding: spacing.lg, marginBottom: spacing.md },
-  badge:       { backgroundColor: colors.duoGreenLight, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4, alignSelf: "flex-start", marginBottom: 10 },
-  badgeText:   { fontSize: 10, fontWeight: "800", color: colors.duoGreenDark, letterSpacing: 1 },
-  title:       { fontSize: 32, fontWeight: "900", color: colors.almostBlack, letterSpacing: -0.5 },
-  sub:         { fontSize: 14, color: colors.graphite, marginTop: 6, lineHeight: 20 },
-  card:        { marginBottom: spacing.md, padding: spacing.md },
-  label:       { fontSize: 11, fontWeight: "800", color: colors.silver, letterSpacing: 1.5, marginBottom: 8 },
-  wave:        { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, height: 60, width: "100%" },
-  waveBar:     { width: 5, height: 44, borderRadius: 5 },
-  durationText:{ fontSize: 18, fontWeight: "800", letterSpacing: 2 },
-  micBtn:      { width: 96, height: 96, borderRadius: 48, alignItems: "center", justifyContent: "center", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 0, elevation: 4 },
-  micIcon:     { fontSize: 38 },
-  hint:        { textAlign: "center", fontSize: 13, color: colors.silver, lineHeight: 19, paddingHorizontal: spacing.sm },
-  transcript:  { fontSize: 16, color: colors.almostBlack, fontStyle: "italic", lineHeight: 24, fontWeight: "600" },
-  loadTitle:   { fontSize: 17, fontWeight: "800", color: colors.almostBlack },
-  loadSub:     { textAlign: "center", fontSize: 13, color: colors.silver, lineHeight: 18 },
-  memeBox:     { borderWidth: 2, borderColor: colors.cloudGray, borderRadius: radius.md, padding: spacing.md, alignItems: "center", marginBottom: spacing.md, backgroundColor: colors.bgSecondary },
-  memeText:    { fontSize: 17, fontWeight: "900", textTransform: "uppercase", textAlign: "center", color: colors.almostBlack, lineHeight: 22 },
-  memeScene:   { marginVertical: spacing.md, width: "100%", minHeight: 100, alignItems: "center", justifyContent: "center", padding: spacing.md },
-  memeSceneText:{ textAlign: "center", fontSize: 13, color: colors.graphite, lineHeight: 19, marginTop: 8 },
-  subtitleCard:{ padding: spacing.md, backgroundColor: colors.bgSecondary, borderRadius: radius.md, borderWidth: 2, borderColor: colors.cloudGray },
-  gridLabel:   { fontSize: 11, fontWeight: "800", color: colors.silver, letterSpacing: 1, marginBottom: 6 },
-  subtitleText:{ fontSize: 14, fontStyle: "italic", color: colors.charcoal, lineHeight: 19 },
-=======
-  scroll:      { paddingHorizontal: spacing.md, paddingTop: spacing.md },
-  hero:        { padding: spacing.lg, marginBottom: spacing.md },
-  badge:       { backgroundColor: colors.duoGreenLight, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4, alignSelf: "flex-start", marginBottom: 10 },
-  badgeText:   { fontSize: rs(10), fontWeight: "800", color: colors.duoGreenDark, letterSpacing: 1 },
-  title:       { fontSize: rs(32), fontWeight: "900", color: colors.almostBlack, letterSpacing: -0.5 },
-  sub:         { fontSize: rs(14), color: colors.graphite, marginTop: 6, lineHeight: rs(20) },
-  card:        { marginBottom: spacing.md, padding: spacing.md },
-  label:       { fontSize: rs(11), fontWeight: "800", color: colors.silver, letterSpacing: 1.5, marginBottom: 8 },
-  wave:        { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, height: 60, width: "100%" },
-  waveBar:     { width: 5, height: 44, borderRadius: 5 },
-  durationText:{ fontSize: rs(18), fontWeight: "800", letterSpacing: 2 },
-  micBtn:      { width: 96, height: 96, borderRadius: 48, alignItems: "center", justifyContent: "center", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 0, elevation: 4 },
-  micIcon:     { fontSize: rs(38) },
-  hint:        { textAlign: "center", fontSize: rs(13), color: colors.silver, lineHeight: rs(19), paddingHorizontal: spacing.sm },
-  transcript:  { fontSize: rs(16), color: colors.almostBlack, fontStyle: "italic", lineHeight: rs(24), fontWeight: "600" },
-  loadTitle:   { fontSize: rs(17), fontWeight: "800", color: colors.almostBlack },
-  loadSub:     { textAlign: "center", fontSize: rs(13), color: colors.silver, lineHeight: rs(18) },
-  memeBox:     { borderWidth: 2, borderColor: colors.cloudGray, borderRadius: radius.md, padding: spacing.md, alignItems: "center", marginBottom: spacing.md, backgroundColor: colors.bgSecondary },
-  memeText:    { fontSize: rs(17), fontWeight: "900", textTransform: "uppercase", textAlign: "center", color: colors.almostBlack, lineHeight: rs(22) },
-  memeScene:   { marginVertical: spacing.md, width: "100%", minHeight: 100, alignItems: "center", justifyContent: "center", padding: spacing.md },
-  memeSceneText:{ textAlign: "center", fontSize: rs(13), color: colors.graphite, lineHeight: rs(19), marginTop: 8 },
-  subtitleCard:{ padding: spacing.md, backgroundColor: colors.bgSecondary, borderRadius: radius.md, borderWidth: 2, borderColor: colors.cloudGray },
-  gridLabel:   { fontSize: rs(11), fontWeight: "800", color: colors.silver, letterSpacing: 1, marginBottom: 6 },
-  subtitleText:{ fontSize: rs(14), fontStyle: "italic", color: colors.charcoal, lineHeight: rs(19) },
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
+  safe: { flex: 1, backgroundColor: "#ffffff" },
+  scroll: { paddingHorizontal: spacing.md, paddingTop: 80 },
+  hero: { padding: spacing.lg, marginBottom: spacing.md },
+  badge: { backgroundColor: colors.duoGreenLight, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4, alignSelf: "flex-start", marginBottom: 10 },
+  badgeText: { fontSize: 10, fontWeight: "800", color: colors.duoGreenDark, letterSpacing: 1 },
+  title: { fontSize: 32, fontWeight: "900", color: colors.almostBlack, letterSpacing: -0.5 },
+  sub: { fontSize: 14, color: colors.graphite, marginTop: 6, lineHeight: 20 },
+  card: { marginBottom: spacing.md, padding: spacing.md },
+  label: { fontSize: 11, fontWeight: "800", color: colors.silver, letterSpacing: 1.5, marginBottom: 8 },
+  wave: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, height: 60, width: "100%" },
+  waveBar: { width: 5, height: 44, borderRadius: 5 },
+  durationText: { fontSize: 18, fontWeight: "800", letterSpacing: 2 },
+  micBtn: { width: 96, height: 96, borderRadius: 48, alignItems: "center", justifyContent: "center", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 0, elevation: 4 },
+  micIcon: { fontSize: 38 },
+  hint: { textAlign: "center", fontSize: 13, color: colors.silver, lineHeight: 19, paddingHorizontal: spacing.sm },
+  transcript: { fontSize: 16, color: colors.almostBlack, fontStyle: "italic", lineHeight: 24, fontWeight: "600" },
+  loadTitle: { fontSize: 17, fontWeight: "800", color: colors.almostBlack },
+  loadSub: { textAlign: "center", fontSize: 13, color: colors.silver, lineHeight: 18 },
+  memeBox: { borderWidth: 2, borderColor: colors.cloudGray, borderRadius: radius.md, padding: spacing.md, alignItems: "center", marginBottom: spacing.md, backgroundColor: colors.bgSecondary },
+  memeText: { fontSize: 17, fontWeight: "900", textTransform: "uppercase", textAlign: "center", color: colors.almostBlack, lineHeight: 22 },
+  memeScene: { marginVertical: spacing.md, width: "100%", minHeight: 60, alignItems: "center", justifyContent: "center" },
 });
 
 export default VoiceToMemeScreen;

@@ -1,5 +1,4 @@
 const AIService = require("../services-ia/aiService");
-<<<<<<< HEAD
 const ShareService = require("../services-ia/shareService");
 
 async function attachMemeShare(req, memeData) {
@@ -37,41 +36,35 @@ async function attachRemixShare(req, remix) {
     share,
   };
 }
-=======
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
+
+function wantsCompanion(req) {
+  return req.body?.companionComment === true || req.query?.companion === "true";
+}
 
 const MemeController = {
   createFromText: async (req, res) => {
     try {
-      const { text, inputType, location } = req.body;
-      if (!text) {
-        return res.status(400).json({ error: "Texte requis" });
-      }
+      const { text, location } = req.body;
+      if (!text) return res.status(400).json({ error: "Texte requis" });
 
       const memeData = await AIService.generateMemeFromText(text, location);
 
-      // Ajout d'un commentaire dynamique du compagnon Art
-      let companionComment = "";
-      try {
-        companionComment = await AIService.chatWithCompanion(
-          "art",
-          `L'utilisateur (${location || "international"}) veut un mème sur : "${text}". J'ai généré : "${memeData.topText} / ${memeData.bottomText}". Commente brièvement ce résultat en tant qu'Art (expert visuel).`,
-        );
-      } catch (e) {
-        companionComment = "Art adore ce concept ! C'est très visuel.";
+      let companionComment = null;
+      if (wantsCompanion(req)) {
+        try {
+          companionComment = await AIService.chatWithCompanion(
+            "art",
+            `Mème généré pour "${text}": "${memeData.topText} / ${memeData.bottomText}". Commente brièvement en tant qu'Art.`
+          );
+        } catch {
+          companionComment = "Art adore ce concept !";
+        }
       }
 
-<<<<<<< HEAD
       const withShare = await attachMemeShare(req, memeData);
-
       res.status(200).json({
         message: "Mème généré avec succès",
         ...withShare,
-=======
-      res.status(200).json({
-        message: "Mème généré avec succès",
-        ...memeData,
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
         companionComment,
         location: location || "international",
       });
@@ -83,81 +76,57 @@ const MemeController = {
 
   createFromVoice: async (req, res) => {
     try {
-<<<<<<< HEAD
       let { transcription } = req.body;
 
-      // Nouveau : si un vrai fichier audio est envoyé (multipart/form-data,
-      // champ "audio"), on le transcrit réellement via Whisper (HF).
       if (req.file) {
         try {
-          transcription = await AIService.transcribeAudio(
-            req.file.buffer,
-            req.file.mimetype,
-          );
+          transcription = await AIService.transcribeAudio(req.file.buffer, req.file.mimetype);
         } catch (e) {
           console.error("[createFromVoice][transcription]", e.message);
           return res.status(502).json({
-            error:
-              "Le service de transcription audio est indisponible. Réessaie dans un instant.",
+            error: "Service de transcription indisponible. Réessaie dans un instant.",
           });
         }
       }
 
       if (!transcription) {
-        return res.status(400).json({
-          error: "Audio (champ 'audio') ou transcription requis",
-        });
-=======
-      const { transcription } = req.body;
-      if (!transcription) {
-        return res.status(400).json({ error: "Transcription requise" });
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
+        return res.status(400).json({ error: "Audio (champ 'audio') ou transcription requis" });
       }
 
       const memeData = await AIService.generateMemeFromVoice(transcription);
 
-      // Ajout d'un commentaire dynamique du compagnon Ubu
-      let companionComment = "";
-      try {
-        companionComment = await AIService.chatWithCompanion(
-          "ubu",
-          `L'utilisateur a dit : "${transcription}". J'ai fait ce mème : "${memeData.topText} / ${memeData.bottomText}". Fais une blague ou un commentaire absurde en tant qu'Ubu.`,
-        );
-      } catch (e) {
-        companionComment = "Ubu trouve ça hilarant ! 🤖";
+      let companionComment = null;
+      if (wantsCompanion(req)) {
+        try {
+          companionComment = await AIService.chatWithCompanion(
+            "ubu",
+            `L'utilisateur a dit : "${transcription}". Mème : "${memeData.topText} / ${memeData.bottomText}". Blague courte en tant qu'Ubu.`
+          );
+        } catch {
+          companionComment = "Ubu trouve ça hilarant ! 🤖";
+        }
       }
 
-<<<<<<< HEAD
       const withShare = await attachMemeShare(req, memeData);
-
       res.status(200).json({
         message: "Mème vocal généré avec succès",
         transcription,
         ...withShare,
-=======
-      res.status(200).json({
-        message: "Mème vocal généré avec succès",
-        ...memeData,
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
         companionComment,
       });
     } catch (error) {
+      console.error("[createFromVoice]", error);
       res.status(500).json({ error: "Erreur lors de la génération vocale" });
     }
   },
 
   chat: async (req, res) => {
     try {
-      const { companionId, message, history } = req.body;
+      const { companionId, message } = req.body;
       if (!message || !companionId) {
         return res.status(400).json({ error: "Message et companionId requis" });
       }
-
-      const reply = await AIService.chatWithCompanion(
-        companionId,
-        message,
-        history,
-      );
+      const reply = await AIService.chatWithCompanion(companionId, message);
       res.status(200).json({ reply });
     } catch (error) {
       res.status(500).json({ error: "Erreur lors du chat" });
@@ -169,7 +138,7 @@ const MemeController = {
       const { companionId } = req.body;
       const reply = await AIService.chatWithCompanion(
         companionId,
-        "Salut ! Présente-toi brièvement selon ton rôle et souhaite-moi la bienvenue sur Viral Stick.",
+        "Présente-toi brièvement selon ton rôle et souhaite-moi la bienvenue sur Viral Stick."
       );
       res.status(200).json({ reply });
     } catch (error) {
@@ -180,10 +149,7 @@ const MemeController = {
   generateImage: async (req, res) => {
     try {
       const { prompt } = req.body;
-      if (!prompt) {
-        return res.status(400).json({ error: "Prompt requis" });
-      }
-
+      if (!prompt) return res.status(400).json({ error: "Prompt requis" });
       const imageResult = await AIService.generateImage(prompt);
       res.status(200).json(imageResult);
     } catch (error) {
@@ -191,14 +157,24 @@ const MemeController = {
     }
   },
 
+  transcribe: async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Champ 'audio' requis" });
+      }
+      const transcription = await AIService.transcribeAudio(req.file.buffer, req.file.mimetype);
+      res.status(200).json({ transcription });
+    } catch (error) {
+      console.error("[transcribe]", error);
+      res.status(502).json({ error: "Transcription indisponible" });
+    }
+  },
+
   statusRemixer: async (req, res) => {
     try {
-      const { text, location, imageContext, inputImageUrl, inputImageBase64 } =
-        req.body;
+      const { text, location, imageContext, inputImageUrl, inputImageBase64 } = req.body;
       if (!text && !inputImageUrl && !inputImageBase64) {
-        return res.status(400).json({
-          error: "Texte ou image requis",
-        });
+        return res.status(400).json({ error: "Texte ou image requis" });
       }
 
       const remix = await AIService.generateStatusRemix({
@@ -209,26 +185,21 @@ const MemeController = {
         inputImageBase64,
       });
 
-      let companionComment = "";
-      try {
-        companionComment = await AIService.chatWithCompanion(
-          "bio",
-          `L'utilisateur veut remixer ce contenu: "${text}". Résultat caption: "${remix.meme_text}". Donne un court retour créatif en tant que Bio.`,
-        );
-      } catch (e) {
-        companionComment =
-          "Bio valide le rendu : plus lisible, plus postable, plus viral.";
+      let companionComment = null;
+      if (wantsCompanion(req)) {
+        try {
+          companionComment = await AIService.chatWithCompanion(
+            "bio",
+            `Remix: "${text}". Caption: "${remix.meme_text}". Court retour créatif en tant que Bio.`
+          );
+        } catch {
+          companionComment = "Bio valide le rendu : plus lisible, plus postable.";
+        }
       }
 
-<<<<<<< HEAD
       const withShare = await attachRemixShare(req, remix);
-
       res.status(200).json({
         ...withShare,
-=======
-      res.status(200).json({
-        ...remix,
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
         companionComment,
         location: location || "international",
       });

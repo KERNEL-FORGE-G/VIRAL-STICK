@@ -1,21 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
-<<<<<<< HEAD
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, Animated, TouchableOpacity, TextInput, Alert, StatusBar } from "react-native";
 import { spacing, radius } from "../theme";
-=======
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, Animated, TouchableOpacity, TextInput, Alert, StatusBar, ActivityIndicator } from "react-native";
-import axios from "axios";
-import { spacing, radius } from "../theme";
-import { rs, wp } from "../theme/responsive";
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
 import { colors } from "../theme/tokens";
 import GlassCard from "../components/GlassCard";
 import AnimatedButton from "../components/AnimatedButton";
 import CompanionAvatar from "../components/CompanionAvatar";
-<<<<<<< HEAD
-=======
-import { apiUrl } from "../config/api";
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
 
 const PROVIDERS = [
   { key: "gemini",   label: "Gemini",   emoji: "💎", color: "#7C3AED", desc: "Provider principal — texte et image." },
@@ -29,38 +18,12 @@ const SettingsScreen = ({ navigate }) => {
   const [deepseek, setDeepseek] = useState("");
   const [show, setShow]         = useState(false);
   const [status, setStatus]     = useState("");
-<<<<<<< HEAD
-=======
-  const [testing, setTesting]   = useState(false);
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
   const anim                    = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.spring(anim, { toValue: 1, tension: 60, friction: 8, useNativeDriver: true }).start();
   }, [anim]);
 
-<<<<<<< HEAD
-=======
-  const testConnection = async () => {
-    setTesting(true);
-    setStatus("");
-    try {
-      const url = apiUrl("/health");
-      const res = await axios.get(url, { timeout: 5000 });
-      if (res.status === 200) {
-        setStatus("✅ Connexion établie avec le backend Vercel.");
-      } else {
-        setStatus("⚠️ Le serveur a répondu avec un statut inattendu.");
-      }
-    } catch (err) {
-      console.log("Error testing connection:", err);
-      setStatus("❌ Impossible de joindre le backend. Vérifie ta connexion internet.");
-    } finally {
-      setTesting(false);
-    }
-  };
-
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
   const save = () => {
     if (!gemini.trim() && !mistral.trim() && !deepseek.trim()) {
       Alert.alert("Viral Stick", "Entre au moins une clé API avant d'enregistrer."); return;
@@ -126,7 +89,6 @@ const SettingsScreen = ({ navigate }) => {
               </View>
             ))}
 
-<<<<<<< HEAD
             {!!status && (
               <View style={[styles.statusBox, { backgroundColor: colors.duoGreenLight, borderColor: `${colors.duoGreen}44` }]}>
                 <Text style={[styles.statusText, { color: colors.duoGreenDark }]}>{status}</Text>
@@ -134,24 +96,6 @@ const SettingsScreen = ({ navigate }) => {
             )}
 
             <AnimatedButton title="Enregistrer les clés" onPress={save} size="lg" style={{ marginTop: spacing.sm }} />
-=======
-            <View style={styles.actions}>
-              <AnimatedButton title="Enregistrer les clés" onPress={save} size="lg" style={{ flex: 1 }} />
-              <TouchableOpacity
-                style={[styles.testBtn, { borderColor: testing ? colors.silver : colors.duoGreen }]}
-                onPress={testConnection}
-                disabled={testing}
-              >
-                {testing ? <ActivityIndicator size="small" color={colors.silver} /> : <Text style={styles.testBtnText}>Tester Connexion</Text>}
-              </TouchableOpacity>
-            </View>
-
-            {!!status && (
-              <View style={[styles.statusBox, { backgroundColor: status.startsWith("✅") ? colors.duoGreenLight : "#fee2e2", borderColor: status.startsWith("✅") ? `${colors.duoGreen}44` : "#fecaca" }]}>
-                <Text style={[styles.statusText, { color: status.startsWith("✅") ? colors.duoGreenDark : "#b91c1c" }]}>{status}</Text>
-              </View>
-            )}
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
           </GlassCard>
 
           {/* Lien à propos */}
@@ -174,7 +118,6 @@ const SettingsScreen = ({ navigate }) => {
 
 const styles = StyleSheet.create({
   safe:        { flex: 1, backgroundColor: "#ffffff" },
-<<<<<<< HEAD
   scroll:      { paddingHorizontal: spacing.md, paddingTop: 80 },
   hero:        { padding: spacing.lg, marginBottom: spacing.md },
   badge:       { backgroundColor: colors.duoGreenLight, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4, alignSelf: "flex-start", marginBottom: 10 },
@@ -199,35 +142,6 @@ const styles = StyleSheet.create({
   aboutLabel:  { fontSize: 16, fontWeight: "800", color: colors.almostBlack },
   aboutDesc:   { fontSize: 13, color: colors.silver, marginTop: 4 },
   arrow:       { fontSize: 28, fontWeight: "300" },
-=======
-  scroll:      { paddingHorizontal: spacing.md, paddingTop: spacing.md },
-  hero:        { padding: spacing.lg, marginBottom: spacing.md },
-  badge:       { backgroundColor: colors.duoGreenLight, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4, alignSelf: "flex-start", marginBottom: 10 },
-  badgeText:   { fontSize: rs(10), fontWeight: "800", color: colors.duoGreenDark, letterSpacing: 1 },
-  title:       { fontSize: rs(32), fontWeight: "900", color: colors.almostBlack, letterSpacing: -0.5 },
-  sub:         { fontSize: rs(14), color: colors.graphite, marginTop: 6, lineHeight: rs(20) },
-  card:        { marginBottom: spacing.md },
-  sectionTitle:{ fontSize: rs(18), fontWeight: "800", color: colors.almostBlack, marginBottom: spacing.md },
-  providerRow: { flexDirection: "row", alignItems: "center", gap: 10, padding: 14, borderRadius: radius.md, borderWidth: 2, marginBottom: 8 },
-  providerDot: { width: 10, height: 10, borderRadius: 5 },
-  providerEmoji:{ fontSize: rs(18) },
-  providerName:{ fontSize: rs(15), fontWeight: "800", color: colors.almostBlack },
-  providerDesc:{ fontSize: rs(12), color: colors.silver, marginTop: 2, lineHeight: rs(16) },
-  keyHeader:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.md },
-  toggleBtn:   { borderWidth: 2, borderColor: colors.cloudGray, borderRadius: radius.md, paddingHorizontal: 12, paddingVertical: 7, backgroundColor: colors.bgSecondary },
-  toggleText:  { fontSize: rs(13), fontWeight: "700", color: colors.charcoal },
-  fieldLabel:  { fontSize: rs(14), fontWeight: "800", color: colors.charcoal, marginBottom: 8 },
-  input:       { borderWidth: 2, borderColor: colors.cloudGray, borderRadius: radius.md, padding: spacing.md, fontSize: rs(14), color: colors.almostBlack, backgroundColor: colors.bgSecondary },
-  actions:     { flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm },
-  testBtn:     { flex: 1, borderWidth: 2, borderRadius: radius.md, justifyContent: "center", alignItems: "center", backgroundColor: colors.bgSecondary },
-  testBtnText: { fontSize: rs(14), fontWeight: "800", color: colors.charcoal },
-  statusBox:   { borderWidth: 2, borderRadius: radius.md, padding: 12, marginTop: spacing.md },
-  statusText:  { fontSize: rs(14), fontWeight: "700", lineHeight: rs(19) },
-  aboutRow:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  aboutLabel:  { fontSize: rs(16), fontWeight: "800", color: colors.almostBlack },
-  aboutDesc:   { fontSize: rs(13), color: colors.silver, marginTop: 4 },
-  arrow:       { fontSize: rs(28), fontWeight: "300" },
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
 });
 
 export default SettingsScreen;

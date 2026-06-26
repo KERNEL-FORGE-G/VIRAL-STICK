@@ -86,10 +86,5 @@ Response includes:
 - Web supports image upload as base64 input.
 - Backend accepts larger JSON payloads for image base64 (`20mb`).
 - Mobile currently supports image-aware pipeline fields, but not a full native gallery/camera picker yet.
-<<<<<<< HEAD
-- Image generation is Puter only.
+- Image generation uses Pollinations.ai (primary, free) with Puter fallback.
 - If Puter Router returns `402 Payment Required` on text models, your monthly included credits are exhausted; text generation will rely on configured fallbacks when available.
-=======
-- Image generation is Hugging Face only.
-- If Hugging Face Router returns `402 Payment Required` on text models, your monthly included credits are exhausted; text generation will rely on configured fallbacks when available.
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
