@@ -13,15 +13,18 @@ const ForumScreen = ({ navigate }) => {
   const [memes, setMemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('createdAt');
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     fetchMemes();
-  }, [sortBy]);
+  }, [sortBy, userId]);
 
   const fetchMemes = async () => {
     setLoading(true);
     try {
-      const res = await fetch(apiUrl(`/api/forum/memes?sortBy=${sortBy}`));
+      const params = new URLSearchParams({ sortBy });
+      if (userId) params.append('userId', userId);
+      const res = await fetch(apiUrl(`/api/forum/memes?${params.toString()}`));
       const data = await res.json();
       setMemes(Array.isArray(data) ? data : []);
     } catch (e) {
@@ -33,10 +36,24 @@ const ForumScreen = ({ navigate }) => {
   };
 
   const handleLike = async (id) => {
+    if (!userId) {
+      Alert.alert('Connexion nécessaire', 'Connectez-vous pour liker des mèmes !');
+      navigate('Auth');
+      return;
+    }
     try {
-      const res = await fetch(apiUrl(`/api/forum/like/${id}`), { method: 'POST' });
+      const res = await fetch(apiUrl(`/api/forum/like/${id}`), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
       if (res.ok) {
-        setMemes(prev => prev.map(m => m.id === id ? { ...m, likes: (m.likes || 0) + 1 } : m));
+        const result = await res.json();
+        setMemes(prev => prev.map(m => 
+          m.id === id 
+            ? { ...m, likes: result.liked ? (m.likes || 0) + 1 : Math.max(0, (m.likes || 0) - 1), likedByUser: result.liked }
+            : m
+        ));
       }
     } catch (e) {
       console.error(e);
@@ -56,20 +73,27 @@ const ForumScreen = ({ navigate }) => {
       <View style={styles.cardFooter}>
         <View style={styles.statsRow}>
           <View style={styles.stat}>
-            <Text style={styles.statValue}>{item.likes}</Text>
+            <Text style={styles.statValue}>{item.likes || 0}</Text>
             <Text style={styles.statLabel}>LIKES</Text>
           </View>
           <View style={styles.stat}>
             <Text style={[styles.statValue, { color: colors.duoBlue }]}>{item.remixes || 0}</Text>
             <Text style={styles.statLabel}>REMIX</Text>
           </View>
+          {item.username && (
+            <View style={{ flex: 1, alignItems: 'flex-end' }}>
+              <Text style={{ fontSize: 10, color: colors.silver, fontWeight: '700' }}>par {item.username}</Text>
+            </View>
+          )}
         </View>
         <View style={styles.actions}>
           <TouchableOpacity
-            style={styles.likeBtn}
+            style={[styles.likeBtn, item.likedByUser && styles.likedBtn]}
             onPress={() => handleLike(item.id)}
           >
-            <Text style={styles.btnText}>❤️ Liker</Text>
+            <Text style={[styles.btnText, item.likedByUser && { color: '#fff' }]}>
+              {item.likedByUser ? '❤️ Liked' : '❤️ Liker'}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.remixBtn}
@@ -84,9 +108,10 @@ const ForumScreen = ({ navigate }) => {
 
   return (
     <View style={styles.container}>
-      {/* Tabs */}
-      <View style={styles.tabs}>
-        {TABS.map(tab => (
+      {/* Tabs + Leaderboard */}
+      <View style={styles.header}>
+        <View style={styles.tabs}>
+          {TABS.map(tab => (
           <TouchableOpacity
             key={tab.id}
             onPress={() => setSortBy(tab.id)}
@@ -96,7 +121,11 @@ const ForumScreen = ({ navigate }) => {
               {tab.icon} {tab.label}
             </Text>
           </TouchableOpacity>
-        ))}
+          ))}
+        </View>
+        <TouchableOpacity style={styles.leaderboardBtn} onPress={() => navigate('Leaderboard')}>
+          <Text style={styles.leaderboardBtnText}>🏆 Classement</Text>
+        </TouchableOpacity>
       </View>
 
       {loading ? (
@@ -116,9 +145,28 @@ const ForumScreen = ({ navigate }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f7f7f7' },
+  header: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 2,
+    borderColor: colors.cloudGray,
+    padding: 8,
+    gap: 8,
+  },
   tabs: {
-    flexDirection: 'row', backgroundColor: '#fff', padding: 8,
-    borderBottomWidth: 2, borderColor: colors.cloudGray, gap: 8
+    flexDirection: 'row',
+    gap: 8,
+  },
+  leaderboardBtn: {
+    backgroundColor: colors.duoGreen,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: radius.md,
+    alignItems: 'center',
+  },
+  leaderboardBtnText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 14,
   },
   tab: {
     flex: 1, height: 40, justifyContent: 'center', alignItems: 'center',
@@ -143,7 +191,7 @@ const styles = StyleSheet.create({
   imageContainer: { width: '100%', aspectRatio: 1, backgroundColor: '#000' },
   image: { width: '100%', height: '100%' },
   cardFooter: { padding: 16 },
-  statsRow: { flexDirection: 'row', gap: 20, marginBottom: 16 },
+  statsRow: { flexDirection: 'row', gap: 20, marginBottom: 16, alignItems: 'center' },
   stat: { alignItems: 'center' },
   statValue: { fontWeight: '900', fontSize: 18, color: colors.duoGreen },
   statLabel: { fontSize: 10, color: colors.silver, fontWeight: '800' },
@@ -152,6 +200,10 @@ const styles = StyleSheet.create({
     flex: 1, height: 44, borderRadius: radius.md,
     borderWidth: 2, borderColor: colors.cloudGray,
     justifyContent: 'center', alignItems: 'center'
+  },
+  likedBtn: {
+    backgroundColor: colors.duoGreen,
+    borderColor: colors.duoGreenDark
   },
   remixBtn: {
     flex: 1, height: 44, borderRadius: radius.md,

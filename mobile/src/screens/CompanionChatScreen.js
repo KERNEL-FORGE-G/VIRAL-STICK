@@ -1,11 +1,8 @@
+
 import React, { useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, FlatList, SafeAreaView, Animated, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Image, ActivityIndicator, StatusBar } from "react-native";
 import axios from "axios";
 import { spacing, radius } from "../theme";
-<<<<<<< HEAD
-=======
-import { rs, wp } from "../theme/responsive";
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
 import { colors } from "../theme/tokens";
 import GlassCard from "../components/GlassCard";
 import { COMPANIONS, COMPANION_NAMES } from "../components/CompanionAvatar";
@@ -55,8 +52,8 @@ const Bubble = ({ msg, accentColor }) => {
         {!isUser && (
           <Text style={[styles.compName, { color: accentColor }]}>{COMPANION_NAMES[msg.companion]}</Text>
         )}
-        <Text style={[styles.bubbleText, { color: isUser ? "#ffffff" : colors.almostBlack }]}>{msg.text}</Text>
-        <Text style={[styles.bubbleTime, { color: isUser ? "rgba(255,255,255,0.7)" : colors.silver }]}>{msg.time}</Text>
+        <Text style={styles.bubbleText}>{msg.text}</Text>
+        <Text style={styles.bubbleTime}>{msg.time}</Text>
       </View>
     </Animated.View>
   );
@@ -116,7 +113,7 @@ const CompanionChatScreen = () => {
                   style={[styles.selectorItem, { borderColor: isA ? col : colors.cloudGray, backgroundColor: isA ? `${col}18` : "#ffffff", shadowColor: isA ? col : "#aaa", shadowOffset: { width: 0, height: isA ? 3 : 2 }, shadowOpacity: 0.3, shadowRadius: 0, elevation: isA ? 3 : 2 }]}
                 >
                   <Image source={COMPANIONS[item.id]} style={styles.selectorAvatar} resizeMode="contain" />
-                  <Text style={[styles.selectorName, { color: isA ? col : colors.silver }]}>{COMPANION_NAMES[item.id]}</Text>
+                  <Text style={styles.selectorName}>{COMPANION_NAMES[item.id]}</Text>
                 </TouchableOpacity>
               );
             }}
@@ -175,8 +172,7 @@ const CompanionChatScreen = () => {
 
 const styles = StyleSheet.create({
   safe:         { flex: 1, backgroundColor: "#ffffff" },
-<<<<<<< HEAD
-  page:         { flex: 1, paddingTop: 70 },
+  page:         { flex: 1, paddingTop: 0 },
   selectorWrap: { paddingVertical: 8, borderBottomWidth: 2, borderBottomColor: colors.cloudGray },
   selectorItem: { width: 80, borderWidth: 2, borderRadius: radius.md, paddingVertical: 10, paddingHorizontal: 6, alignItems: "center", gap: 6 },
   selectorAvatar:{ width: 40, height: 40 },
@@ -188,26 +184,11 @@ const styles = StyleSheet.create({
   onlineBadge:  { marginLeft: "auto", flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
   onlineDot:    { width: 7, height: 7, borderRadius: 3.5 },
   onlineText:   { fontSize: 11, fontWeight: "800", color: colors.duoGreenDark },
-=======
-  page:         { flex: 1, paddingTop: 0 },
-  selectorWrap: { paddingVertical: 8, borderBottomWidth: 2, borderBottomColor: colors.cloudGray },
-  selectorItem: { width: 80, borderWidth: 2, borderRadius: radius.md, paddingVertical: 10, paddingHorizontal: 6, alignItems: "center", gap: 6 },
-  selectorAvatar:{ width: 40, height: 40 },
-  selectorName: { fontSize: rs(11), fontWeight: "800" },
-  chatHeader:   { flexDirection: "row", alignItems: "center", gap: spacing.md, paddingHorizontal: spacing.md, paddingVertical: 12, borderBottomWidth: 2 },
-  headerAvatar: { width: 48, height: 48, borderRadius: 24, borderWidth: 2 },
-  headerName:   { fontSize: rs(17), fontWeight: "900" },
-  headerRole:   { fontSize: rs(12), color: colors.silver, fontWeight: "600", marginTop: 2 },
-  onlineBadge:  { marginLeft: "auto", flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
-  onlineDot:    { width: 7, height: 7, borderRadius: 3.5 },
-  onlineText:   { fontSize: rs(11), fontWeight: "800", color: colors.duoGreenDark },
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
   bubbleRow:    { flexDirection: "row", alignItems: "flex-end", marginBottom: 2 },
   left:         { justifyContent: "flex-start" },
   right:        { justifyContent: "flex-end" },
   bubbleAvatar: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, marginRight: 8 },
   bubble:       { maxWidth: "80%", borderRadius: 16, padding: 12 },
-<<<<<<< HEAD
   compName:     { fontSize: 11, fontWeight: "900", marginBottom: 5, letterSpacing: 0.5 },
   bubbleText:   { fontSize: 14, lineHeight: 20, fontWeight: "600" },
   bubbleTime:   { fontSize: 10, fontWeight: "700", marginTop: 6 },
@@ -217,17 +198,6 @@ const styles = StyleSheet.create({
   input:        { flex: 1, borderWidth: 2, borderRadius: radius.pill, paddingHorizontal: 16, paddingVertical: 11, fontSize: 14, color: colors.almostBlack, borderColor: colors.cloudGray, backgroundColor: colors.bgSecondary },
   sendBtn:      { width: 46, height: 46, borderRadius: 23, justifyContent: "center", alignItems: "center" },
   sendIcon:     { color: "#fff", fontSize: 16, fontWeight: "900" },
-=======
-  compName:     { fontSize: rs(11), fontWeight: "900", marginBottom: 5, letterSpacing: 0.5 },
-  bubbleText:   { fontSize: rs(14), lineHeight: rs(20), fontWeight: "600" },
-  bubbleTime:   { fontSize: rs(10), fontWeight: "700", marginTop: 6 },
-  loadingBubble:{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 8, paddingHorizontal: spacing.md },
-  loadingText:  { fontSize: rs(13), fontWeight: "700" },
-  inputBar:     { flexDirection: "row", alignItems: "center", paddingHorizontal: spacing.md, paddingVertical: 10, borderTopWidth: 2, borderTopColor: colors.cloudGray, gap: 10, backgroundColor: "#ffffff" },
-  input:        { flex: 1, borderWidth: 2, borderRadius: radius.pill, paddingHorizontal: 16, paddingVertical: 11, fontSize: rs(14), color: colors.almostBlack, borderColor: colors.cloudGray, backgroundColor: colors.bgSecondary },
-  sendBtn:      { width: 46, height: 46, borderRadius: 23, justifyContent: "center", alignItems: "center" },
-  sendIcon:     { color: "#fff", fontSize: rs(16), fontWeight: "900" },
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
 });
 
 export default CompanionChatScreen;

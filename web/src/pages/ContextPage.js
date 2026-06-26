@@ -1,10 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CompanionAvatarWeb from "../components/CompanionAvatarWeb";
 import WebShell from "../components/WebShell";
 import PremiumButton from "../components/PremiumButton";
 import WhatsAppShareButton from "../components/WhatsAppShareButton";
-import AppIcon from "../components/AppIcon";
 import { colors, radius } from "../theme/tokens";
+import { useUser } from "../contexts/UserContext";
 
 const LOCATIONS = [
   { value: "france",       label: "🇫🇷 France" },
@@ -21,6 +22,8 @@ const ContextPage = () => {
   const [result, setResult]     = useState(null);
   const [error, setError]       = useState("");
   const [published, setPublished] = useState(false);
+  const { userId, username } = useUser();
+  const navigate = useNavigate();
 
   const generate = async () => {
     if (!context.trim()) return;
@@ -40,6 +43,10 @@ const ContextPage = () => {
 
   const publishToForum = async () => {
     if (!result || published) return;
+    if (!userId) {
+      navigate("/auth");
+      return;
+    }
     try {
       const res = await fetch("/api/forum/publish", {
         method: "POST",
@@ -48,7 +55,9 @@ const ContextPage = () => {
           shareId: result.share?.shareId,
           imageUrl: result.share?.publicUrl || result.imageUrl,
           topText: result.topText,
-          bottomText: result.bottomText
+          bottomText: result.bottomText,
+          userId,
+          username
         }),
       });
       if (res.ok) {
@@ -102,7 +111,7 @@ const ContextPage = () => {
           ) : (
             <div style={{ animation: "fadeUp 0.4s ease" }}>
               <div style={{ background: "#000", borderRadius: radius.lg, overflow: "hidden", marginBottom: 24, border: `3px solid ${colors.cloudGray}` }}>
-                <img src={result.imageUrl} alt="Mème" style={{ width: "100%", display: "block" }} />
+                <img src={result.composedImageUrl || result.share?.imageDataUrl || result.imageUrl} alt="Mème" style={{ width: "100%", display: "block" }} />
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

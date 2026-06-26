@@ -1,11 +1,8 @@
+
 import React, { useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, FlatList, SafeAreaView, Animated, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Image, ActivityIndicator, StatusBar } from "react-native";
 import axios from "axios";
 import { spacing, radius } from "../theme";
-<<<<<<< HEAD
-=======
-import { rs, wp } from "../theme/responsive";
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
 import { colors } from "../theme/tokens";
 import { COMPANIONS, COMPANION_NAMES } from "../components/CompanionAvatar";
 import { apiUrl } from "../config/api";
@@ -155,26 +152,17 @@ const MultiChatScreen = ({ navigate }) => {
 
 const styles = StyleSheet.create({
   safe:      { flex: 1, backgroundColor: "#ffffff" },
-<<<<<<< HEAD
-  page:      { flex: 1, paddingTop: 70 },
-  grid:      { flexDirection: "row", flexWrap: "wrap", gap: 8, padding: spacing.md, borderBottomWidth: 2, borderBottomColor: colors.cloudGray },
-  statusCard:{ width: "12.5%", minWidth: 70, alignItems: "center", gap: 5, padding: 8, borderRadius: radius.md, borderWidth: 2 },
-  statusAvatar:{ width: 36, height: 36, borderRadius: 18, borderWidth: 2 },
-  statusName:  { fontSize: 10, fontWeight: "900" },
-=======
   page:      { flex: 1, paddingTop: 0 },
   grid:      { flexDirection: "row", flexWrap: "wrap", gap: 8, padding: spacing.md, borderBottomWidth: 2, borderBottomColor: colors.cloudGray },
   statusCard:{ width: "12.5%", minWidth: 70, alignItems: "center", gap: 5, padding: 8, borderRadius: radius.md, borderWidth: 2 },
   statusAvatar:{ width: 36, height: 36, borderRadius: 18, borderWidth: 2 },
-  statusName:  { fontSize: rs(10), fontWeight: "900" },
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
+  statusName:  { fontSize: 10, fontWeight: "900" },
   statusDot:   { width: 8, height: 8, borderRadius: 4 },
   msgRow:    { flexDirection: "row", alignItems: "flex-end", marginBottom: 2 },
   msgLeft:   { justifyContent: "flex-start" },
   msgRight:  { justifyContent: "flex-end" },
   msgAvatar: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, marginRight: 8 },
   msgBubble: { maxWidth: "82%", borderRadius: 14, padding: 11, borderWidth: 2 },
-<<<<<<< HEAD
   msgCompName:{ fontSize: 10, fontWeight: "900", marginBottom: 4, letterSpacing: 0.4 },
   msgText:   { fontSize: 14, lineHeight: 19, fontWeight: "600" },
   msgTime:   { fontSize: 10, fontWeight: "700", marginTop: 5 },
@@ -184,17 +172,6 @@ const styles = StyleSheet.create({
   input:     { flex: 1, borderWidth: 2, borderRadius: radius.pill, paddingHorizontal: 16, paddingVertical: 11, fontSize: 14, color: colors.almostBlack, borderColor: colors.cloudGray, backgroundColor: colors.bgSecondary },
   sendBtn:   { width: 46, height: 46, borderRadius: 23, justifyContent: "center", alignItems: "center" },
   sendIcon:  { color: "#fff", fontSize: 16, fontWeight: "900" },
-=======
-  msgCompName:{ fontSize: rs(10), fontWeight: "900", marginBottom: 4, letterSpacing: 0.4 },
-  msgText:   { fontSize: rs(14), lineHeight: rs(19), fontWeight: "600" },
-  msgTime:   { fontSize: rs(10), fontWeight: "700", marginTop: 5 },
-  loadWrap:  { flexDirection: "row", alignItems: "center", gap: 8, padding: spacing.sm },
-  loadText:  { fontSize: rs(12), color: colors.silver, fontWeight: "700" },
-  inputBar:  { flexDirection: "row", alignItems: "center", paddingHorizontal: spacing.md, paddingVertical: 10, borderTopWidth: 2, borderTopColor: colors.cloudGray, gap: 10, backgroundColor: "#ffffff" },
-  input:     { flex: 1, borderWidth: 2, borderRadius: radius.pill, paddingHorizontal: 16, paddingVertical: 11, fontSize: rs(14), color: colors.almostBlack, borderColor: colors.cloudGray, backgroundColor: colors.bgSecondary },
-  sendBtn:   { width: 46, height: 46, borderRadius: 23, justifyContent: "center", alignItems: "center" },
-  sendIcon:  { color: "#fff", fontSize: rs(16), fontWeight: "900" },
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
 });
 
 export default MultiChatScreen;

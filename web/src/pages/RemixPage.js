@@ -229,7 +229,7 @@ const RemixPage = () => {
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
             {result?.imageUrl ? (
-              <img src={result.imageUrl} alt="Remix" style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
+              <img src={result.composedImageUrl || result.share?.imageDataUrl || result.imageUrl} alt="Remix" style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0 }} />
             ) : inputImageBase64 ? (
               <img src={inputImageBase64} alt="Source" style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute", inset: 0, opacity: 0.4 }} />
             ) : (

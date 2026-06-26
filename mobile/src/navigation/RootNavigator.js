@@ -15,6 +15,7 @@ import AboutScreen from "../screens/AboutScreen";
 import MenuScreen from "../screens/MenuScreen";
 import ForumScreen from "../screens/ForumScreen";
 import AuthScreen from "../screens/AuthScreen";
+import LeaderboardScreen from "../screens/LeaderboardScreen";
 
 const SCREENS = {
   Home: { comp: HomeScreen, title: "Accueil", sub: "Viral Stick Studio" },
@@ -27,16 +28,18 @@ const SCREENS = {
   About: { comp: AboutScreen, title: "À propos", sub: "Manifeste" },
   Menu: { comp: MenuScreen, title: "Menu", sub: "Options du Studio" },
   Forum: { comp: ForumScreen, title: "Forum", sub: "Flux Viral" },
+  Leaderboard: { comp: LeaderboardScreen, title: "Classement", sub: "Top Créateurs" },
   Auth: { comp: AuthScreen, title: "Compte", sub: "Connexion / Inscription" },
 };
 
 const RootNavigator = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentScreen, setCurrentScreen] = useState("Home");
 
   const screenInfo = SCREENS[currentScreen] || SCREENS.Home;
   const ScreenComp = screenInfo.comp;
 
-  const mainTabs = ["Home", "ContextReader", "VoiceToMeme", "StatusRemixer", "Menu", "Forum"];
+  const mainTabs = ["Home", "Forum", "ContextReader", "StatusRemixer", "Menu"];
   const showBack = !mainTabs.includes(currentScreen);
 
   const goBack = () => {
@@ -47,6 +50,21 @@ const RootNavigator = () => {
       setCurrentScreen("Home");
     }
   };
+
+  if (!isLoggedIn && currentScreen !== "Auth") {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+        <Header title="Bienvenue" subtitle="Viral Stick Studio" />
+        <View style={styles.screenWrapper}>
+          <AuthScreen navigate={(s) => {
+            if (s === 'Home') setIsLoggedIn(true);
+            setCurrentScreen(s);
+          }} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

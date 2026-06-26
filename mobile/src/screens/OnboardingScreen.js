@@ -28,11 +28,9 @@ const OnboardingScreen = ({ onFinish }) => {
   const scrollRef = useRef(null);
   const [idx, setIdx] = useState(0);
 
-<<<<<<< HEAD
-  const handleScroll = Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: false });
-=======
+
   const handleScroll = useRef(Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: false })).current;
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
+
 
   const goNext = () => {
     if (idx < PAGES.length - 1) {

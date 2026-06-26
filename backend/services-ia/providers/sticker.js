@@ -177,6 +177,30 @@ async function addFaceToSticker(stickerBuffer, faceBuffer, options = {}) {
   };
 }
 
+// ─── Helpers for text wrapping ─────────────────────────────────────────────────
+
+function wrapText(text, maxWidth, fontSize, w) {
+  const words = String(text || "").toUpperCase().split(/\s+/);
+  const lines = [];
+  let currentLine = "";
+
+  const approxCharWidth = fontSize * 0.55; // Approximate width per character
+  const maxCharsPerLine = Math.floor((w * 0.9) / approxCharWidth);
+
+  for (const word of words) {
+    if (!word) continue;
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    if (testLine.length > maxCharsPerLine && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+  return lines;
+}
+
 // ─── Ajoute un texte mème sur une image (topText / bottomText) ────────────────
 
 async function applyMemeText(imageBuffer, options = {}) {
@@ -189,8 +213,7 @@ async function applyMemeText(imageBuffer, options = {}) {
 
   const fontSize = Math.max(Math.round(w * 0.08), 32);
   const strokeW  = Math.max(Math.round(fontSize * 0.08), 3);
-  const marginT  = Math.round(h * 0.04) + fontSize;
-  const marginB  = h - Math.round(h * 0.04);
+  const lineHeight = fontSize * 1.2;
 
   const escXml = (s) =>
     (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -199,13 +222,35 @@ async function applyMemeText(imageBuffer, options = {}) {
     `x="50%" y="${y}" font-family="Impact, Arial Black, sans-serif"
      font-size="${fontSize}px" font-weight="900" fill="white"
      stroke="black" stroke-width="${strokeW}" stroke-linejoin="round"
-     text-anchor="middle" dominant-baseline="auto"
+     text-anchor="middle" dominant-baseline="middle"
      paint-order="stroke fill" letter-spacing="1"`;
+
+  // Render top text
+  let topSvg = "";
+  if (topText) {
+    const lines = wrapText(topText, w, fontSize, w);
+    const startY = Math.round(h * 0.06) + lineHeight / 2;
+    for (let i = 0; i < lines.length; i++) {
+      const y = startY + i * lineHeight;
+      topSvg += `<text ${attrs(y)}>${escXml(lines[i])}</text>`;
+    }
+  }
+
+  // Render bottom text
+  let bottomSvg = "";
+  if (bottomText) {
+    const lines = wrapText(bottomText, w, fontSize, w);
+    const startY = h - Math.round(h * 0.06) - ((lines.length - 1) * lineHeight) - lineHeight / 2;
+    for (let i = 0; i < lines.length; i++) {
+      const y = startY + i * lineHeight;
+      bottomSvg += `<text ${attrs(y)}>${escXml(lines[i])}</text>`;
+    }
+  }
 
   const svg = Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
-      ${topText    ? `<text ${attrs(marginT)}>${escXml(topText.toUpperCase())}</text>`    : ""}
-      ${bottomText ? `<text ${attrs(marginB)}>${escXml(bottomText.toUpperCase())}</text>` : ""}
+      ${topSvg}
+      ${bottomSvg}
     </svg>`
   );
 

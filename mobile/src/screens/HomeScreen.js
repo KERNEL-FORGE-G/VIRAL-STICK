@@ -1,6 +1,6 @@
+
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { colors, radius, spacing } from '../theme/tokens';
 import CompanionAvatar from '../components/CompanionAvatar';
 
@@ -11,9 +11,7 @@ const TOOLS = [
   { id: 'forum', title: 'Forum Viral', icon: '🌍', color: colors.duoGreen, screen: 'Forum' },
 ];
 
-const HomeScreen = () => {
-  const navigation = useNavigation();
-
+const HomeScreen = ({ navigate }) => {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Header Style Duolingo */}
@@ -31,7 +29,7 @@ const HomeScreen = () => {
           <TouchableOpacity
             key={tool.id}
             style={[styles.card, { borderColor: tool.color + '44' }]}
-            onPress={() => navigation.navigate(tool.screen)}
+            onPress={() => navigate(tool.screen)}
           >
             <Text style={styles.cardIcon}>{tool.icon}</Text>
             <Text style={styles.cardTitle}>{tool.title}</Text>
@@ -42,7 +40,7 @@ const HomeScreen = () => {
       {/* CTA Forum */}
       <TouchableOpacity
         style={styles.forumCta}
-        onPress={() => navigation.navigate('Forum')}
+        onPress={() => navigate('Forum')}
       >
         <Text style={styles.forumCtaText}>Découvrir le Forum ❤️</Text>
       </TouchableOpacity>

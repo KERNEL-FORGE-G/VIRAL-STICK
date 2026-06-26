@@ -3,28 +3,61 @@ import { useNavigate } from "react-router-dom";
 import WebShell from "../components/WebShell";
 import PremiumButton from "../components/PremiumButton";
 import { colors, radius } from "../theme/tokens";
+import { useUser } from "../contexts/UserContext";
 
 const ForumPage = () => {
   const [memes, setMemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("createdAt");
   const navigate = useNavigate();
+  const { userId } = useUser();
 
-  useEffect(() => { fetchMemes(); }, [sortBy]);
+  useEffect(() => { fetchMemes(); }, [sortBy, userId]);
 
   const fetchMemes = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/forum/memes?sortBy=${sortBy}`);
+      const params = new URLSearchParams({ sortBy });
+      if (userId) params.append("userId", userId);
+      const res = await fetch(`/api/forum/memes?${params.toString()}`);
       const data = await res.json();
       setMemes(Array.isArray(data) ? data : []);
-    } catch (e) { setMemes([]); }
+    } catch (e) {
+      console.error("Fetch memes error:", e);
+      setMemes([]);
+    }
     finally { setLoading(false); }
   };
 
   const handleLike = async (id) => {
-    const res = await fetch(`/api/forum/like/${id}`, { method: "POST" });
-    if (res.ok) setMemes(prev => prev.map(m => m.id === id ? { ...m, likes: m.likes + 1 } : m));
+    if (!userId) {
+      navigate("/auth");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/forum/like/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId })
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        // Optimistic UI update or wait for server response
+        setMemes(prev => prev.map(m =>
+          m.id === id
+            ? {
+                ...m,
+                likes: result.liked ? (m.likes || 0) + 1 : Math.max(0, (m.likes || 0) - 1),
+                likedByUser: result.liked
+              }
+            : m
+        ));
+      }
+    } catch (e) {
+      console.error("Like error:", e);
+    }
   };
 
   return (
@@ -39,27 +72,30 @@ const ForumPage = () => {
           </p>
         </div>
 
-        <div style={{ display: "flex", background: colors.bgSecondary, padding: 4, borderRadius: radius.lg, border: `2px solid ${colors.cloudGray}` }}>
-          {[
-            { id: "createdAt", label: "Récents", icon: "🕒" },
-            { id: "likes",     label: "Populaires", icon: "🔥" },
-            { id: "remixes",   label: "Viraux", icon: "🔄" }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setSortBy(tab.id)}
-              style={{
-                padding: "10px 16px", borderRadius: radius.md, border: "none", cursor: "pointer",
-                fontFamily: "'Nunito', sans-serif", fontWeight: 800, fontSize: 14,
-                background: sortBy === tab.id ? colors.snowWhite : "transparent",
-                color: sortBy === tab.id ? colors.duoGreenDark : colors.silver,
-                boxShadow: sortBy === tab.id ? "0 2px 0 #e5e5e5" : "none",
-                transition: "all 0.2s"
-              }}
-            >
-              {tab.icon} {tab.label}
-            </button>
-          ))}
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", background: colors.bgSecondary, padding: 4, borderRadius: radius.lg, border: `2px solid ${colors.cloudGray}` }}>
+            {[
+              { id: "createdAt", label: "Récents", icon: "🕒" },
+              { id: "likes",     label: "Populaires", icon: "🔥" },
+              { id: "remixes",   label: "Viraux", icon: "🔄" }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setSortBy(tab.id)}
+                style={{
+                  padding: "10px 16px", borderRadius: radius.md, border: "none", cursor: "pointer",
+                  fontFamily: "'Nunito', sans-serif", fontWeight: 800, fontSize: 14,
+                  background: sortBy === tab.id ? colors.snowWhite : "transparent",
+                  color: sortBy === tab.id ? colors.duoGreenDark : colors.silver,
+                  boxShadow: sortBy === tab.id ? "0 2px 0 #e5e5e5" : "none",
+                  transition: "all 0.2s"
+                }}
+              >
+                {tab.icon} {tab.label}
+              </button>
+            ))}
+          </div>
+          <PremiumButton variant="primary" onClick={() => navigate("/leaderboard")} style={{ whiteSpace: "nowrap" }}>🏆 Classement</PremiumButton>
         </div>
       </div>
 
@@ -67,6 +103,11 @@ const ForumPage = () => {
         <div style={{ textAlign: "center", padding: 80, color: colors.silver }}>Chargement du flux...</div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
+          {memes.length === 0 && (
+            <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 48, color: colors.silver }}>
+              Aucun mème trouvé. Sois le premier à publier !
+            </div>
+          )}
           {memes.map((meme, index) => (
             <div key={meme.id} className="duo-card" style={{ overflow: "hidden", display: "flex", flexDirection: "column", position: "relative" }}>
               {sortBy !== "createdAt" && index < 3 && (
@@ -79,12 +120,35 @@ const ForumPage = () => {
               </div>
               <div style={{ padding: 16, flex: 1 }}>
                 <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
-                  <div style={{ textAlign: "center" }}><Text style={{ display: "block", fontSize: 18, fontWeight: 900, color: colors.duoGreen }}>{meme.likes}</Text><Text style={{ fontSize: 10, color: colors.silver, fontWeight: 800 }}>LIKES</Text></div>
-                  <div style={{ textAlign: "center" }}><Text style={{ display: "block", fontSize: 18, fontWeight: 900, color: colors.duoBlue }}>{meme.remixes || 0}</Text><Text style={{ fontSize: 10, color: colors.silver, fontWeight: 800 }}>REMIX</Text></div>
+                  <div style={{ textAlign: "center" }}>
+                    <span style={{ display: "block", fontSize: 18, fontWeight: 900, color: colors.duoGreen }}>{meme.likes || 0}</span>
+                    <span style={{ fontSize: 10, color: colors.silver, fontWeight: 800 }}>LIKES</span>
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <span style={{ display: "block", fontSize: 18, fontWeight: 900, color: colors.duoBlue }}>{meme.remixes || 0}</span>
+                    <span style={{ fontSize: 10, color: colors.silver, fontWeight: 800 }}>REMIX</span>
+                  </div>
+                  {meme.username && (
+                    <div style={{ flex: 1, textAlign: "right", alignSelf: "center" }}>
+                      <span style={{ fontSize: 12, color: colors.silver, fontWeight: 700 }}>par {meme.username}</span>
+                    </div>
+                  )}
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
-                  <PremiumButton variant="ghost" onClick={() => handleLike(meme.id)} style={{ flex: 1, minHeight: 40 }}>❤️ Liker</PremiumButton>
-                  <PremiumButton variant="primary" onClick={() => navigate("/remix", { state: { imageUrl: meme.imageUrl, sourceMemeId: meme.id } })} style={{ flex: 1, minHeight: 40 }}>✨ Remix</PremiumButton>
+                  <PremiumButton 
+                    variant={meme.likedByUser ? "green" : "ghost"} 
+                    onClick={() => handleLike(meme.id)} 
+                    style={{ flex: 1, minHeight: 40 }}
+                  >
+                    {meme.likedByUser ? "❤️ Liked" : "❤️ Liker"}
+                  </PremiumButton>
+                  <PremiumButton
+                    variant="primary"
+                    onClick={() => navigate("/remix", { state: { imageUrl: meme.imageUrl, sourceMemeId: meme.id } })}
+                    style={{ flex: 1, minHeight: 40 }}
+                  >
+                    ✨ Remix
+                  </PremiumButton>
                 </div>
               </div>
             </div>
@@ -94,5 +158,5 @@ const ForumPage = () => {
     </WebShell>
   );
 };
-const Text = ({ children, style }) => <span style={style}>{children}</span>;
+
 export default ForumPage;

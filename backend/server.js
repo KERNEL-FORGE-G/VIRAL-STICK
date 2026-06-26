@@ -1,9 +1,15 @@
+
+console.log("=== Starting Viral Stick Server ===");
+
 const express = require("express");
 const cors = require("cors");
 require("./loadEnv")();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+console.log("[Server] NODE_ENV =", process.env.NODE_ENV);
+console.log("[Server] PORT =", PORT);
 
 app.use(cors());
 app.use(express.json({ limit: "20mb" }));
@@ -16,12 +22,9 @@ app.use("/api/share",   require("./routes/shareRoutes"));
 app.use("/api/forum",   require("./routes/forumRoutes"));
 
 // Alias conforme à docs/contrat-api.md : POST /api/context-reader
-// (le contrat ne prévoyait pas le préfixe /memes utilisé par le reste de l'API)
 const MemeController = require("./controllers/memeController");
 app.post("/api/context-reader", MemeController.createFromText);
 
-// Toujours disponible (même en production) : indique si la mise à jour des
-// clés API via l'UI Réglages est possible (uniquement en dev local).
 app.get("/api/debug/keys-status", (req, res) => {
   res.status(200).json({ updatable: process.env.NODE_ENV === "development" });
 });
@@ -82,10 +85,8 @@ app.get("/debug", (req, res) => {
   res.json({ env: envStatus, deps: depsStatus });
 });
 
-if (process.env.NODE_ENV !== "production") {
-  app.listen(PORT, () => {
-    console.log(`Serveur Viral Stick en écoute sur le port ${PORT}`);
-  });
-}
+app.listen(PORT, () => {
+  console.log(`✅ Serveur Viral Stick en écoute sur le port ${PORT}`);
+});
 
 module.exports = app;

@@ -1,15 +1,15 @@
 {
   "scripts": {
-    "start": "npx concurrently -n BE,FE -c cyan,magenta \"npm start --prefix backend\" \"cd web && PORT=3001 npx react-scripts start\"",
+    "start": "concurrently -n BE,FE -c cyan,magenta \"npm start --prefix backend\" \"npm start --prefix web\"",
     "build": "cd web && npm install && CI=false DISABLE_ESLINT_PLUGIN=true npm run build && cd .. && rm -rf build && mv web/build build",
     "test": "jest"
   },
   "devDependencies": {
-    "concurrently": "^10.0.3",
     "jest": "^30.4.2",
     "prettier": "^3.8.4"
   },
   "dependencies": {
+    "concurrently": "^10.0.3",
     "@google/generative-ai": "^0.1.3",
     "@mistralai/mistralai": "^2.2.6",
     "axios": "^1.18.1",
