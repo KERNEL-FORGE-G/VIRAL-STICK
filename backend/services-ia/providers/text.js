@@ -69,7 +69,7 @@ async function callGemini(systemPrompt, userPrompt, schema) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("Gemini: GEMINI_API_KEY manquant");
 
-  const model = "gemini-2.5-flash";
+  const model = "gemini-1.5-flash";
 
   // Pour le JSON, on demande explicitement le mode JSON
   const generationConfig = schema === "json"

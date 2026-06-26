@@ -8,7 +8,8 @@ const path = require("path");
 const { v4: uuid } = require("uuid");
 const { applyMemeText } = require("./providers/sticker");
 
-const STORAGE_DIR = path.join(__dirname, "..", "storage", "shares");
+const os = require("os");
+const STORAGE_DIR = path.join(os.tmpdir(), "viral-stick-shares");
 const SHARE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 function ensureStorageDir() {

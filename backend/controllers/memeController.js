@@ -1,5 +1,4 @@
 const AIService = require("../services-ia/aiService");
-<<<<<<< HEAD
 const ShareService = require("../services-ia/shareService");
 
 async function attachMemeShare(req, memeData) {
@@ -37,8 +36,6 @@ async function attachRemixShare(req, remix) {
     share,
   };
 }
-=======
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
 
 const MemeController = {
   createFromText: async (req, res) => {
@@ -61,17 +58,11 @@ const MemeController = {
         companionComment = "Art adore ce concept ! C'est très visuel.";
       }
 
-<<<<<<< HEAD
       const withShare = await attachMemeShare(req, memeData);
 
       res.status(200).json({
         message: "Mème généré avec succès",
         ...withShare,
-=======
-      res.status(200).json({
-        message: "Mème généré avec succès",
-        ...memeData,
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
         companionComment,
         location: location || "international",
       });
@@ -83,7 +74,6 @@ const MemeController = {
 
   createFromVoice: async (req, res) => {
     try {
-<<<<<<< HEAD
       let { transcription } = req.body;
 
       // Nouveau : si un vrai fichier audio est envoyé (multipart/form-data,
@@ -107,11 +97,6 @@ const MemeController = {
         return res.status(400).json({
           error: "Audio (champ 'audio') ou transcription requis",
         });
-=======
-      const { transcription } = req.body;
-      if (!transcription) {
-        return res.status(400).json({ error: "Transcription requise" });
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
       }
 
       const memeData = await AIService.generateMemeFromVoice(transcription);
@@ -127,18 +112,12 @@ const MemeController = {
         companionComment = "Ubu trouve ça hilarant ! 🤖";
       }
 
-<<<<<<< HEAD
       const withShare = await attachMemeShare(req, memeData);
 
       res.status(200).json({
         message: "Mème vocal généré avec succès",
         transcription,
         ...withShare,
-=======
-      res.status(200).json({
-        message: "Mème vocal généré avec succès",
-        ...memeData,
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
         companionComment,
       });
     } catch (error) {
@@ -220,15 +199,10 @@ const MemeController = {
           "Bio valide le rendu : plus lisible, plus postable, plus viral.";
       }
 
-<<<<<<< HEAD
       const withShare = await attachRemixShare(req, remix);
 
       res.status(200).json({
         ...withShare,
-=======
-      res.status(200).json({
-        ...remix,
->>>>>>> 9a71b9ba62fd2eb4616a0c864cc0b21c7a0ed075
         companionComment,
         location: location || "international",
       });
