@@ -1,28 +1,16 @@
 const fs = require("fs");
-const path = require("path");
-const os = require("os");
 const { v4: uuid } = require("uuid");
 const { applyMemeText } = require("./providers/sticker");
-const { db } = require("../firebase");
+const { db, admin } = require("../firebase");
 const cloudinary = require("../cloudinary");
 
-/**
- * Téléverse une image sur Cloudinary
- */
 async function uploadToCloudinary(buffer, fileName) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: "viral-stick/memes",
-        public_id: fileName.split(".")[0],
-        resource_type: "image",
-      },
+      { folder: "viral-stick/memes", public_id: fileName.split(".")[0], resource_type: "image" },
       (error, result) => {
-        if (error) {
-          console.error("[Cloudinary] Upload Error:", error.message);
-          return resolve(null);
-        }
-        resolve(result.secure_url);
+        if (error) { resolve(null); }
+        else { resolve(result.secure_url); }
       }
     );
     uploadStream.end(buffer);
@@ -36,57 +24,47 @@ async function composeMemeImage({ imageUrl, imageBase64, topText = "", bottomTex
     buffer = Buffer.from(base64Data, "base64");
   } else if (imageUrl && imageUrl.startsWith("data:")) {
     const match = imageUrl.match(/^data:([^;]+);base64,(.+)$/s);
-    if (match) {
-      buffer = Buffer.from(match[2], "base64");
-    }
+    if (match) { buffer = Buffer.from(match[2], "base64"); }
+  } else if (imageUrl && imageUrl.startsWith("http")) {
+    const axios = require("axios");
+    try {
+      const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+      buffer = Buffer.from(response.data, 'binary');
+    } catch (e) { return null; }
   }
 
   if (!buffer) return null;
-
-  try {
-    const result = await applyMemeText(buffer, { topText, bottomText });
-    return {
-      buffer: result.buffer,
-      dataUrl: result.dataUrl,
-      mimeType: "image/jpeg"
-    };
-  } catch (e) {
-    console.error("[composeMemeImage] Error:", e.message);
-    return null;
-  }
+  const result = await applyMemeText(buffer, { topText, bottomText });
+  return result;
 }
 
-async function buildShareBundle({ topText, bottomText, caption, imageUrl, imageBase64, baseUrl }) {
-  const composed = await composeMemeImage({
-    imageUrl,
-    imageBase64,
-    topText,
-    bottomText: bottomText || caption,
-  });
-
+async function buildShareBundle({ topText, bottomText, caption, imageUrl, imageBase64, shareToForum = false, sourceMemeId = null }) {
+  const composed = await composeMemeImage({ imageUrl, imageBase64, topText, bottomText: bottomText || caption });
   let shareId = uuid().replace(/-/g, "").slice(0, 12);
   let publicUrl = null;
 
   if (composed) {
-    // 1. Upload sur Cloudinary (plus robuste que Firebase Storage pour les images publiques)
-    const fileName = `${shareId}.jpg`;
-    publicUrl = await uploadToCloudinary(composed.buffer, fileName);
+    publicUrl = await uploadToCloudinary(composed.buffer, `${shareId}.jpg`);
 
-    // 2. Enregistrement dans Firestore pour le Forum (toujours utilisé pour les métadonnées et likes)
-    if (db) {
+    if (db && shareToForum) {
       try {
         await db.collection("memes").doc(shareId).set({
           shareId,
-          imageUrl: publicUrl || composed.dataUrl, // Fallback dataUrl si Cloudinary échoue
+          imageUrl: publicUrl || composed.dataUrl,
           topText: topText || "",
           bottomText: bottomText || caption || "",
           likes: 0,
+          remixes: 0,
           createdAt: Date.now(),
         });
-        console.log(`[Firestore] Mème ${shareId} enregistré avec URL Cloudinary`);
-      } catch (e) {
-        console.error("[Firestore] Save error:", e.message);
-      }
+
+        // Si c'est un remix, on incrémente le compteur du mème d'origine
+        if (sourceMemeId) {
+          await db.collection("memes").doc(sourceMemeId).update({
+            remixes: admin.firestore.FieldValue.increment(1)
+          });
+        }
+      } catch (e) { console.error("[Firestore] Save error:", e.message); }
     }
   }
 

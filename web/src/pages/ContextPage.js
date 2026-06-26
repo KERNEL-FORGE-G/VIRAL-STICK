@@ -17,6 +17,7 @@ const LOCATIONS = [
 const ContextPage = () => {
   const [context, setContext]   = useState("");
   const [location, setLocation] = useState("france");
+  const [shareToForum, setShareToForum] = useState(true);
   const [loading, setLoading]   = useState(false);
   const [result, setResult]     = useState(null);
   const [error, setError]       = useState("");
@@ -28,7 +29,7 @@ const ContextPage = () => {
       const res  = await fetch("/api/memes/generate-from-text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: context, location }),
+        body: JSON.stringify({ text: context, location, shareToForum }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Erreur serveur");
@@ -118,6 +119,19 @@ const ContextPage = () => {
                 transition: "width 0.3s ease",
               }} />
             </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24, padding: "0 4px" }}>
+            <input
+              type="checkbox"
+              id="shareToForum"
+              checked={shareToForum}
+              onChange={(e) => setShareToForum(e.target.checked)}
+              style={{ width: 18, height: 18, accentColor: colors.duoGreen }}
+            />
+            <label htmlFor="shareToForum" style={{ fontFamily: "'Nunito', sans-serif", fontSize: 14, fontWeight: 700, color: colors.charcoal, cursor: "pointer" }}>
+              Partager sur le Forum public 🌍
+            </label>
           </div>
 
           {error && (
