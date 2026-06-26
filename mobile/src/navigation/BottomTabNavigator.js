@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Dimensions, Platform } from "react-native";
+import React, { useRef } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Dimensions, Platform, Animated } from "react-native";
 import { colors, spacing, borderRadius } from "../theme/tokens";
 
 const { width: SW } = Dimensions.get("window");
@@ -12,44 +12,70 @@ const TAB_ITEMS = [
   { key: "Menu",           label: "Menu",      icon: "☰",  accent: colors.silver },
 ];
 
+const TabButton = ({ item, active, onPress }) => {
+  const scaleValue = useRef(new Animated.Value(1)).current;
+
+  const onPressIn = () => {
+    Animated.spring(scaleValue, {
+      toValue: 0.9,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const onPressOut = () => {
+    Animated.spring(scaleValue, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      activeOpacity={0.7}
+      style={styles.tabItem}
+    >
+      <Animated.View style={[
+        styles.iconBox,
+        active && { backgroundColor: `${item.accent}18`, borderColor: item.accent, borderWidth: 2 },
+        { transform: [{ scale: scaleValue }] }
+      ]}>
+        <Text style={[styles.tabIcon, active && { transform: [{ scale: 1.1 }] }]}>
+          {item.icon}
+        </Text>
+      </Animated.View>
+      <Text style={[
+        styles.tabLabel,
+        { color: active ? item.accent : colors.silver, fontWeight: active ? "900" : "700" }
+      ]}>
+        {item.label}
+      </Text>
+      {active && <View style={[styles.activeIndicator, { backgroundColor: item.accent }]} />}
+    </TouchableOpacity>
+  );
+};
+
 const BottomTabNavigator = ({ children, currentScreen, onNavigate }) => {
   return (
     <View style={styles.root}>
-      {/* Contenu de l'écran */}
       <View style={styles.content}>
         {children}
       </View>
 
-      {/* Barre de navigation basse */}
       <SafeAreaView style={styles.tabBarContainer}>
         <View style={styles.tabBar}>
-          {TAB_ITEMS.map((item) => {
-            const active = currentScreen === item.key;
-            return (
-              <TouchableOpacity
-                key={item.key}
-                onPress={() => onNavigate(item.key)}
-                activeOpacity={0.7}
-                style={styles.tabItem}
-              >
-                <View style={[
-                  styles.iconBox,
-                  active && { backgroundColor: `${item.accent}18`, borderColor: item.accent, borderWidth: 2 }
-                ]}>
-                  <Text style={[styles.tabIcon, active && { transform: [{ scale: 1.1 }] }]}>
-                    {item.icon}
-                  </Text>
-                </View>
-                <Text style={[
-                  styles.tabLabel,
-                  { color: active ? item.accent : colors.silver, fontWeight: active ? "900" : "700" }
-                ]}>
-                  {item.label}
-                </Text>
-                {active && <View style={[styles.activeIndicator, { backgroundColor: item.accent }]} />}
-              </TouchableOpacity>
-            );
-          })}
+          {TAB_ITEMS.map((item) => (
+            <TabButton
+              key={item.key}
+              item={item}
+              active={currentScreen === item.key}
+              onPress={() => onNavigate(item.key)}
+            />
+          ))}
         </View>
       </SafeAreaView>
     </View>
