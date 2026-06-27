@@ -8,13 +8,12 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "devtools": "react-devtools",
-    "log:android": "adb logcat -s ReactNativeJS:V ReactNative:V"
+    "log:android": "adb logcat -s ReactNativeJS:V ReactNative:V",
+    "apk": "cd android && ./gradlew assembleRelease && cp app/build/outputs/apk/release/app-release.apk ../viral-stick-release.apk && cd .."
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^1.21.0",
     "@react-native-community/voice": "^1.1.9",
-    "@react-navigation/bottom-tabs": "^7.18.3",
-    "@react-navigation/native": "^7.3.4",
-    "@react-navigation/native-stack": "^7.17.6",
     "axios": "^1.7.0",
     "lucide-react-native": "^1.21.0",
     "react": "18.3.1",
@@ -22,7 +21,6 @@
     "react-native-fs": "^2.20.0",
     "react-native-image-picker": "^8.2.1",
     "react-native-permissions": "^5.6.0",
-    "react-native-safe-area-context": "^5.8.0",
     "react-native-share": "^12.3.1",
     "react-native-svg": "^15.15.5"
   },

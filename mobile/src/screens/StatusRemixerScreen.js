@@ -8,7 +8,7 @@ import AnimatedButton from "../components/AnimatedButton";
 import CompanionAvatar from "../components/CompanionAvatar";
 import AppIcon from "../components/AppIcon";
 import { apiUrl } from "../config/api";
-import { shareToWhatsApp } from "../utils/shareUtils";
+import { shareToWhatsApp, downloadImageToGallery } from "../utils/shareUtils";
 import { memeDB, statsDB } from "../services/database";
 
 const FILTERS = [
@@ -182,6 +182,19 @@ const StatusRemixerScreen = ({ navigate, route }) => {
     }
   };
 
+  const handleDownload = async () => {
+    const imageUrl = remix?.composedImageUrl || remix?.share?.publicUrl || remix?.imageUrl || initialImage;
+    if (imageUrl) {
+      try {
+        const savedPath = await downloadImageToGallery(imageUrl);
+        Alert.alert('Succès', 'Image sauvegardée dans votre galerie !');
+      } catch (error) {
+        console.error('Erreur téléchargement:', error);
+        Alert.alert('Erreur', 'Impossible de télécharger l\'image.');
+      }
+    }
+  };
+
   const regenerateRemix = async () => {
     if (!editCaption.trim()) {
       Alert.alert("Viral Stick", "Entre une caption pour régénérer.");
@@ -336,6 +349,7 @@ const StatusRemixerScreen = ({ navigate, route }) => {
 
             <View style={styles.actions}>
               <AnimatedButton title={loading ? "Remix IA..." : "Remixer avec l'IA"} onPress={askRemix} loading={loading} disabled={loading} size="lg" style={{ flex: 1 }} />
+              <AnimatedButton title="Télécharger" onPress={handleDownload} size="lg" style={{ flex: 1, backgroundColor: theme.primary }} />
               <AnimatedButton title="WhatsApp" onPress={handleShareWhatsApp} size="lg" style={{ flex: 1, backgroundColor: '#25D366' }} />
             </View>
 
