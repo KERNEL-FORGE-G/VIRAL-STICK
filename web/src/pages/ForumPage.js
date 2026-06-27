@@ -9,6 +9,7 @@ const ForumPage = () => {
   const [memes, setMemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("createdAt");
+  const [likingId, setLikingId] = useState(null);
   const navigate = useNavigate();
   const { userId } = useUser();
 
@@ -35,6 +36,11 @@ const ForumPage = () => {
       return;
     }
 
+    // Empêcher les clics multiples sur le même mème
+    if (likingId === id) return;
+    
+    setLikingId(id);
+
     try {
       const res = await fetch(`/api/forum/like/${id}`, {
         method: "POST",
@@ -57,6 +63,8 @@ const ForumPage = () => {
       }
     } catch (e) {
       console.error("Like error:", e);
+    } finally {
+      setLikingId(null);
     }
   };
 

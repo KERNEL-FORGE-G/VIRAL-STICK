@@ -3,12 +3,13 @@
  * KERNEL FORGE — 2026
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text } from "react-native";
 import { ThemeProvider } from "./src/theme";
 import RootNavigator from "./src/navigation/RootNavigator";
 import SplashScreen from "./src/components/SplashScreen";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
+import { initDatabase } from "./src/services/database";
 
 class AppErrorBoundary extends React.Component {
   constructor(props) {
@@ -60,6 +61,20 @@ class AppErrorBoundary extends React.Component {
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(true);
+  const [dbReady, setDbReady] = useState(false);
+
+  useEffect(() => {
+    // Initialiser la base de données SQLite au démarrage
+    initDatabase()
+      .then(() => {
+        console.log('Base de données prête');
+        setDbReady(true);
+      })
+      .catch((error) => {
+        console.error('Erreur initialisation DB:', error);
+        setDbReady(true); // Continuer quand même
+      });
+  }, []);
 
   return (
     <AppErrorBoundary>

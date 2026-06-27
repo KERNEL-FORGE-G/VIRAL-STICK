@@ -12,8 +12,8 @@ import { Platform } from "react-native";
 // Mets FORCE_LOCAL à true pour forcer le backend local
 // Mets USE_PROD_IN_DEV à true pour forcer la production
 // ──────────────────────────────────────────────
-const FORCE_LOCAL = false;
-const USE_PROD_IN_DEV = true; // Forcer l'API de production en tout temps
+const FORCE_LOCAL = false; // Utiliser le backend local
+const USE_PROD_IN_DEV = true; // Utiliser l'API de production en développement
 
 const PRODUCTION_URL = "https://viral-stick.vercel.app";
 

@@ -9,6 +9,7 @@ const MenuScreen = ({ navigate }) => {
   const { theme } = useTheme();
 
   const MENU_OPTIONS = [
+    { key: "Profile",       label: "Mon Profil",      icon: "globe", desc: "Voir tes statistiques", color: theme.success },
     { key: "CompanionChat", label: "Chat Compagnons", icon: "chat", desc: "Discute avec tes experts IA", color: theme.primary },
     { key: "MultiChat",     label: "Multi-Chat",      icon: "multichat", desc: "Le board complet de l'IA", color: theme.warning },
     { key: "Settings",      label: "Paramètres",      icon: "settings", desc: "Clés API et préférences", color: theme.textSecondary },
@@ -24,7 +25,7 @@ const MenuScreen = ({ navigate }) => {
               <Text style={[styles.bannerTitle, { color: theme.textPrimary }]}>Studio Viral</Text>
               <Text style={[styles.bannerSub, { color: theme.secondary }]}>Génère. Partage. Viralise.</Text>
             </View>
-            <CompanionAvatar companion="arch" size={70} floating />
+            <CompanionAvatar companion="arch" size={70} floating showRing={false} />
           </View>
         </GlassCard>
 

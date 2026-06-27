@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, Animated, TouchableOpacity, TextInput, Alert, Image, ActivityIndicator, StatusBar } from "react-native";
+import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import axios from "axios";
 import { useTheme, spacing, radius } from "../theme";
 import GlassCard from "../components/GlassCard";
@@ -7,6 +8,8 @@ import AnimatedButton from "../components/AnimatedButton";
 import CompanionAvatar from "../components/CompanionAvatar";
 import AppIcon from "../components/AppIcon";
 import { apiUrl } from "../config/api";
+import { shareToWhatsApp } from "../utils/shareUtils";
+import { memeDB, statsDB } from "../services/database";
 
 const FILTERS = [
   { id: "none", label: "Original", icon: "refresh-cw" },
@@ -28,7 +31,9 @@ const StatusRemixerScreen = ({ navigate, route }) => {
   const [initialImage, setInitialImage] = useState(null);
   const [loading, setLoading]     = useState(false);
   const [remix, setRemix]         = useState(null);
+  const [published, setPublished] = useState(false);
   const [msg, setMsg]             = useState("Envoie un visuel ou une intention. Je m'occupe du reste.");
+  const [userId] = useState('demo_user'); // À remplacer par l'ID utilisateur réel
   const previewAnim               = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -47,12 +52,42 @@ const StatusRemixerScreen = ({ navigate, route }) => {
     vintage: "rgba(193,132,79,0.24)", fire: "rgba(239,68,68,0.28)",
   }[filter] || "transparent"), [filter]);
 
-  const pickImage = () => {
-    Alert.alert("Image source", "Choisir depuis :", [
-      { text: "📷 Caméra", onPress: () => { setImagePicked(true); animatePreview(); } },
-      { text: "🖼️ Galerie", onPress: () => { setImagePicked(true); animatePreview(); } },
-      { text: "Annuler", style: "cancel" },
-    ]);
+  const pickImage = async (source) => {
+    const options = {
+      mediaType: 'photo',
+      quality: 0.8,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      includeBase64: true,
+    };
+
+    try {
+      let result;
+      if (source === 'camera') {
+        result = await launchCamera(options);
+      } else {
+        result = await launchImageLibrary(options);
+      }
+
+      if (result.didCancel) {
+        return;
+      }
+
+      if (result.errorCode) {
+        Alert.alert('Erreur', result.errorMessage || 'Impossible de sélectionner l\'image');
+        return;
+      }
+
+      if (result.assets && result.assets[0]) {
+        const asset = result.assets[0];
+        setInitialImage(asset.uri);
+        setImagePicked(true);
+        animatePreview();
+      }
+    } catch (error) {
+      console.error('Erreur sélection image:', error);
+      Alert.alert('Erreur', 'Impossible de sélectionner l\'image');
+    }
   };
 
   const animatePreview = () => {
@@ -62,20 +97,83 @@ const StatusRemixerScreen = ({ navigate, route }) => {
 
   const askRemix = async () => {
     if (!imagePicked && !caption.trim()) { Alert.alert("Viral Stick", "Charge une image ou décris une idée."); return; }
-    setLoading(true); setRemix(null); setMsg("Je cherche une caption social-first...");
+    setLoading(true); setRemix(null); setPublished(false); setMsg("Je cherche une caption social-first...");
+    
+    const url = apiUrl("/api/memes/status-remixer");
+    console.log('[StatusRemixer] URL API:', url);
+    console.log('[StatusRemixer] Caption:', caption);
+    console.log('[StatusRemixer] Image:', initialImage);
+    
     try {
-      const res = await axios.post(apiUrl("/api/memes/status-remixer"), {
+      const res = await axios.post(url, {
         text: caption || "Image de réaction expressive à transformer en mème",
         inputImageUrl: initialImage || undefined,
         imageContext: imagePicked ? `Filtre: ${filter}. Position: ${position}.` : undefined,
       });
+      console.log('[StatusRemixer] Réponse API:', res.data);
       setRemix(res.data);
       if (res.data?.meme_text) setCaption(res.data.meme_text);
       setMsg(res.data?.companionComment || "Remix prêt. Caption et édition alignés.");
-    } catch {
+      
+      // Sauvegarder le mème dans SQLite
+      await saveMemeToDB(res.data);
+    } catch (error) {
+      console.error('[StatusRemixer] Erreur API:', error);
+      console.error('[StatusRemixer] Détails erreur:', error.response?.data || error.message);
       setMsg("Le remix IA n'a pas répondu. Réessaie.");
-      Alert.alert("Erreur", "Connexion backend impossible.");
+      Alert.alert("Erreur", `Connexion backend impossible: ${error.message}`);
     } finally { setLoading(false); }
+  };
+
+  const saveMemeToDB = async (memeData) => {
+    try {
+      const memeRecord = {
+        id: memeData.id || `meme_${Date.now()}`,
+        userId: userId,
+        imageUrl: memeData.imageUrl || initialImage,
+        topText: caption || memeData.meme_text || "",
+        bottomText: "",
+        sourceType: 'remix',
+        shareId: memeData.share?.shareId,
+        publicUrl: memeData.share?.publicUrl,
+        published: false,
+        likes: 0,
+      };
+      await memeDB.saveMeme(memeRecord);
+      await statsDB.incrementMemesCreated(userId);
+      await statsDB.incrementRemixes(userId);
+    } catch (error) {
+      console.error('Erreur sauvegarde mème:', error);
+    }
+  };
+
+  const publishToForum = async () => {
+    if (!remix && !initialImage || published) return;
+    try {
+      await axios.post(apiUrl("/api/forum/publish"), {
+        shareId: remix?.share?.shareId,
+        imageUrl: remix?.share?.publicUrl || remix?.imageUrl || initialImage,
+        topText: caption || remix?.meme_text || "",
+        bottomText: "",
+        sourceMemeId: params.sourceMemeId
+      });
+      setPublished(true);
+      Alert.alert("Succès", "Remix propulsé sur le Forum !");
+      
+      // Mettre à jour la base de données
+      const memeId = remix?.id || `meme_${Date.now()}`;
+      await memeDB.updateMemePublished(memeId, true);
+    } catch (e) {
+      const errorMsg = e.response?.data?.error || e.message;
+      Alert.alert("Erreur publication", errorMsg);
+    }
+  };
+
+  const handleShareWhatsApp = async () => {
+    const imageUrl = remix?.share?.publicUrl || remix?.imageUrl || initialImage;
+    if (imageUrl) {
+      await shareToWhatsApp(imageUrl, 'Regarde ce remix généré par Viral Stick ! ✨');
+    }
   };
 
   return (
@@ -87,7 +185,7 @@ const StatusRemixerScreen = ({ navigate, route }) => {
           <Text style={[styles.title, { color: theme.textPrimary }]}>Status <Text style={{ color: theme.primary }}>Remixer</Text></Text>
           <Text style={[styles.sub, { color: theme.textSecondary }]}>Passe d'un visuel brut à une publication mieux cadrée et plus lisible.</Text>
           <View style={{ alignItems: "center", marginTop: spacing.md }}>
-            <CompanionAvatar companion="bio" size={96} floating message={msg} />
+            <CompanionAvatar companion="bio" size={96} floating message={msg} showRing={false} />
           </View>
         </GlassCard>
 
@@ -96,8 +194,27 @@ const StatusRemixerScreen = ({ navigate, route }) => {
             <Text style={[styles.label, { color: theme.textMuted }]}>SOURCE VISUELLE</Text>
             <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Charge une image à remixer</Text>
             <Text style={[styles.sectionSub, { color: theme.textSecondary }]}>Caméra ou galerie — l'IA analyse le contexte et génère la meilleure caption.</Text>
-            <AnimatedButton title="Choisir une image" onPress={pickImage} size="lg" style={{ marginTop: spacing.md }} />
-            <AnimatedButton title="Utiliser une image démo" onPress={() => { setImagePicked(true); animatePreview(); }} variant="ghost" size="lg" style={{ marginTop: spacing.sm }} />
+            <View style={styles.imageSourceButtons}>
+              <AnimatedButton 
+                title="📷 Caméra" 
+                onPress={() => pickImage('camera')} 
+                size="lg" 
+                style={{ flex: 1, backgroundColor: theme.primary }} 
+              />
+              <AnimatedButton 
+                title="🖼️ Galerie" 
+                onPress={() => pickImage('gallery')} 
+                size="lg" 
+                style={{ flex: 1, backgroundColor: theme.secondary }} 
+              />
+            </View>
+            <AnimatedButton 
+              title="Utiliser une image démo" 
+              onPress={() => { setImagePicked(true); animatePreview(); }} 
+              variant="ghost" 
+              size="lg" 
+              style={{ marginTop: spacing.sm }} 
+            />
           </GlassCard>
         ) : (
           <>
@@ -169,8 +286,18 @@ const StatusRemixerScreen = ({ navigate, route }) => {
 
             <View style={styles.actions}>
               <AnimatedButton title={loading ? "Remix IA..." : "Remixer avec l'IA"} onPress={askRemix} loading={loading} disabled={loading} size="lg" style={{ flex: 1 }} />
-              <AnimatedButton title="Exporter" onPress={() => Alert.alert("Viral Stick", "Export PNG à finaliser côté pipeline.")} variant="ghost" size="lg" style={{ flex: 1 }} />
+              <AnimatedButton title="WhatsApp" onPress={handleShareWhatsApp} size="lg" style={{ flex: 1, backgroundColor: '#25D366' }} />
             </View>
+
+            {remix && (
+              <View style={styles.actions}>
+                {!published ? (
+                  <AnimatedButton title="Propulser" onPress={publishToForum} size="lg" variant="primary" style={{ flex: 1, backgroundColor: theme.secondary }} />
+                ) : (
+                  <View style={[styles.publishedBadge, { backgroundColor: theme.secondaryLight }]}><Text style={[styles.publishedText, { color: theme.secondary }]}>PUBLIÉ</Text></View>
+                )}
+              </View>
+            )}
 
             {loading && (
               <GlassCard style={[styles.card, { alignItems: "center", gap: spacing.sm }]}>
@@ -227,12 +354,15 @@ const styles = StyleSheet.create({
   posRow:       { flexDirection: "row", gap: spacing.sm },
   posBtn:       { flex: 1, borderWidth: 1, borderRadius: radius.md, paddingVertical: 11, alignItems: "center" },
   posLabel:     { fontSize: 14, fontWeight: "800" },
+  imageSourceButtons: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.md },
   actions:      { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
   loadTitle:    { fontSize: 17, fontWeight: "800" },
   loadSub:      { textAlign: "center", fontSize: 13, lineHeight: 18 },
   enhancement:  { flexDirection: "row", alignItems: "flex-start", gap: spacing.sm, padding: spacing.md, borderRadius: radius.md, marginBottom: spacing.sm },
   enhIdx:       { fontSize: 15, fontWeight: "900", minWidth: 18 },
   enhText:      { flex: 1, fontSize: 13, lineHeight: 19 },
+  publishedBadge: { flex: 1, height: 54, borderRadius: radius.md, justifyContent: "center", alignItems: "center" },
+  publishedText: { fontWeight: "900" },
 });
 
 export default StatusRemixerScreen;

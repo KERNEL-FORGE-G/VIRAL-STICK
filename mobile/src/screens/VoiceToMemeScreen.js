@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, Animated, TouchableOpacity, Alert, ActivityIndicator, Image, StatusBar } from "react-native";
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, Animated, TouchableOpacity, Alert, ActivityIndicator, Image, StatusBar, Platform } from "react-native";
+import Voice from '@react-native-community/voice';
+import { PermissionsAndroid } from 'react-native';
 import axios from "axios";
 import { useTheme, spacing, radius } from "../theme";
 import GlassCard from "../components/GlassCard";
@@ -7,6 +9,8 @@ import AnimatedButton from "../components/AnimatedButton";
 import CompanionAvatar from "../components/CompanionAvatar";
 import AppIcon from "../components/AppIcon";
 import { apiUrl } from "../config/api";
+import { shareToWhatsApp } from "../utils/shareUtils";
+import { memeDB, statsDB } from "../services/database";
 
 const DEMOS = [
   "Je voulais juste faire une sieste et je me suis réveillé avec 43 appels manqués.",
@@ -41,45 +45,195 @@ const VoiceToMemeScreen = ({ navigate }) => {
   const [duration, setDuration]       = useState(0);
   const [published, setPublished]     = useState(false);
   const [msg, setMsg]                 = useState("Donne-moi une phrase dite à chaud. Je garde l'énergie.");
+  const [userId] = useState('demo_user'); // À remplacer par l'ID utilisateur réel
+  const [editMode, setEditMode]       = useState(false);
+  const [editTopText, setEditTopText] = useState("");
+  const [editBottomText, setEditBottomText] = useState("");
+  const [regenerating, setRegenerating] = useState(false);
   const timerRef                      = useRef(null);
   const micScale                      = useRef(new Animated.Value(1)).current;
   const resultAnim                    = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => () => clearInterval(timerRef.current), []);
+  useEffect(() => {
+    // Initialiser Voice
+    Voice.onSpeechStart = onSpeechStart;
+    Voice.onSpeechEnd = onSpeechEnd;
+    Voice.onSpeechResults = onSpeechResults;
+    Voice.onSpeechError = onSpeechError;
+    
+    return () => {
+      Voice.destroy().then(Voice.removeAllListeners);
+      clearInterval(timerRef.current);
+    };
+  }, []);
 
-  const startRec = () => {
-    setRecording(true); setTranscription(""); setMeme(null); setDuration(0); setPublished(false);
-    setMsg("Parle comme tu le sens. Plus c'est spontané, mieux c'est.");
-    Animated.loop(Animated.sequence([
-      Animated.timing(micScale, { toValue: 1.12, duration: 500, useNativeDriver: true }),
-      Animated.timing(micScale, { toValue: 1,    duration: 500, useNativeDriver: true }),
-    ])).start();
-    timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
+  const onSpeechStart = () => {
+    setMsg("Écoute en cours...");
   };
 
-  const stopRec = () => {
-    setRecording(false); micScale.stopAnimation(); micScale.setValue(1);
+  const onSpeechEnd = () => {
+    setRecording(false);
+    micScale.stopAnimation();
+    micScale.setValue(1);
     clearInterval(timerRef.current);
-    setMsg("Transcription en cours...");
-    setTimeout(() => {
-      const s = DEMOS[Math.floor(Math.random() * DEMOS.length)];
-      setTranscription(s); setMsg("Transcription prête. Lance la transformation !");
-    }, 1200);
+    setMsg("Traitement de la transcription...");
+  };
+
+  const onSpeechResults = (e) => {
+    if (e.value && e.value.length > 0) {
+      setTranscription(e.value[0]);
+    }
+  };
+
+  const onSpeechError = (e) => {
+    console.error('Erreur reconnaissance vocale:', e);
+    setRecording(false);
+    micScale.stopAnimation();
+    micScale.setValue(1);
+    clearInterval(timerRef.current);
+    setMsg("Erreur de reconnaissance vocale. Réessaie.");
+    Alert.alert("Erreur", "Impossible de reconnaître la voix. Vérifie les permissions.");
+  };
+
+  const requestMicrophonePermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+          {
+            title: 'Permission de micro',
+            message: 'Viral Stick a besoin d\'accéder à votre micro pour enregistrer votre voix.',
+            buttonNeutral: 'Demander plus tard',
+            buttonNegative: 'Refuser',
+            buttonPositive: 'Autoriser',
+          }
+        );
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          console.log('Permission micro accordée');
+          return true;
+        } else {
+          console.log('Permission micro refusée');
+          Alert.alert('Permission requise', 'La permission du micro est nécessaire pour utiliser cette fonctionnalité.');
+          return false;
+        }
+      } catch (err) {
+        console.error('Erreur demande permission:', err);
+        return false;
+      }
+    }
+    return true; // iOS gère les permissions différemment
+  };
+
+  const startRec = async () => {
+    const hasPermission = await requestMicrophonePermission();
+    if (!hasPermission) return;
+
+    try {
+      setRecording(true);
+      setTranscription("");
+      setMeme(null);
+      setDuration(0);
+      setPublished(false);
+      setMsg("Initialisation du micro...");
+      
+      await Voice.start('fr-FR');
+      setMsg("Parle maintenant. Je capture ton énergie vocale.");
+      
+      Animated.loop(Animated.sequence([
+        Animated.timing(micScale, { toValue: 1.12, duration: 500, useNativeDriver: true }),
+        Animated.timing(micScale, { toValue: 1,    duration: 500, useNativeDriver: true }),
+      ])).start();
+      timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
+    } catch (error) {
+      console.error('Erreur démarrage enregistrement:', error);
+      Alert.alert("Erreur", "Impossible de démarrer l'enregistrement. Vérifie les permissions du micro.");
+    }
+  };
+
+  const stopRec = async () => {
+    try {
+      await Voice.stop();
+    } catch (error) {
+      console.error('Erreur arrêt enregistrement:', error);
+    }
   };
 
   const generate = async () => {
     if (!transcription.trim()) { Alert.alert("Viral Stick", "Enregistre d'abord une prise."); return; }
-    setLoading(true); setMeme(null); setMsg("Je construis la chute à partir de ton énergie vocale...");
+    setLoading(true); setMeme(null); setEditMode(false); setMsg("Je construis la chute à partir de ton énergie vocale...");
+    
+    const url = apiUrl("/api/memes/voice-to-meme");
+    console.log('[VoiceToMeme] URL API:', url);
+    console.log('[VoiceToMeme] Transcription:', transcription);
+    
     try {
-      const res = await axios.post(apiUrl("/api/memes/voice-to-meme"), { transcription });
+      const res = await axios.post(url, { transcription });
+      console.log('[VoiceToMeme] Réponse API:', res.data);
       setMeme(res.data);
+      setEditTopText(res.data.topText || "");
+      setEditBottomText(res.data.bottomText || "");
       setMsg(res.data?.companionComment || "L'énergie est préservée. Mème prêt !");
       resultAnim.setValue(0);
       Animated.spring(resultAnim, { toValue: 1, tension: 70, friction: 8, useNativeDriver: true }).start();
-    } catch {
+      
+      // Sauvegarder le mème dans SQLite
+      await saveMemeToDB(res.data);
+    } catch (error) {
+      console.error('[VoiceToMeme] Erreur API:', error);
+      console.error('[VoiceToMeme] Détails erreur:', error.response?.data || error.message);
       setMsg("Le module vocal n'a pas répondu. Relance.");
-      Alert.alert("Erreur", "Connexion backend impossible.");
+      Alert.alert("Erreur", `Connexion backend impossible: ${error.message}`);
     } finally { setLoading(false); }
+  };
+
+  const regenerateMeme = async () => {
+    if (!meme) return;
+    setRegenerating(true);
+    setMsg("Je régénère avec ton nouveau texte...");
+    
+    try {
+      const url = apiUrl("/api/memes/compose");
+      const res = await axios.post(url, {
+        imageUrl: meme.imageUrl,
+        topText: editTopText,
+        bottomText: editBottomText
+      });
+      console.log('[VoiceToMeme] Régénération:', res.data);
+      setMeme({ ...meme, ...res.data });
+      setMsg("Nouvelle version prête !");
+      resultAnim.setValue(0);
+      Animated.spring(resultAnim, { toValue: 1, tension: 70, friction: 8, useNativeDriver: true }).start();
+      
+      // Mettre à jour la base de données
+      await saveMemeToDB({ ...meme, ...res.data });
+    } catch (error) {
+      console.error('[VoiceToMeme] Erreur régénération:', error);
+      setMsg("Échec de la régénération. Réessaie.");
+      Alert.alert("Erreur", "Impossible de régénérer le mème.");
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
+  const saveMemeToDB = async (memeData) => {
+    try {
+      const memeRecord = {
+        id: memeData.id || `meme_${Date.now()}`,
+        userId: userId,
+        imageUrl: memeData.imageUrl,
+        topText: memeData.topText,
+        bottomText: memeData.bottomText,
+        sourceType: 'voice',
+        shareId: memeData.share?.shareId,
+        publicUrl: memeData.share?.publicUrl,
+        published: false,
+        likes: 0,
+      };
+      await memeDB.saveMeme(memeRecord);
+      await statsDB.incrementMemesCreated(userId);
+    } catch (error) {
+      console.error('Erreur sauvegarde mème:', error);
+    }
   };
 
   const publishToForum = async () => {
@@ -93,9 +247,19 @@ const VoiceToMemeScreen = ({ navigate }) => {
       });
       setPublished(true);
       Alert.alert("Succès", "Mème vocal propulsé sur le Forum !");
+      
+      // Mettre à jour la base de données
+      await memeDB.updateMemePublished(meme.id, true);
     } catch (e) {
       const errorMsg = e.response?.data?.error || e.message;
       Alert.alert("Erreur publication", errorMsg);
+    }
+  };
+
+  const handleShareWhatsApp = async () => {
+    const imageUrl = meme.share?.publicUrl || meme.imageUrl;
+    if (imageUrl) {
+      await shareToWhatsApp(imageUrl, 'Regarde ce mème vocal généré par Viral Stick ! 🎤');
     }
   };
 
@@ -110,7 +274,7 @@ const VoiceToMemeScreen = ({ navigate }) => {
           <Text style={[styles.title, { color: theme.textPrimary }]}>Voice <Text style={{ color: theme.secondary }}>→ Mème</Text></Text>
           <Text style={[styles.sub, { color: theme.textSecondary }]}>Transforme une parole spontanée en punchline mémorable.</Text>
           <View style={{ alignItems: "center", marginTop: spacing.md }}>
-            <CompanionAvatar companion="ubu" size={96} floating message={msg} />
+            <CompanionAvatar companion="ubu" size={96} floating message={msg} showRing={false} />
           </View>
         </GlassCard>
 
@@ -164,34 +328,106 @@ const VoiceToMemeScreen = ({ navigate }) => {
           <Animated.View style={{ opacity: resultAnim, transform: [{ translateY: resultAnim.interpolate({ inputRange: [0,1], outputRange: [24,0] }) }] }}>
             <GlassCard style={styles.card}>
               <View style={[styles.badge, { backgroundColor: theme.secondaryLight }]}><Text style={[styles.badgeText, { color: theme.secondary }]}>✅ MÈME VOCAL PRÊT</Text></View>
-              <View style={[styles.memePreview, { borderColor: theme.border }]}>
-                {meme.imageUrl ? (
-                  <Image source={{ uri: meme.imageUrl }} style={styles.fullMeme} resizeMode="contain" />
-                ) : (
-                  <View style={[styles.memeBox, { backgroundColor: theme.backgroundSecondary }]}>
-                    <Text style={[styles.memeText, { color: theme.textPrimary }]}>{meme.topText}</Text>
-                    <View style={styles.memeScene}>
-                      <AppIcon name="mic" color={theme.secondary} size={36} />
-                      <Text style={[styles.memeSceneText, { color: theme.textSecondary }]}>{meme.descriptionImage}</Text>
-                    </View>
-                    <Text style={[styles.memeText, { color: theme.textPrimary }]}>{meme.bottomText}</Text>
+              
+              {!editMode ? (
+                // Mode affichage normal
+                <>
+                  <View style={[styles.memePreview, { borderColor: theme.border }]}>
+                    {meme.imageUrl ? (
+                      <Image source={{ uri: meme.imageUrl }} style={styles.fullMeme} resizeMode="contain" />
+                    ) : (
+                      <View style={[styles.memeBox, { backgroundColor: theme.backgroundSecondary }]}>
+                        <Text style={[styles.memeText, { color: theme.textPrimary }]}>{meme.topText}</Text>
+                        <View style={styles.memeScene}>
+                          <AppIcon name="mic" color={theme.secondary} size={36} />
+                          <Text style={[styles.memeSceneText, { color: theme.textSecondary }]}>{meme.descriptionImage}</Text>
+                        </View>
+                        <Text style={[styles.memeText, { color: theme.textPrimary }]}>{meme.bottomText}</Text>
+                      </View>
+                    )}
                   </View>
-                )}
-              </View>
-              {meme.original_transcript_subtitle ? (
-                <View style={[styles.subtitleCard, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
-                  <Text style={[styles.gridLabel, { color: theme.textMuted }]}>SOUS-TITRE ORIGINAL</Text>
-                  <Text style={[styles.subtitleText, { color: theme.textPrimary }]}>"{meme.original_transcript_subtitle}"</Text>
-                </View>
-              ) : null}
-              <View style={styles.actions}>
-                <AnimatedButton title="Partager" onPress={() => Alert.alert("Partage", "Lien: " + meme.share?.publicUrl)} size="lg" style={{ flex: 1 }} />
-                {!published ? (
-                  <AnimatedButton title="Propulser 🌍" onPress={publishToForum} size="lg" variant="primary" style={{ flex: 1, backgroundColor: theme.secondary }} />
-                ) : (
-                  <View style={[styles.publishedBadge, { backgroundColor: theme.secondaryLight }]}><Text style={[styles.publishedText, { color: theme.secondary }]}>✅ PUBLIÉ</Text></View>
-                )}
-              </View>
+                  {meme.original_transcript_subtitle ? (
+                    <View style={[styles.subtitleCard, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
+                      <Text style={[styles.gridLabel, { color: theme.textMuted }]}>SOUS-TITRE ORIGINAL</Text>
+                      <Text style={[styles.subtitleText, { color: theme.textPrimary }]}>"{meme.original_transcript_subtitle}"</Text>
+                    </View>
+                  ) : null}
+                  <View style={styles.actions}>
+                    <AnimatedButton
+                      title="Éditer"
+                      onPress={() => setEditMode(true)}
+                      size="lg"
+                      variant="ghost"
+                      style={{ flex: 1 }}
+                    />
+                    <AnimatedButton title="WhatsApp" onPress={handleShareWhatsApp} size="lg" style={{ flex: 1, backgroundColor: '#25D366' }} />
+                    {!published ? (
+                      <AnimatedButton title="Propulser" onPress={publishToForum} size="lg" variant="primary" style={{ flex: 1, backgroundColor: theme.secondary }} />
+                    ) : (
+                      <View style={[styles.publishedBadge, { backgroundColor: theme.secondaryLight }]}><Text style={[styles.publishedText, { color: theme.secondary }]}>PUBLIÉ</Text></View>
+                    )}
+                  </View>
+                </>
+              ) : (
+                // Mode édition
+                <>
+                  <View style={[styles.memePreview, { borderColor: theme.border }]}>
+                    {meme.imageUrl ? (
+                      <Image source={{ uri: meme.imageUrl }} style={styles.fullMeme} resizeMode="contain" />
+                    ) : (
+                      <View style={[styles.memeBox, { backgroundColor: theme.backgroundSecondary }]}>
+                        <Text style={[styles.memeText, { color: theme.textPrimary }]}>{meme.topText}</Text>
+                        <View style={styles.memeScene}>
+                          <AppIcon name="mic" color={theme.secondary} size={36} />
+                          <Text style={[styles.memeSceneText, { color: theme.textSecondary }]}>{meme.descriptionImage}</Text>
+                        </View>
+                        <Text style={[styles.memeText, { color: theme.textPrimary }]}>{meme.bottomText}</Text>
+                      </View>
+                    )}
+                  </View>
+                  
+                  <View style={styles.editSection}>
+                    <Text style={[styles.editLabel, { color: theme.textSecondary }]}>Texte du haut</Text>
+                    <TextInput
+                      style={[styles.editInput, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border, color: theme.textPrimary }]}
+                      value={editTopText}
+                      onChangeText={setEditTopText}
+                      placeholder="Texte du haut..."
+                      placeholderTextColor={theme.textMuted}
+                      maxLength={100}
+                    />
+                    
+                    <Text style={[styles.editLabel, { color: theme.textSecondary }]}>Texte du bas</Text>
+                    <TextInput
+                      style={[styles.editInput, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border, color: theme.textPrimary }]}
+                      value={editBottomText}
+                      onChangeText={setEditBottomText}
+                      placeholder="Texte du bas..."
+                      placeholderTextColor={theme.textMuted}
+                      maxLength={100}
+                    />
+                  </View>
+                  
+                  <View style={styles.actions}>
+                    <AnimatedButton
+                      title="Annuler"
+                      onPress={() => setEditMode(false)}
+                      size="lg"
+                      variant="ghost"
+                      style={{ flex: 1 }}
+                      disabled={regenerating}
+                    />
+                    <AnimatedButton
+                      title={regenerating ? "Régénération..." : "Régénérer"}
+                      onPress={regenerateMeme}
+                      size="lg"
+                      style={{ flex: 1 }}
+                      disabled={regenerating}
+                      loading={regenerating}
+                    />
+                  </View>
+                </>
+              )}
             </GlassCard>
           </Animated.View>
         )}
@@ -230,6 +466,9 @@ const styles = StyleSheet.create({
   gridLabel:   { fontSize: 11, fontWeight: "800", letterSpacing: 1, marginBottom: 6 },
   subtitleText:{ fontSize: 14, fontStyle: "italic", lineHeight: 19 },
   actions:     { flexDirection: "row", gap: spacing.sm },
+  editSection: { marginTop: spacing.md, marginBottom: spacing.md },
+  editLabel:   { fontSize: 13, fontWeight: "800", marginBottom: 8 },
+  editInput:   { borderWidth: 1, borderRadius: radius.md, padding: spacing.md, fontSize: 15, marginBottom: spacing.md, minHeight: 50 },
   publishedBadge: { flex: 1, height: 54, borderRadius: radius.md, justifyContent: "center", alignItems: "center" },
   publishedText: { fontWeight: "900" },
 });

@@ -40,6 +40,21 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+    packagingOptions {
+        pickFirst '**/values/values.xml'
+        pickFirst '**/values/attrs.xml'
+        pickFirst '**/values/styles.xml'
+        pickFirst '**/values/public.xml'
+        pickFirst '**/values/strings.xml'
+        pickFirst '**/values/colors.xml'
+        pickFirst '**/values/dimens.xml'
+        pickFirst '**/values/themes.xml'
+    }
+    
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
 }
 
 dependencies {

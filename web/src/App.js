@@ -11,6 +11,7 @@ import MultiChatPage from "./pages/MultiChatPage";
 import ForumPage from "./pages/ForumPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import AuthPage from "./pages/AuthPage";
+import ProfilePage from "./pages/ProfilePage";
 import "./App.css";
 
 const ProtectedRoute = ({ children }) => {
@@ -35,6 +36,7 @@ function App() {
           <Route path="/multi-chat" element={<ProtectedRoute><MultiChatPage /></ProtectedRoute>} />
           <Route path="/forum" element={<ProtectedRoute><ForumPage /></ProtectedRoute>} />
           <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         </Routes>
       </Router>
     </UserProvider>

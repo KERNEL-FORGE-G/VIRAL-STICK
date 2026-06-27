@@ -1,23 +1,19 @@
 
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, Animated, TouchableOpacity, TextInput, Alert, StatusBar, ActivityIndicator } from "react-native";
-import axios from "axios";
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, Animated, TouchableOpacity, StatusBar, Alert, ActivityIndicator } from "react-native";
 import { useTheme, spacing, radius } from "../theme";
 import GlassCard from "../components/GlassCard";
 import AnimatedButton from "../components/AnimatedButton";
 import CompanionAvatar from "../components/CompanionAvatar";
 import AppIcon from "../components/AppIcon";
 import { apiUrl } from "../config/api";
+import axios from "axios";
 
 const SettingsScreen = ({ navigate }) => {
   const { theme, isDark, toggleTheme } = useTheme();
-  const [gemini, setGemini]     = useState("");
-  const [mistral, setMistral]   = useState("");
-  const [deepseek, setDeepseek] = useState("");
-  const [show, setShow]         = useState(false);
-  const [status, setStatus]     = useState("");
-  const [testing, setTesting]   = useState(false);
-  const anim                    = useRef(new Animated.Value(0)).current;
+  const [pingStatus, setPingStatus] = useState(null);
+  const [pingLoading, setPingLoading] = useState(false);
+  const anim = useRef(new Animated.Value(0)).current;
 
   const PROVIDERS = [
     { key: "gemini",   label: "Gemini",   icon: "sparkles", color: "#7C3AED", desc: "Provider principal — texte et image." },
@@ -29,30 +25,23 @@ const SettingsScreen = ({ navigate }) => {
     Animated.spring(anim, { toValue: 1, tension: 60, friction: 8, useNativeDriver: true }).start();
   }, [anim]);
 
-  const testConnection = async () => {
-    setTesting(true);
-    setStatus("");
+  const testPing = async () => {
+    setPingLoading(true);
+    setPingStatus(null);
     try {
-      const url = apiUrl("/health");
+      const url = apiUrl('/health');
       const res = await axios.get(url, { timeout: 5000 });
       if (res.status === 200) {
-        setStatus("✅ Connexion établie avec le backend.");
+        setPingStatus({ success: true, message: '✅ Serveur accessible' });
       } else {
-        setStatus("⚠️ Le serveur a répondu avec un statut inattendu.");
+        setPingStatus({ success: false, message: '⚠️ Réponse inattendue du serveur' });
       }
-    } catch (err) {
-      console.log("Error testing connection:", err);
-      setStatus("❌ Impossible de joindre le backend. Vérifie ta connexion internet.");
+    } catch (error) {
+      console.error('Ping error:', error);
+      setPingStatus({ success: false, message: '❌ Impossible de joindre le serveur' });
     } finally {
-      setTesting(false);
+      setPingLoading(false);
     }
-  };
-
-  const save = () => {
-    if (!gemini.trim() && !mistral.trim() && !deepseek.trim()) {
-      Alert.alert("Viral Stick", "Entre au moins une clé API avant d'enregistrer."); return;
-    }
-    setStatus("✅ Clés enregistrées pour cette session.");
   };
 
   return (
@@ -65,9 +54,9 @@ const SettingsScreen = ({ navigate }) => {
           <GlassCard style={styles.hero}>
             <View style={[styles.badge, { backgroundColor: theme.secondaryLight }]}><Text style={[styles.badgeText, { color: theme.secondary }]}>PARAMÈTRES IA</Text></View>
             <Text style={[styles.title, { color: theme.textPrimary }]}>Configu<Text style={{ color: theme.primary }}>ration</Text></Text>
-            <Text style={[styles.sub, { color: theme.textSecondary }]}>Gère les clés API et configure l'interface du studio.</Text>
+            <Text style={[styles.sub, { color: theme.textSecondary }]}>Configure l'interface du studio. Les clés API sont gérées par le serveur.</Text>
             <View style={{ alignItems: "center", marginTop: spacing.md }}>
-              <CompanionAvatar companion="para" size={88} floating message="Je garde les réglages clairs et prêts pour l'exploitation." />
+              <CompanionAvatar companion="para" size={88} floating message="Je garde les réglages clairs et prêts pour l'exploitation." showRing={false} />
             </View>
           </GlassCard>
 
@@ -113,57 +102,32 @@ const SettingsScreen = ({ navigate }) => {
             ))}
           </GlassCard>
 
-          {/* Clés API */}
-          <GlassCard animate delay={200} style={styles.card}>
-            <View style={styles.keyHeader}>
-              <View style={styles.sectionHeader}>
-                <AppIcon name="key" color={theme.primary} size={20} />
-                <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Clés API</Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => setShow((v) => !v)}
-                style={[styles.toggleBtn, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}
-              >
-                <Text style={[styles.toggleText, { color: theme.textSecondary }]}>{show ? "Masquer" : "Afficher"}</Text>
-              </TouchableOpacity>
+          {/* Test de connexion */}
+          <GlassCard animate delay={150} style={styles.card}>
+            <View style={styles.sectionHeader}>
+              <AppIcon name="wifi" color={theme.primary} size={20} />
+              <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Test de connexion</Text>
             </View>
-
-            {[
-              ["Gemini API Key",   gemini,   setGemini,   "AIza..."],
-              ["Mistral API Key",  mistral,  setMistral,  "mistral-..."],
-              ["DeepSeek API Key", deepseek, setDeepseek, "sk-..."],
-            ].map(([label, value, setter, ph]) => (
-              <View key={label} style={{ marginBottom: 16 }}>
-                <Text style={[styles.fieldLabel, { color: theme.textSecondary }]}>{label}</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border, color: theme.textPrimary }]}
-                  value={value} onChangeText={setter}
-                  placeholder={ph} placeholderTextColor={theme.textMuted}
-                  secureTextEntry={!show} autoCapitalize="none" autoCorrect={false}
-                />
-              </View>
-            ))}
-
-            <View style={styles.actions}>
-              <AnimatedButton title="Enregistrer" onPress={save} size="lg" style={{ flex: 1 }} />
-              <TouchableOpacity
-                style={[styles.testBtn, { backgroundColor: theme.backgroundSecondary, borderColor: testing ? theme.textMuted : theme.secondary }]}
-                onPress={testConnection}
-                disabled={testing}
-              >
-                {testing ? <ActivityIndicator size="small" color={theme.textSecondary} /> : <Text style={[styles.testBtnText, { color: theme.textPrimary }]}>Tester Connexion</Text>}
-              </TouchableOpacity>
-            </View>
-
-            {!!status && (
-              <View style={[styles.statusBox, { backgroundColor: status.startsWith("✅") ? theme.secondaryLight : "#fee2e2", borderColor: status.startsWith("✅") ? `${theme.secondary}44` : "#fecaca" }]}>
-                <Text style={[styles.statusText, { color: status.startsWith("✅") ? theme.secondary : "#b91c1c" }]}>{status}</Text>
+            <TouchableOpacity
+              onPress={testPing}
+              disabled={pingLoading}
+              style={[styles.pingBtn, { backgroundColor: theme.backgroundSecondary, borderColor: pingLoading ? theme.textMuted : theme.secondary }]}
+            >
+              {pingLoading ? (
+                <ActivityIndicator size="small" color={theme.textSecondary} />
+              ) : (
+                <Text style={[styles.pingBtnText, { color: theme.textPrimary }]}>Tester le ping</Text>
+              )}
+            </TouchableOpacity>
+            {pingStatus && (
+              <View style={[styles.statusBox, { backgroundColor: pingStatus.success ? theme.secondaryLight : "#fee2e2", borderColor: pingStatus.success ? `${theme.secondary}44` : "#fecaca" }]}>
+                <Text style={[styles.statusText, { color: pingStatus.success ? theme.secondary : "#b91c1c" }]}>{pingStatus.message}</Text>
               </View>
             )}
           </GlassCard>
 
           {/* Lien à propos */}
-          <GlassCard animate delay={300} style={styles.card}>
+          <GlassCard animate delay={200} style={styles.card}>
             <TouchableOpacity onPress={() => navigate?.("About")} activeOpacity={0.8} style={styles.aboutRow}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                 <AppIcon name="info" color={theme.primary} size={20} />

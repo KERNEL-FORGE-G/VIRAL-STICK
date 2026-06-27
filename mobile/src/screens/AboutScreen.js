@@ -6,6 +6,7 @@ import GlassCard from "../components/GlassCard";
 import AnimatedButton from "../components/AnimatedButton";
 import CompanionAvatar from "../components/CompanionAvatar";
 import AppIcon from "../components/AppIcon";
+import { TEAM_MEMBERS } from "../data/teamData";
 
 const AboutScreen = () => {
   const { theme, isDark } = useTheme();
@@ -18,11 +19,6 @@ const AboutScreen = () => {
   ];
 
   const TECH = ["React Native 0.75", "Node.js / Express", "Hugging Face API", "Google Gemini", "Mistral AI", "7 compagnons IA"];
-
-  const TEAM = [
-    { name: "Ravel",        role: "Lead Technique",         companion: "arch", github: "@Archlord12345" },
-    { name: "Kernel Forge", role: "Équipe de développement", companion: "data", github: "#KERNELFORGE" },
-  ];
 
   useEffect(() => {
     Animated.spring(anim, { toValue: 1, tension: 55, friction: 8, useNativeDriver: true }).start();
@@ -47,7 +43,7 @@ const AboutScreen = () => {
               <Image source={require("../../assets/logo/logo_sans_fond.png")} style={styles.logo} resizeMode="contain" />
             </View>
             <View style={{ alignItems: "center", marginTop: spacing.md }}>
-              <CompanionAvatar companion="arch" size={88} floating message="Le produit doit être cohérent, mémorable et techniquement crédible." />
+              <CompanionAvatar companion="arch" size={88} floating message="Le produit doit être cohérent, mémorable et techniquement crédible." showRing={false} />
             </View>
           </GlassCard>
 
@@ -81,13 +77,13 @@ const AboutScreen = () => {
           {/* Équipe */}
           <GlassCard style={styles.card}>
             <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Équipe</Text>
-            {TEAM.map((m) => (
-              <View key={m.name} style={[styles.teamRow, { borderBottomColor: theme.border }]}>
+            {TEAM_MEMBERS.map((m) => (
+              <View key={m.id} style={[styles.teamRow, { borderBottomColor: theme.border }]}>
                 <CompanionAvatar companion={m.companion} size={56} />
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.teamName, { color: theme.textPrimary }]}>{m.name}</Text>
                   <Text style={[styles.teamRole, { color: theme.textSecondary }]}>{m.role}</Text>
-                  <Text style={[styles.teamGithub, { color: theme.primary }]}>{m.github}</Text>
+                  <Text style={[styles.teamGithub, { color: theme.primary }]}>@{m.github}</Text>
                 </View>
               </View>
             ))}

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { colors, radius, spacing } from '../theme/tokens';
 import { apiUrl } from '../config/api';
+import { shareToWhatsApp } from '../utils/shareUtils';
+import { useTheme } from '../theme';
 
 const TABS = [
   { id: 'createdAt', label: 'Récents', icon: '🕒' },
@@ -10,10 +12,12 @@ const TABS = [
 ];
 
 const ForumScreen = ({ navigate }) => {
+  const { theme, isDark } = useTheme();
   const [memes, setMemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('createdAt');
   const [userId, setUserId] = useState(null);
+  const [likingId, setLikingId] = useState(null);
 
   useEffect(() => {
     fetchMemes();
@@ -41,6 +45,12 @@ const ForumScreen = ({ navigate }) => {
       navigate('Auth');
       return;
     }
+    
+    // Empêcher les clics multiples sur le même mème
+    if (likingId === id) return;
+    
+    setLikingId(id);
+    
     try {
       const res = await fetch(apiUrl(`/api/forum/like/${id}`), {
         method: 'POST',
@@ -57,13 +67,19 @@ const ForumScreen = ({ navigate }) => {
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      setLikingId(null);
     }
   };
 
+  const handleShareWhatsApp = async (imageUrl) => {
+    await shareToWhatsApp(imageUrl, 'Regarde ce mème incroyable ! 🔥');
+  };
+
   const renderMeme = ({ item, index }) => (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
       {sortBy !== 'createdAt' && index < 3 && (
-        <View style={styles.topBadge}>
+        <View style={[styles.topBadge, { backgroundColor: colors.sunshineYellow }]}>
           <Text style={styles.topBadgeText}>#{index + 1} TOP</Text>
         </View>
       )}
@@ -73,33 +89,39 @@ const ForumScreen = ({ navigate }) => {
       <View style={styles.cardFooter}>
         <View style={styles.statsRow}>
           <View style={styles.stat}>
-            <Text style={styles.statValue}>{item.likes || 0}</Text>
-            <Text style={styles.statLabel}>LIKES</Text>
+            <Text style={[styles.statValue, { color: theme.textPrimary }]}>{item.likes || 0}</Text>
+            <Text style={[styles.statLabel, { color: theme.textMuted }]}>LIKES</Text>
           </View>
           <View style={styles.stat}>
-            <Text style={[styles.statValue, { color: colors.duoBlue }]}>{item.remixes || 0}</Text>
-            <Text style={styles.statLabel}>REMIX</Text>
+            <Text style={[styles.statValue, { color: colors.skyBlue }]}>{item.remixes || 0}</Text>
+            <Text style={[styles.statLabel, { color: theme.textMuted }]}>REMIX</Text>
           </View>
           {item.username && (
             <View style={{ flex: 1, alignItems: 'flex-end' }}>
-              <Text style={{ fontSize: 10, color: colors.silver, fontWeight: '700' }}>par {item.username}</Text>
+              <Text style={{ fontSize: 10, color: theme.textMuted, fontWeight: '700' }}>par {item.username}</Text>
             </View>
           )}
         </View>
         <View style={styles.actions}>
           <TouchableOpacity
-            style={[styles.likeBtn, item.likedByUser && styles.likedBtn]}
+            style={[styles.likeBtn, { borderColor: theme.border }, item.likedByUser && styles.likedBtn]}
             onPress={() => handleLike(item.id)}
           >
-            <Text style={[styles.btnText, item.likedByUser && { color: '#fff' }]}>
-              {item.likedByUser ? '❤️ Liked' : '❤️ Liker'}
+            <Text style={[styles.btnText, { color: theme.textPrimary }, item.likedByUser && { color: '#fff' }]}>
+              {item.likedByUser ? '❤️ Liké' : '❤️ Liker'}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.remixBtn}
+            style={[styles.remixBtn, { backgroundColor: colors.skyBlue }]}
             onPress={() => navigate('StatusRemixer', { imageUrl: item.imageUrl, sourceMemeId: item.id })}
           >
             <Text style={[styles.btnText, { color: '#fff' }]}>✨ Remix</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.whatsappBtn}
+            onPress={() => handleShareWhatsApp(item.imageUrl)}
+          >
+            <Text style={[styles.btnText, { color: '#fff' }]}>📱 WhatsApp</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -107,36 +129,36 @@ const ForumScreen = ({ navigate }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Tabs + Leaderboard */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.backgroundSecondary, borderBottomColor: theme.border }]}>
         <View style={styles.tabs}>
           {TABS.map(tab => (
           <TouchableOpacity
             key={tab.id}
             onPress={() => setSortBy(tab.id)}
-            style={[styles.tab, sortBy === tab.id && styles.activeTab]}
+            style={[styles.tab, sortBy === tab.id && styles.activeTab, sortBy === tab.id && { backgroundColor: colors.sapphireLight, borderColor: colors.sapphire }]}
           >
-            <Text style={[styles.tabText, sortBy === tab.id && styles.activeTabText]}>
+            <Text style={[styles.tabText, sortBy === tab.id && styles.activeTabText, sortBy === tab.id && { color: colors.sapphireDark }]}>
               {tab.icon} {tab.label}
             </Text>
           </TouchableOpacity>
           ))}
         </View>
-        <TouchableOpacity style={styles.leaderboardBtn} onPress={() => navigate('Leaderboard')}>
+        <TouchableOpacity style={[styles.leaderboardBtn, { backgroundColor: colors.successGreen }]} onPress={() => navigate('Leaderboard')}>
           <Text style={styles.leaderboardBtnText}>🏆 Classement</Text>
         </TouchableOpacity>
       </View>
 
       {loading ? (
-        <View style={styles.center}><ActivityIndicator color={colors.duoGreen} size="large" /></View>
+        <View style={styles.center}><ActivityIndicator color={colors.sapphire} size="large" /></View>
       ) : (
         <FlatList
           data={memes}
           renderItem={renderMeme}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
-          ListEmptyComponent={<Text style={styles.empty}>Aucun mème trouvé.</Text>}
+          ListEmptyComponent={<Text style={[styles.empty, { color: theme.textMuted }]}>Aucun mème trouvé.</Text>}
         />
       )}
     </View>
@@ -144,22 +166,19 @@ const ForumScreen = ({ navigate }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f7f7f7' },
+  container: { flex: 1 },
   header: {
-    backgroundColor: '#fff',
-    borderBottomWidth: 2,
-    borderColor: colors.cloudGray,
-    padding: 8,
-    gap: 8,
+    borderBottomWidth: 1,
+    padding: spacing.sm,
+    gap: spacing.sm,
   },
   tabs: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.sm,
   },
   leaderboardBtn: {
-    backgroundColor: colors.duoGreen,
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
     borderRadius: radius.md,
     alignItems: 'center',
   },
@@ -170,48 +189,52 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1, height: 40, justifyContent: 'center', alignItems: 'center',
-    borderRadius: radius.md, backgroundColor: '#f0f0f0'
+    borderRadius: radius.md, backgroundColor: 'rgba(255,255,255,0.05)'
   },
-  activeTab: { backgroundColor: colors.duoGreenLight, borderWidth: 1, borderColor: colors.duoGreen },
-  tabText: { fontWeight: '800', fontSize: 13, color: colors.silver },
-  activeTabText: { color: colors.duoGreenDark },
+  activeTab: { borderWidth: 1 },
+  tabText: { fontWeight: '800', fontSize: 13 },
+  activeTabText: {},
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   list: { padding: spacing.md },
   card: {
-    backgroundColor: '#fff', borderRadius: radius.xl, marginBottom: 20,
-    borderWidth: 2, borderColor: colors.cloudGray, overflow: 'hidden',
+    borderRadius: radius.xl, marginBottom: 20,
+    borderWidth: 1, overflow: 'hidden',
     position: 'relative'
   },
   topBadge: {
     position: 'absolute', top: 12, left: 12, zIndex: 10,
-    backgroundColor: colors.sunshineYellow, paddingHorizontal: 10,
+    paddingHorizontal: 10,
     paddingVertical: 4, borderRadius: radius.pill
   },
   topBadgeText: { fontWeight: '900', fontSize: 10 },
   imageContainer: { width: '100%', aspectRatio: 1, backgroundColor: '#000' },
   image: { width: '100%', height: '100%' },
-  cardFooter: { padding: 16 },
+  cardFooter: { padding: spacing.md },
   statsRow: { flexDirection: 'row', gap: 20, marginBottom: 16, alignItems: 'center' },
   stat: { alignItems: 'center' },
-  statValue: { fontWeight: '900', fontSize: 18, color: colors.duoGreen },
-  statLabel: { fontSize: 10, color: colors.silver, fontWeight: '800' },
+  statValue: { fontWeight: '900', fontSize: 18 },
+  statLabel: { fontSize: 10, fontWeight: '800' },
   actions: { flexDirection: 'row', gap: 10 },
   likeBtn: {
     flex: 1, height: 44, borderRadius: radius.md,
-    borderWidth: 2, borderColor: colors.cloudGray,
+    borderWidth: 1,
     justifyContent: 'center', alignItems: 'center'
   },
   likedBtn: {
-    backgroundColor: colors.duoGreen,
-    borderColor: colors.duoGreenDark
+    backgroundColor: colors.successGreen,
+    borderColor: colors.successGreenDark
   },
   remixBtn: {
     flex: 1, height: 44, borderRadius: radius.md,
-    backgroundColor: colors.duoBlue,
     justifyContent: 'center', alignItems: 'center'
   },
-  btnText: { fontWeight: '800', color: colors.charcoal },
-  empty: { textAlign: 'center', marginTop: 40, color: colors.silver, fontWeight: '700' }
+  whatsappBtn: {
+    flex: 1, height: 44, borderRadius: radius.md,
+    backgroundColor: '#25D366',
+    justifyContent: 'center', alignItems: 'center'
+  },
+  btnText: { fontWeight: '800' },
+  empty: { textAlign: 'center', marginTop: 40, fontWeight: '700' }
 });
 
 export default ForumScreen;

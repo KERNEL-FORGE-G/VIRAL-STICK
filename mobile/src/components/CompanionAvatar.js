@@ -29,6 +29,7 @@ const CompanionAvatar = ({
   size = wp(40),
   message = null,
   floating = false,
+  showRing = true,
   onPress,
 }) => {
   const { theme } = useTheme();
@@ -88,29 +89,33 @@ const CompanionAvatar = ({
           },
         ]}
       >
-        <View
-          style={[
-            styles.outerGlow,
-            {
-              width: size + 22,
-              height: size + 22,
-              borderRadius: (size + 22) / 2,
-              shadowColor: accentColor,
-              backgroundColor: `${accentColor}20`,
-            },
-          ]}
-        />
-        <View
-          style={[
-            styles.ring,
-            {
-              width: size + 8,
-              height: size + 8,
-              borderRadius: (size + 8) / 2,
-              borderColor: `${accentColor}88`,
-            },
-          ]}
-        />
+        {showRing && (
+          <>
+            <View
+              style={[
+                styles.outerGlow,
+                {
+                  width: size + 22,
+                  height: size + 22,
+                  borderRadius: (size + 22) / 2,
+                  shadowColor: accentColor,
+                  backgroundColor: `${accentColor}20`,
+                },
+              ]}
+            />
+            <View
+              style={[
+                styles.ring,
+                {
+                  width: size + 8,
+                  height: size + 8,
+                  borderRadius: (size + 8) / 2,
+                  borderColor: `${accentColor}88`,
+                },
+              ]}
+            />
+          </>
+        )}
         <Image
           source={COMPANIONS[companion]}
           style={{ width: size, height: size }}

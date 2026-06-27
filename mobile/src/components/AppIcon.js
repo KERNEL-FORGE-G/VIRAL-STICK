@@ -10,12 +10,16 @@ import {
   Info,
   Rocket,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  Share2,
+  Heart,
+  Sparkles,
+  Globe
 } from "lucide-react-native";
 
-export const AppIcon = ({ name, color = "#777777", size = 20 }) => {
-  // Stroke width 2 is ideal for a premium look
-  const props = { color, size, strokeWidth: 2 };
+export const AppIcon = ({ name, color = "#777777", size = 20, filled = false }) => {
+  // Stroke width 2 for outlined, 0 for filled look
+  const props = { color, size, strokeWidth: filled ? 0 : 2, fill: filled ? color : "none" };
 
   switch (name) {
     case "home":
@@ -48,6 +52,16 @@ export const AppIcon = ({ name, color = "#777777", size = 20 }) => {
       return <ChevronRight {...props} />;
     case "arrow-left":
       return <ChevronLeft {...props} />;
+    case "share":
+    case "whatsapp":
+      return <Share2 {...props} />;
+    case "heart":
+    case "like":
+      return <Heart {...props} />;
+    case "sparkles":
+      return <Sparkles {...props} />;
+    case "globe":
+      return <Globe {...props} />;
     default:
       return null;
   }

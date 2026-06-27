@@ -17,6 +17,7 @@ import MenuScreen from "../screens/MenuScreen";
 import ForumScreen from "../screens/ForumScreen";
 import AuthScreen from "../screens/AuthScreen";
 import LeaderboardScreen from "../screens/LeaderboardScreen";
+import ProfileScreen from "../screens/ProfileScreen";
 
 const SCREENS = {
   Home:          { comp: HomeScreen,          title: "Accueil",       sub: "Viral Stick Studio" },
@@ -31,6 +32,7 @@ const SCREENS = {
   Forum:         { comp: ForumScreen,         title: "Forum",         sub: "Flux Viral" },
   Leaderboard:   { comp: LeaderboardScreen,   title: "Classement",    sub: "Top Créateurs" },
   Auth:          { comp: AuthScreen,          title: "Compte",        sub: "Connexion / Inscription" },
+  Profile:       { comp: ProfileScreen,       title: "Profil",        sub: "Mon Compte" },
 };
 
 const RootNavigator = () => {
@@ -45,7 +47,7 @@ const RootNavigator = () => {
   const showBack = !mainTabs.includes(currentScreen);
 
   const goBack = () => {
-    const menuItems = ["CompanionChat", "MultiChat", "Settings", "About", "Leaderboard"];
+    const menuItems = ["CompanionChat", "MultiChat", "Settings", "About", "Leaderboard", "Profile"];
     if (menuItems.includes(currentScreen)) {
       setCurrentScreen("Menu");
     } else {
