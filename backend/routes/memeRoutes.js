@@ -18,5 +18,6 @@ router.post("/chat", MemeController.chat);
 router.post("/chat/greeting", MemeController.getGreeting);
 router.post("/generate-image", MemeController.generateImage);
 router.post("/status-remixer", MemeController.statusRemixer);
+router.post("/compose", MemeController.compose);
 
 module.exports = router;

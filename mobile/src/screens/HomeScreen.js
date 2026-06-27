@@ -57,7 +57,7 @@ const HomeScreen = ({ navigate }) => {
               <Image source={require("../../assets/logo/logo_sans_fond.png")} style={styles.logo} resizeMode="contain" />
             </View>
             <View style={styles.heroBottom}>
-              <CompanionAvatar companion={COMPANIONS[companionIdx]} size={96} floating message={MESSAGES[companionIdx]} />
+              <CompanionAvatar companion={COMPANIONS[companionIdx]} size={96} floating message={MESSAGES[companionIdx]} showRing={false} />
             </View>
           </GlassCard>
         </Animated.View>

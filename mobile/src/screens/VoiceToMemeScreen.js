@@ -61,8 +61,22 @@ const VoiceToMemeScreen = ({ navigate }) => {
     Voice.onSpeechResults = onSpeechResults;
     Voice.onSpeechError = onSpeechError;
     
+    // Initialiser Voice au démarrage
+    Voice.isAvailable().then(
+      (available) => {
+        console.log('Voice disponible:', available);
+        if (!available) {
+          setMsg("La reconnaissance vocale n'est pas disponible sur cet appareil.");
+        }
+      },
+      (error) => {
+        console.error('Erreur vérification Voice:', error);
+        setMsg("Erreur lors de l'initialisation de la reconnaissance vocale.");
+      }
+    );
+    
     return () => {
-      Voice.destroy().then(Voice.removeAllListeners);
+      Voice.destroy().then(Voice.removeAllListeners).catch(e => console.error('Erreur destruction Voice:', e));
       clearInterval(timerRef.current);
     };
   }, []);
@@ -91,8 +105,18 @@ const VoiceToMemeScreen = ({ navigate }) => {
     micScale.stopAnimation();
     micScale.setValue(1);
     clearInterval(timerRef.current);
-    setMsg("Erreur de reconnaissance vocale. Réessaie.");
-    Alert.alert("Erreur", "Impossible de reconnaître la voix. Vérifie les permissions.");
+    
+    // Gestion spécifique des erreurs courantes
+    if (e.error?.message === '7/No match') {
+      setMsg("Aucune reconnaissance trouvée. Parle plus clairement ou réessaie.");
+      Alert.alert("Reconnaissance", "Aucun texte reconnu. Essaie de parler plus lentement ou plus clairement.");
+    } else if (e.error?.message === '9/No speech') {
+      setMsg("Aucun son détecté. Vérifie ton micro.");
+      Alert.alert("Micro", "Aucun son détecté. Vérifie que ton micro fonctionne.");
+    } else {
+      setMsg("Erreur de reconnaissance vocale. Réessaie.");
+      Alert.alert("Erreur", `Impossible de reconnaître la voix: ${e.error?.message || 'Erreur inconnue'}. Vérifie les permissions.`);
+    }
   };
 
   const requestMicrophonePermission = async () => {
@@ -136,6 +160,7 @@ const VoiceToMemeScreen = ({ navigate }) => {
       setPublished(false);
       setMsg("Initialisation du micro...");
       
+      console.log('Démarrage reconnaissance vocale en français...');
       await Voice.start('fr-FR');
       setMsg("Parle maintenant. Je capture ton énergie vocale.");
       
@@ -146,7 +171,9 @@ const VoiceToMemeScreen = ({ navigate }) => {
       timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
     } catch (error) {
       console.error('Erreur démarrage enregistrement:', error);
-      Alert.alert("Erreur", "Impossible de démarrer l'enregistrement. Vérifie les permissions du micro.");
+      setRecording(false);
+      setMsg("Erreur lors du démarrage du micro. Vérifie les permissions.");
+      Alert.alert("Erreur", `Impossible de démarrer l'enregistrement: ${error.message || 'Erreur inconnue'}`);
     }
   };
 
@@ -189,23 +216,35 @@ const VoiceToMemeScreen = ({ navigate }) => {
   const regenerateMeme = async () => {
     if (!meme) return;
     setRegenerating(true);
-    setMsg("Je régénère avec ton nouveau texte...");
+    setMsg("Je fusionne ton texte en pied de page de l'image...");
     
     try {
       const url = apiUrl("/api/memes/compose");
       const res = await axios.post(url, {
         imageUrl: meme.imageUrl,
-        topText: editTopText,
-        bottomText: editBottomText
+        topText: "",
+        bottomText: editBottomText || editTopText // Utiliser bottomText pour le pied de page
       });
       console.log('[VoiceToMeme] Régénération:', res.data);
-      setMeme({ ...meme, ...res.data });
-      setMsg("Nouvelle version prête !");
+      setMeme({ 
+        ...meme, 
+        composedImageUrl: res.data.composedImageUrl,
+        share: res.data.share,
+        topText: "",
+        bottomText: editBottomText || editTopText
+      });
+      setMsg("Image fusionnée prête !");
       resultAnim.setValue(0);
       Animated.spring(resultAnim, { toValue: 1, tension: 70, friction: 8, useNativeDriver: true }).start();
       
       // Mettre à jour la base de données
-      await saveMemeToDB({ ...meme, ...res.data });
+      await saveMemeToDB({ 
+        ...meme, 
+        composedImageUrl: res.data.composedImageUrl,
+        share: res.data.share,
+        topText: "",
+        bottomText: editBottomText || editTopText
+      });
     } catch (error) {
       console.error('[VoiceToMeme] Erreur régénération:', error);
       setMsg("Échec de la régénération. Réessaie.");
@@ -241,7 +280,7 @@ const VoiceToMemeScreen = ({ navigate }) => {
     try {
       await axios.post(apiUrl("/api/forum/publish"), {
         shareId: meme.share?.shareId,
-        imageUrl: meme.share?.publicUrl || meme.imageUrl,
+        imageUrl: meme.composedImageUrl || meme.share?.publicUrl || meme.imageUrl,
         topText: meme.topText,
         bottomText: meme.bottomText
       });
@@ -257,9 +296,9 @@ const VoiceToMemeScreen = ({ navigate }) => {
   };
 
   const handleShareWhatsApp = async () => {
-    const imageUrl = meme.share?.publicUrl || meme.imageUrl;
+    const imageUrl = meme.composedImageUrl || meme.share?.publicUrl || meme.imageUrl;
     if (imageUrl) {
-      await shareToWhatsApp(imageUrl, 'Regarde ce mème vocal généré par Viral Stick ! 🎤');
+      await shareToWhatsApp(imageUrl, ''); // Pas de texte séparé, l'image contient déjà le texte fusionné
     }
   };
 

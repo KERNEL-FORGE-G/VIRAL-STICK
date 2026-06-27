@@ -63,23 +63,35 @@ const ContextReaderScreen = ({ navigate }) => {
   const regenerateMeme = async () => {
     if (!meme) return;
     setRegenerating(true);
-    setMsg("Je régénère avec ton nouveau texte...");
+    setMsg("Je fusionne ton texte en pied de page de l'image...");
     
     try {
       const url = apiUrl("/api/memes/compose");
       const res = await axios.post(url, {
         imageUrl: meme.imageUrl,
-        topText: editTopText,
-        bottomText: editBottomText
+        topText: "",
+        bottomText: editBottomText || editTopText // Utiliser bottomText pour le pied de page
       });
       console.log('[ContextReader] Régénération:', res.data);
-      setMeme({ ...meme, ...res.data });
-      setMsg("Nouvelle version prête !");
+      setMeme({ 
+        ...meme, 
+        composedImageUrl: res.data.composedImageUrl,
+        share: res.data.share,
+        topText: "",
+        bottomText: editBottomText || editTopText
+      });
+      setMsg("Image fusionnée prête !");
       resultAnim.setValue(0);
       Animated.spring(resultAnim, { toValue: 1, tension: 70, friction: 8, useNativeDriver: true }).start();
       
       // Mettre à jour la base de données
-      await saveMemeToDB({ ...meme, ...res.data });
+      await saveMemeToDB({ 
+        ...meme, 
+        composedImageUrl: res.data.composedImageUrl,
+        share: res.data.share,
+        topText: "",
+        bottomText: editBottomText || editTopText
+      });
     } catch (error) {
       console.error('[ContextReader] Erreur régénération:', error);
       setMsg("Échec de la régénération. Réessaie.");
@@ -115,7 +127,7 @@ const ContextReaderScreen = ({ navigate }) => {
     try {
       await axios.post(apiUrl("/api/forum/publish"), {
         shareId: meme.share?.shareId,
-        imageUrl: meme.share?.publicUrl || meme.composedImageUrl || meme.imageUrl,
+        imageUrl: meme.composedImageUrl || meme.share?.publicUrl || meme.imageUrl,
         topText: meme.topText,
         bottomText: meme.bottomText
       });
@@ -133,7 +145,7 @@ const ContextReaderScreen = ({ navigate }) => {
   const handleShareWhatsApp = async () => {
     const imageUrl = meme.composedImageUrl || meme.share?.publicUrl || meme.imageUrl;
     if (imageUrl) {
-      await shareToWhatsApp(imageUrl, 'Regarde ce mème généré par Viral Stick ! 🔥');
+      await shareToWhatsApp(imageUrl, ''); // Pas de texte séparé, l'image contient déjà le texte fusionné
     }
   };
 

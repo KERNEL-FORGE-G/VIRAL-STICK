@@ -34,6 +34,9 @@ const StatusRemixerScreen = ({ navigate, route }) => {
   const [published, setPublished] = useState(false);
   const [msg, setMsg]             = useState("Envoie un visuel ou une intention. Je m'occupe du reste.");
   const [userId] = useState('demo_user'); // À remplacer par l'ID utilisateur réel
+  const [editMode, setEditMode]   = useState(false);
+  const [editCaption, setEditCaption] = useState("");
+  const [regenerating, setRegenerating] = useState(false);
   const previewAnim               = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -97,7 +100,7 @@ const StatusRemixerScreen = ({ navigate, route }) => {
 
   const askRemix = async () => {
     if (!imagePicked && !caption.trim()) { Alert.alert("Viral Stick", "Charge une image ou décris une idée."); return; }
-    setLoading(true); setRemix(null); setPublished(false); setMsg("Je cherche une caption social-first...");
+    setLoading(true); setRemix(null); setPublished(false); setEditMode(false); setMsg("Je cherche une caption social-first...");
     
     const url = apiUrl("/api/memes/status-remixer");
     console.log('[StatusRemixer] URL API:', url);
@@ -112,7 +115,10 @@ const StatusRemixerScreen = ({ navigate, route }) => {
       });
       console.log('[StatusRemixer] Réponse API:', res.data);
       setRemix(res.data);
-      if (res.data?.meme_text) setCaption(res.data.meme_text);
+      if (res.data?.meme_text) {
+        setCaption(res.data.meme_text);
+        setEditCaption(res.data.meme_text);
+      }
       setMsg(res.data?.companionComment || "Remix prêt. Caption et édition alignés.");
       
       // Sauvegarder le mème dans SQLite
@@ -152,7 +158,7 @@ const StatusRemixerScreen = ({ navigate, route }) => {
     try {
       await axios.post(apiUrl("/api/forum/publish"), {
         shareId: remix?.share?.shareId,
-        imageUrl: remix?.share?.publicUrl || remix?.imageUrl || initialImage,
+        imageUrl: remix?.composedImageUrl || remix?.share?.publicUrl || remix?.imageUrl || initialImage,
         topText: caption || remix?.meme_text || "",
         bottomText: "",
         sourceMemeId: params.sourceMemeId
@@ -170,9 +176,53 @@ const StatusRemixerScreen = ({ navigate, route }) => {
   };
 
   const handleShareWhatsApp = async () => {
-    const imageUrl = remix?.share?.publicUrl || remix?.imageUrl || initialImage;
+    const imageUrl = remix?.composedImageUrl || remix?.share?.publicUrl || remix?.imageUrl || initialImage;
     if (imageUrl) {
-      await shareToWhatsApp(imageUrl, 'Regarde ce remix généré par Viral Stick ! ✨');
+      await shareToWhatsApp(imageUrl, ''); // Pas de texte séparé, l'image contient déjà le texte fusionné
+    }
+  };
+
+  const regenerateRemix = async () => {
+    if (!editCaption.trim()) {
+      Alert.alert("Viral Stick", "Entre une caption pour régénérer.");
+      return;
+    }
+    
+    setRegenerating(true);
+    setMsg("Je fusionne ton texte en pied de page de l'image...");
+    
+    try {
+      const res = await axios.post(apiUrl("/api/memes/compose"), {
+        imageUrl: remix?.imageUrl || initialImage,
+        topText: "",
+        bottomText: editCaption // Utiliser bottomText pour le pied de page
+      });
+      
+      console.log('[StatusRemixer] Réponse compose:', res.data);
+      
+      setRemix({ 
+        ...remix, 
+        composedImageUrl: res.data.composedImageUrl,
+        share: res.data.share,
+        meme_text: editCaption
+      });
+      setCaption(editCaption);
+      setEditCaption(editCaption);
+      setMsg("Image fusionnée prête !");
+      
+      // Sauvegarder le mème mis à jour
+      await saveMemeToDB({ 
+        ...remix, 
+        composedImageUrl: res.data.composedImageUrl,
+        share: res.data.share,
+        meme_text: editCaption
+      });
+    } catch (error) {
+      console.error('[StatusRemixer] Erreur régénération:', error);
+      setMsg("Erreur lors de la régénération.");
+      Alert.alert("Erreur", "Impossible de régénérer le remix.");
+    } finally {
+      setRegenerating(false);
     }
   };
 
@@ -223,15 +273,15 @@ const StatusRemixerScreen = ({ navigate, route }) => {
                 <Text style={[styles.label, { color: theme.textMuted }]}>CANVAS</Text>
                 <View style={[styles.canvas, { borderColor: theme.border }]}>
                   <View style={[StyleSheet.absoluteFill, { backgroundColor: overlay, borderRadius: radius.md, zIndex: 2 }]} pointerEvents="none" />
-                  {remix?.imageUrl || initialImage ? (
-                    <Image source={{ uri: remix?.imageUrl || initialImage }} style={styles.canvasImg} resizeMode="cover" />
+                  {remix?.composedImageUrl || remix?.imageUrl || initialImage ? (
+                    <Image source={{ uri: remix?.composedImageUrl || remix?.imageUrl || initialImage }} style={styles.canvasImg} resizeMode="cover" />
                   ) : (
                     <View style={styles.canvasPlaceholder}>
                       <AppIcon name="image" color={theme.textMuted} size={48} />
                       <Text style={[styles.canvasLabel, { color: theme.textMuted }]}>Visuel de démonstration</Text>
                     </View>
                   )}
-                  {!!caption && (
+                  {!!caption && !remix?.composedImageUrl && (
                     <Text style={[styles.overlayText, position === "top" ? styles.top : position === "center" ? styles.center : styles.bottom]}>
                       {caption.toUpperCase()}
                     </Text>
@@ -289,14 +339,54 @@ const StatusRemixerScreen = ({ navigate, route }) => {
               <AnimatedButton title="WhatsApp" onPress={handleShareWhatsApp} size="lg" style={{ flex: 1, backgroundColor: '#25D366' }} />
             </View>
 
-            {remix && (
+            {remix && !editMode && (
               <View style={styles.actions}>
+                <AnimatedButton title="Éditer" onPress={() => setEditMode(true)} size="lg" variant="ghost" style={{ flex: 1 }} />
                 {!published ? (
                   <AnimatedButton title="Propulser" onPress={publishToForum} size="lg" variant="primary" style={{ flex: 1, backgroundColor: theme.secondary }} />
                 ) : (
                   <View style={[styles.publishedBadge, { backgroundColor: theme.secondaryLight }]}><Text style={[styles.publishedText, { color: theme.secondary }]}>PUBLIÉ</Text></View>
                 )}
               </View>
+            )}
+
+            {remix && editMode && (
+              <GlassCard style={styles.card}>
+                <Text style={[styles.label, { color: theme.textMuted }]}>MODE ÉDITION</Text>
+                <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Modifier la caption</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border, color: theme.textPrimary }]}
+                  value={editCaption}
+                  onChangeText={setEditCaption}
+                  placeholder="Nouvelle caption..."
+                  placeholderTextColor={theme.textMuted}
+                  multiline
+                />
+                <View style={styles.actions}>
+                  <AnimatedButton 
+                    title="Annuler" 
+                    onPress={() => { setEditMode(false); setEditCaption(remix.meme_text || caption); }} 
+                    size="lg" 
+                    variant="ghost" 
+                    style={{ flex: 1 }} 
+                  />
+                  <AnimatedButton 
+                    title={regenerating ? "Régénération..." : "Régénérer"} 
+                    onPress={regenerateRemix} 
+                    loading={regenerating}
+                    disabled={regenerating}
+                    size="lg" 
+                    style={{ flex: 1, backgroundColor: theme.primary }} 
+                  />
+                </View>
+              </GlassCard>
+            )}
+
+            {remix && editMode && (
+              <GlassCard style={styles.card}>
+                <Text style={[styles.label, { color: theme.textMuted }]}>CAPTION ACTUELLE</Text>
+                <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>{editCaption || caption}</Text>
+              </GlassCard>
             )}
 
             {loading && (

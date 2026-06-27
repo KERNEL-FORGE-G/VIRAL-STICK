@@ -211,6 +211,41 @@ const MemeController = {
       res.status(500).json({ error: "Erreur lors du remix du status" });
     }
   },
+
+  compose: async (req, res) => {
+    try {
+      const { imageUrl, imageBase64, topText, bottomText } = req.body;
+      
+      if (!imageUrl && !imageBase64) {
+        return res.status(400).json({ error: "Image requise" });
+      }
+
+      if (!topText && !bottomText) {
+        return res.status(400).json({ error: "Texte requis" });
+      }
+
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      
+      const share = await ShareService.buildShareBundle({
+        topText: topText || "",
+        bottomText: bottomText || "",
+        imageUrl: imageUrl || null,
+        imageBase64: imageBase64 || null,
+        baseUrl,
+      });
+
+      res.status(200).json({
+        message: "Mème composé avec succès",
+        composedImageUrl: share.imageDataUrl || imageUrl || null,
+        share,
+        topText,
+        bottomText,
+      });
+    } catch (error) {
+      console.error("[compose]", error);
+      res.status(500).json({ error: "Erreur lors de la composition du mème" });
+    }
+  },
 };
 
 module.exports = MemeController;

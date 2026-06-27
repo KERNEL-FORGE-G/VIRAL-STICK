@@ -58,6 +58,9 @@ const AuthScreen = ({ navigate }) => {
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
+          autoCorrect={false}
+          spellCheck={false}
+          textContentType="none"
         />
 
         <Text style={[styles.label, { color: theme.textMuted }]}>MOT DE PASSE</Text>
@@ -68,6 +71,10 @@ const AuthScreen = ({ navigate }) => {
           secureTextEntry
           value={password}
           onChangeText={setPassword}
+          autoCorrect={false}
+          spellCheck={false}
+          textContentType="none"
+          autoComplete="off"
         />
 
         <TouchableOpacity 

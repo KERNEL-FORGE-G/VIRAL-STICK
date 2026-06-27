@@ -12,8 +12,14 @@ const PILLARS = [
 ];
 
 const TEAM = [
-  { name: "Ravel", role: "Lead Technique & Fullstack", companion: "arch", github: "@Archlord12345" },
-  { name: "Équipe", role: "Kernel Forge", companion: "data", github: "#KERNELFORGE" },
+  { name: "NGHOMSI FEUKOUO RAVEL", role: "Leader du projet", companion: "arch", github: "@Archlord12345" },
+  { name: "NGABISSI NGOUNOU Elisée", role: "Backend dev 2", companion: "data", github: "@Elisee-25" },
+  { name: "JAM AFANE JEMINA", role: "Dev Audio/image", companion: "art", github: "@Graziella865" },
+  { name: "Demanou kenfack Ange Trecy", role: "Dev 1 mobile", companion: "secu", github: "@AngeTrecy" },
+  { name: "NGUEMA ARIDTIDE", role: "Testeur et rapport", companion: "ubu", github: "@ngurmaaristide" },
+  { name: "Nguiffo pierre Ivan", role: "Testeur et rapport", companion: "bio", github: "@nguiffoloic" },
+  { name: "SALWE MARSALA", role: "Backend dev 1", companion: "para", github: "@salwe-marsala" },
+  { name: "HASSANE YOUSSOUF OUMAR", role: "Backend Dev 2", companion: "data", github: "@Hawadja" },
 ];
 
 const TECH = [

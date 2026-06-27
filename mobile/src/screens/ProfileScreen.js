@@ -4,7 +4,8 @@ import { useTheme, spacing, radius } from '../theme';
 import GlassCard from '../components/GlassCard';
 import AnimatedButton from '../components/AnimatedButton';
 import CompanionAvatar from '../components/CompanionAvatar';
-import { userDB, statsDB } from '../services/database';
+import { apiUrl } from '../config/api';
+import axios from 'axios';
 
 const ProfileScreen = ({ navigate }) => {
   const { theme, isDark } = useTheme();
@@ -19,33 +20,35 @@ const ProfileScreen = ({ navigate }) => {
 
   const loadProfile = async () => {
     try {
-      // Charger l'utilisateur depuis la base de données
-      const userData = await userDB.getUserById(userId);
+      // Charger les stats du leaderboard depuis le backend
+      const res = await axios.get(apiUrl('/api/forum/leaderboard'));
+      const leaderboard = res.data;
       
-      if (userData) {
+      // Trouver les stats de l'utilisateur actuel
+      const userStats = leaderboard.find(u => u.userId === userId);
+      
+      if (userStats) {
+        setStats({
+          memes: userStats.memesPosted || 0,
+          likes: userStats.totalLikes || 0,
+          remixes: userStats.totalRemixes || 0
+        });
         setUser({
-          username: userData.username,
-          email: userData.email,
-          joinedAt: new Date(userData.joined_at * 1000).toLocaleDateString('fr-FR'),
-          avatar: userData.avatar
+          username: userStats.username || 'ViralUser',
+          email: 'user@viralstick.com',
+          joinedAt: new Date().toLocaleDateString('fr-FR'),
+          avatar: 'arch'
         });
       } else {
-        // Utilisateur par défaut si non trouvé
+        // Fallback avec données simulées si utilisateur non trouvé
         setUser({
           username: 'ViralUser',
           email: 'user@viralstick.com',
           joinedAt: new Date().toLocaleDateString('fr-FR'),
           avatar: 'arch'
         });
+        setStats({ memes: 0, likes: 0, remixes: 0 });
       }
-
-      // Charger les statistiques
-      const userStats = await statsDB.getUserStats(userId);
-      setStats({
-        memes: userStats.memes_created || 0,
-        likes: userStats.likes_received || 0,
-        remixes: userStats.remixes_count || 0
-      });
     } catch (error) {
       console.error('Erreur chargement profil:', error);
       // Fallback avec données simulées
@@ -55,7 +58,7 @@ const ProfileScreen = ({ navigate }) => {
         joinedAt: new Date().toLocaleDateString('fr-FR'),
         avatar: 'arch'
       });
-      setStats({ memes: 12, likes: 156, remixes: 8 });
+      setStats({ memes: 0, likes: 0, remixes: 0 });
     } finally {
       setLoading(false);
     }
