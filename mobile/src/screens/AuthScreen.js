@@ -5,6 +5,7 @@ import { useTheme } from '../theme';
 import CompanionAvatar from '../components/CompanionAvatar';
 import { apiUrl } from '../config/api';
 import axios from 'axios';
+import authService from '../services/authService';
 
 const AuthScreen = ({ navigate }) => {
   const { theme, isDark } = useTheme();
@@ -26,9 +27,20 @@ const AuthScreen = ({ navigate }) => {
       const res = await axios.get(url, { timeout: 5000 });
       
       if (res.status === 200) {
-        // Backend accessible - simuler une connexion réussie
-        Alert.alert('Succès', isLogin ? 'Connexion réussie !' : 'Compte créé avec succès !');
-        navigate('Home');
+        // Backend accessible - utiliser l'email comme identifiant unique pour la persistance
+        // Hash simple de l'email pour créer un userId stable
+        const userId = `user_${email.trim().toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+        
+        // Sauvegarder la session
+        const saved = await authService.saveSession(userId, email);
+        
+        if (saved) {
+          console.log('[AuthScreen] Session sauvegardée avec userId:', userId);
+          Alert.alert('Succès', isLogin ? 'Connexion réussie !' : 'Compte créé avec succès !');
+          navigate('Home');
+        } else {
+          Alert.alert('Erreur', 'Impossible de sauvegarder la session');
+        }
       }
     } catch (error) {
       console.error('Erreur auth:', error);

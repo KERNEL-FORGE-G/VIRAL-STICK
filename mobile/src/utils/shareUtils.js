@@ -60,7 +60,7 @@ export const downloadAndPrepareSticker = async (imageUrl) => {
     }
 
     // Préparer le chemin de destination pour le sticker
-    const stickerFileName = `viral_stick_${Date.now()}.webp`;
+    const stickerFileName = `viral_stick_${Date.now()}.jpg`; // Utiliser jpg pour meilleure compatibilité
     let stickerPath;
     
     if (Platform.OS === 'android') {
@@ -81,8 +81,6 @@ export const downloadAndPrepareSticker = async (imageUrl) => {
     }
 
     // Copier/renommer le fichier vers le chemin du sticker
-    // Note: Pour une vraie conversion WebP, il faudrait utiliser une librairie comme react-native-image-resizer
-    // Pour l'instant, on copie simplement le fichier avec l'extension .webp
     await RNFS.copyFile(sourcePath, stickerPath);
     console.log('[downloadAndPrepareSticker] Sticker préparé:', stickerPath);
 
@@ -137,7 +135,7 @@ const shareAsWhatsAppSticker = async (filePath, text = '') => {
     // Sur Android, copier le fichier vers un répertoire accessible par WhatsApp
     if (Platform.OS === 'android') {
       const externalDir = RNFS.ExternalStorageDirectoryPath;
-      const fileName = `viral_stick_${Date.now()}.webp`;
+      const fileName = `viral_stick_${Date.now()}.jpg`; // Utiliser jpg au lieu de webp pour meilleure compatibilité
       const externalPath = `${externalDir}/Pictures/${fileName}`;
       
       // Créer le répertoire Pictures s'il n'existe pas
@@ -159,17 +157,21 @@ const shareAsWhatsAppSticker = async (filePath, text = '') => {
       throw new Error('Fichier à partager introuvable');
     }
 
+    // Détecter le type MIME basé sur l'extension
+    const extension = sharePath.split('.').pop().toLowerCase();
+    const mimeType = extension === 'png' ? 'image/png' : 'image/jpeg';
+
     // Utiliser Share.open() pour partager le fichier
     const shareOptions = {
       title: 'Partager sur WhatsApp',
       message: text,
       url: Platform.OS === 'android' ? sharePath : `file://${sharePath}`,
-      type: 'image/webp',
-      filename: 'viral_stick_sticker.webp',
+      type: mimeType,
+      filename: `viral_stick_sticker.${extension}`,
       social: Share.Social.WHATSAPP,
     };
 
-    console.log('Tentative de partage avec Share.open(), url:', shareOptions.url);
+    console.log('Tentative de partage avec Share.open(), url:', shareOptions.url, 'type:', mimeType);
     await Share.open(shareOptions);
     console.log('Partage réussi');
     
@@ -182,18 +184,119 @@ const shareAsWhatsAppSticker = async (filePath, text = '') => {
     
     // Fallback: essayer sans spécifier WhatsApp et avec URI correcte
     try {
+      const extension = sharePath.split('.').pop().toLowerCase();
+      const mimeType = extension === 'png' ? 'image/png' : 'image/jpeg';
+      
       const normalOptions = {
         title: 'Partager le mème',
         message: text,
         url: Platform.OS === 'android' ? filePath : `file://${filePath}`,
-        type: 'image/webp',
+        type: mimeType,
       };
-      console.log('Fallback: partage sans WhatsApp spécifié, url:', normalOptions.url);
+      console.log('Fallback: partage sans WhatsApp spécifié, url:', normalOptions.url, 'type:', mimeType);
       await Share.open(normalOptions);
     } catch (fallbackError) {
       console.error('Erreur fallback:', fallbackError);
       Alert.alert('Erreur', 'Impossible de partager l\'image.');
     }
+  }
+};
+
+/**
+ * Télécharge une image depuis une URL et la sauvegarde dans la galerie
+ * @param {string} imageUrl - URL de l'image à télécharger
+ * @returns {Promise<string>} - Chemin du fichier téléchargé
+ */
+export const downloadImageToGallery = async (imageUrl) => {
+  try {
+    console.log('[downloadImageToGallery] Téléchargement de:', imageUrl);
+    
+    let sourcePath = null;
+    
+    // Cas 1: Image locale (file://)
+    if (imageUrl.startsWith('file://')) {
+      sourcePath = imageUrl.replace('file://', '');
+      console.log('[downloadImageToGallery] Image locale:', sourcePath);
+    }
+    // Cas 2: Base64
+    else if (imageUrl.startsWith('data:image')) {
+      const base64Data = imageUrl.replace(/^data:image\/\w+;base64,/, '');
+      const tempFileName = `viral_stick_temp_${Date.now()}.png`;
+      sourcePath = `${RNFS.TemporaryDirectoryPath}/${tempFileName}`;
+      
+      await RNFS.writeFile(sourcePath, base64Data, 'base64');
+      console.log('[downloadImageToGallery] Base64 sauvegardé:', sourcePath);
+    }
+    // Cas 3: URL HTTP
+    else {
+      const tempFileName = `viral_stick_download_${Date.now()}.jpg`;
+      sourcePath = `${RNFS.TemporaryDirectoryPath}/${tempFileName}`;
+      
+      console.log('[downloadImageToGallery] Téléchargement depuis URL...');
+      const downloadResult = await RNFS.downloadFile({
+        fromUrl: imageUrl,
+        toFile: sourcePath,
+        progress: (res) => {
+          const progress = (res.bytesWritten / res.contentLength) * 100;
+          console.log(`[downloadImageToGallery] Téléchargement: ${progress.toFixed(2)}%`);
+        },
+      }).promise;
+
+      if (downloadResult.statusCode !== 200) {
+        throw new Error(`Échec du téléchargement: status ${downloadResult.statusCode}`);
+      }
+      
+      console.log('[downloadImageToGallery] Téléchargement réussi');
+    }
+
+    // Vérifier que le fichier source existe
+    const sourceExists = await RNFS.exists(sourcePath);
+    if (!sourceExists) {
+      throw new Error('Fichier source introuvable');
+    }
+
+    // Déterminer le nom de fichier et la destination
+    const timestamp = Date.now();
+    const fileName = `viral_stick_${timestamp}.jpg`;
+    
+    let destinationPath;
+    
+    if (Platform.OS === 'android') {
+      // Sur Android, sauvegarder dans Pictures
+      const externalDir = RNFS.ExternalStorageDirectoryPath;
+      const picturesDir = `${externalDir}/Pictures/ViralStick`;
+      
+      // Créer le répertoire ViralStick s'il n'existe pas
+      const dirExists = await RNFS.exists(picturesDir);
+      if (!dirExists) {
+        await RNFS.mkdir(picturesDir);
+      }
+      
+      destinationPath = `${picturesDir}/${fileName}`;
+    } else {
+      // Sur iOS, sauvegarder dans la galerie
+      destinationPath = `${RNFS.CachesDirectoryPath}/${fileName}`;
+    }
+
+    // Copier le fichier vers la destination
+    await RNFS.copyFile(sourcePath, destinationPath);
+    console.log('[downloadImageToGallery] Image sauvegardée:', destinationPath);
+
+    // Scanner le fichier pour qu'il apparaisse dans la galerie (Android seulement)
+    if (Platform.OS === 'android') {
+      await RNFS.scanFile(destinationPath);
+      console.log('[downloadImageToGallery] Fichier scanné pour la galerie');
+    }
+
+    // Nettoyer le fichier temporaire si nécessaire
+    if (sourcePath !== destinationPath && sourcePath.includes('temp')) {
+      RNFS.unlink(sourcePath).catch(err => console.log('[downloadImageToGallery] Erreur suppression temp:', err));
+    }
+
+    return destinationPath;
+  } catch (error) {
+    console.error('[downloadImageToGallery] Erreur:', error);
+    throw error;
   }
 };
 

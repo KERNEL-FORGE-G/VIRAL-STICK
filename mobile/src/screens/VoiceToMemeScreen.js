@@ -9,7 +9,7 @@ import AnimatedButton from "../components/AnimatedButton";
 import CompanionAvatar from "../components/CompanionAvatar";
 import AppIcon from "../components/AppIcon";
 import { apiUrl } from "../config/api";
-import { shareToWhatsApp } from "../utils/shareUtils";
+import { shareToWhatsApp, downloadImageToGallery } from "../utils/shareUtils";
 import { memeDB, statsDB } from "../services/database";
 
 const DEMOS = [
@@ -302,6 +302,19 @@ const VoiceToMemeScreen = ({ navigate }) => {
     }
   };
 
+  const handleDownload = async () => {
+    const imageUrl = meme.composedImageUrl || meme.share?.publicUrl || meme.imageUrl;
+    if (imageUrl) {
+      try {
+        const savedPath = await downloadImageToGallery(imageUrl);
+        Alert.alert('Succès', 'Image sauvegardée dans votre galerie !');
+      } catch (error) {
+        console.error('Erreur téléchargement:', error);
+        Alert.alert('Erreur', 'Impossible de télécharger l\'image.');
+      }
+    }
+  };
+
   const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
   return (
@@ -399,6 +412,7 @@ const VoiceToMemeScreen = ({ navigate }) => {
                       variant="ghost"
                       style={{ flex: 1 }}
                     />
+                    <AnimatedButton title="Télécharger" onPress={handleDownload} size="lg" style={{ flex: 1, backgroundColor: theme.primary }} />
                     <AnimatedButton title="WhatsApp" onPress={handleShareWhatsApp} size="lg" style={{ flex: 1, backgroundColor: '#25D366' }} />
                     {!published ? (
                       <AnimatedButton title="Propulser" onPress={publishToForum} size="lg" variant="primary" style={{ flex: 1, backgroundColor: theme.secondary }} />

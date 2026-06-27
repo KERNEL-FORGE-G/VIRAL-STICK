@@ -8,6 +8,7 @@ import CompanionAvatar from "../components/CompanionAvatar";
 import AppIcon from "../components/AppIcon";
 import { apiUrl } from "../config/api";
 import axios from "axios";
+import authService from "../services/authService";
 
 const SettingsScreen = ({ navigate }) => {
   const { theme, isDark, toggleTheme } = useTheme();
@@ -42,6 +43,29 @@ const SettingsScreen = ({ navigate }) => {
     } finally {
       setPingLoading(false);
     }
+  };
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Déconnexion',
+      'Voulez-vous vraiment vous déconnecter ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Déconnecter',
+          style: 'destructive',
+          onPress: async () => {
+            const loggedOut = await authService.logout();
+            if (loggedOut) {
+              Alert.alert('Déconnexion réussie', 'Vous avez été déconnecté.');
+              navigate?.('Auth');
+            } else {
+              Alert.alert('Erreur', 'Impossible de se déconnecter.');
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -140,6 +164,16 @@ const SettingsScreen = ({ navigate }) => {
             </TouchableOpacity>
           </GlassCard>
 
+          {/* Déconnexion */}
+          <GlassCard animate delay={250} style={styles.card}>
+            <TouchableOpacity onPress={handleLogout} activeOpacity={0.8} style={[styles.logoutBtn, { backgroundColor: "#fee2e2", borderColor: "#fecaca" }]}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <AppIcon name="log-out" color="#b91c1c" size={20} />
+                <Text style={[styles.logoutText, { color: "#b91c1c" }]}>Se déconnecter</Text>
+              </View>
+            </TouchableOpacity>
+          </GlassCard>
+
           <View style={{ height: 100 }} />
         </Animated.View>
       </ScrollView>
@@ -180,6 +214,8 @@ const styles = StyleSheet.create({
   aboutRow:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   aboutLabel:  { fontSize: 16, fontWeight: "800" },
   aboutDesc:   { fontSize: 13, marginTop: 4 },
+  logoutBtn:   { flexDirection: "row", alignItems: "center", justifyContent: "center", padding: 16, borderRadius: radius.md, borderWidth: 1 },
+  logoutText:  { fontSize: 16, fontWeight: "800" },
 });
 
 export default SettingsScreen;

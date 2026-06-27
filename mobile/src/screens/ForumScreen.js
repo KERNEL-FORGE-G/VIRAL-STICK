@@ -4,6 +4,7 @@ import { colors, radius, spacing } from '../theme/tokens';
 import { apiUrl } from '../config/api';
 import { shareToWhatsApp } from '../utils/shareUtils';
 import { useTheme } from '../theme';
+import authService from '../services/authService';
 
 const TABS = [
   { id: 'createdAt', label: 'Récents', icon: '🕒' },
@@ -20,19 +21,37 @@ const ForumScreen = ({ navigate }) => {
   const [likingId, setLikingId] = useState(null);
 
   useEffect(() => {
+    loadUserId();
+  }, []);
+
+  useEffect(() => {
     fetchMemes();
   }, [sortBy, userId]);
+
+  const loadUserId = async () => {
+    try {
+      const id = await authService.getUserId();
+      console.log('[ForumScreen] userId chargé:', id);
+      setUserId(id);
+    } catch (error) {
+      console.error('[ForumScreen] Erreur chargement userId:', error);
+    }
+  };
 
   const fetchMemes = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ sortBy });
       if (userId) params.append('userId', userId);
-      const res = await fetch(apiUrl(`/api/forum/memes?${params.toString()}`));
+      const url = apiUrl(`/api/forum/memes?${params.toString()}`);
+      console.log('[ForumScreen] Fetch memes URL:', url);
+      const res = await fetch(url);
       const data = await res.json();
+      console.log('[ForumScreen] Memes reçus:', data);
+      console.log('[ForumScreen] Nombre de memes:', Array.isArray(data) ? data.length : 0);
       setMemes(Array.isArray(data) ? data : []);
     } catch (e) {
-      console.error(e);
+      console.error('[ForumScreen] Erreur fetch memes:', e);
       setMemes([]);
     } finally {
       setLoading(false);
@@ -40,8 +59,34 @@ const ForumScreen = ({ navigate }) => {
   };
 
   const handleLike = async (id) => {
+    console.log('[ForumScreen] handleLike appelé, userId:', userId);
+    
+    // Si userId est null, essayer de le recharger
     if (!userId) {
+      console.log('[ForumScreen] userId null, tentative de rechargement...');
+      const reloadedId = await authService.getUserId();
+      console.log('[ForumScreen] userId rechargé:', reloadedId);
+      setUserId(reloadedId);
+    }
+    
+    // Vérifier si l'utilisateur est connecté via authService
+    const isLoggedIn = await authService.isLoggedIn();
+    console.log('[ForumScreen] isLoggedIn:', isLoggedIn);
+    
+    if (!userId && !isLoggedIn) {
+      console.log('[ForumScreen] Utilisateur non connecté, userId:', userId, 'isLoggedIn:', isLoggedIn);
       Alert.alert('Connexion nécessaire', 'Connectez-vous pour liker des mèmes !');
+      navigate('Auth');
+      return;
+    }
+    
+    // Utiliser le userId rechargé si disponible
+    const effectiveUserId = userId || await authService.getUserId();
+    console.log('[ForumScreen] effectiveUserId:', effectiveUserId);
+    
+    if (!effectiveUserId) {
+      console.log('[ForumScreen] Impossible de récupérer userId');
+      Alert.alert('Erreur', 'Impossible de récupérer votre identifiant. Veuillez vous reconnecter.');
       navigate('Auth');
       return;
     }
@@ -55,7 +100,7 @@ const ForumScreen = ({ navigate }) => {
       const res = await fetch(apiUrl(`/api/forum/like/${id}`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId })
+        body: JSON.stringify({ userId: effectiveUserId })
       });
       if (res.ok) {
         const result = await res.json();

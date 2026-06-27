@@ -1,10 +1,7 @@
 const { db, admin } = require("../firebase");
 
 // Demo data for fallback
-let demoMemes = [
-  { id: "demo1", shareId: "demo1", imageUrl: "https://placehold.co/600x600/1cb0f6/ffffff?text=Demo+Meme+1", topText: "TOP TEXT", bottomText: "BOTTOM TEXT", likes: 42, remixes: 3, createdAt: Date.now(), username: "MemeMaster42", userId: "demo_u1" },
-  { id: "demo2", shareId: "demo2", imageUrl: "https://placehold.co/600x600/58cc02/ffffff?text=Demo+Meme+2", topText: "ME WHEN", bottomText: "THE MEME HITS", likes: 128, remixes: 12, createdAt: Date.now() - 3600000, username: "LaughFactory", userId: "demo_u2" }
-];
+let demoMemes = [];
 
 async function isDbUsable() {
   if (!db) return false;
@@ -138,10 +135,7 @@ const ForumController = {
     try {
       const usable = await isDbUsable();
       if (!usable) {
-        return res.json([
-          { userId: "demo1", username: "MemeMaster42", totalLikes: 142, memesPosted: 31, totalRemixes: 45 },
-          { userId: "demo2", username: "LaughFactory", totalLikes: 98, memesPosted: 25, totalRemixes: 12 }
-        ]);
+        return res.json([]);
       }
 
       // On calcule les stats par utilisateur à partir de la collection memes
