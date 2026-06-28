@@ -1,301 +1,115 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
-import { View, Text, TextInput, StyleSheet, ScrollView, SafeAreaView, Animated, Alert, Keyboard, ActivityIndicator, Image, StatusBar } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TextInput, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Alert, Keyboard, Image, StatusBar, ActivityIndicator } from "react-native";
+import Slider from '@react-native-community/slider';
 import axios from "axios";
-import { useTheme, spacing, radius } from "../theme";
+import { useTheme, spacing, shadows, radius } from "../theme";
 import GlassCard from "../components/GlassCard";
-import AnimatedButton from "../components/AnimatedButton";
-import CompanionAvatar from "../components/CompanionAvatar";
 import AppIcon from "../components/AppIcon";
 import { apiUrl } from "../config/api";
 import { shareToWhatsApp, downloadImageToGallery } from "../utils/shareUtils";
-import { memeDB, statsDB } from "../services/database";
-import authService from "../services/authService";
-
-const QUICK_IDEAS = [
-  "Le prof arrive en retard à son propre cours et nous gronde quand même.",
-  "Je dis que je vais dormir tôt puis je finis à scroller des reels à 2h43.",
-  "J'envoie un message «simple» qui devient un drama de 17 paragraphes.",
-];
+import CompanionAvatar from "../components/CompanionAvatar";
 
 const ContextReaderScreen = ({ navigate }) => {
   const { theme, isDark } = useTheme();
   const [text, setText]       = useState("");
   const [meme, setMeme]       = useState(null);
   const [loading, setLoading] = useState(false);
-  const [published, setPublished] = useState(false);
-  const [msg, setMsg]         = useState("Décris une situation — je trouve l'angle le plus drôle.");
-  const [userId, setUserId]   = useState(null);
-  const [editMode, setEditMode] = useState(false);
-  const [editTopText, setEditTopText] = useState("");
-  const [editBottomText, setEditBottomText] = useState("");
-  const [regenerating, setRegenerating] = useState(false);
-  const resultAnim            = useRef(new Animated.Value(0)).current;
-  const progress              = useMemo(() => Math.min(text.trim().length / 220, 1), [text]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      const id = await authService.getUserId();
-      setUserId(id || 'guest');
-    };
-    fetchUser();
-  }, []);
+  const [topText, setTopText]       = useState("");
+  const [bottomText, setBottomText] = useState("");
+  const [topY, setTopY]             = useState(12);
+  const [bottomY, setBottomY]       = useState(88);
 
   const generateMeme = async () => {
-    if (!text.trim()) { Alert.alert("Viral Stick", "Entre une situation à transformer."); return; }
-    Keyboard.dismiss(); setLoading(true); setMeme(null); setPublished(false); setEditMode(false);
-    setMsg("J'analyse le contexte et cherche la meilleure chute comique...");
-    
-    const url = apiUrl("/api/memes/generate-from-text");
-
+    if (!text.trim()) return;
+    Keyboard.dismiss(); setLoading(true); setMeme(null);
     try {
-      const res = await axios.post(url, { text });
+      const res = await axios.post(apiUrl("/api/memes/generate-from-text"), { text });
       setMeme(res.data);
-      setEditTopText(res.data.topText || "");
-      setEditBottomText(res.data.bottomText || "");
-      setMsg(res.data?.companionComment || "Angle trouvé. Mème prêt !");
-      resultAnim.setValue(0);
-      Animated.spring(resultAnim, { toValue: 1, tension: 70, friction: 8, useNativeDriver: true }).start();
-      
-      await saveMemeToDB(res.data);
-    } catch (error) {
-      console.error('[ContextReader] Erreur API:', error);
-      const serverMsg = error.response?.data?.error || error.response?.data?.message || "Connexion backend impossible.";
-      setMsg("Le studio n'a pas pu générer: " + serverMsg);
-      Alert.alert("Erreur", serverMsg);
+      setTopText(res.data.topText || "");
+      setBottomText(res.data.bottomText || "");
+    } catch (e) {
+      Alert.alert("Erreur", "Le studio est momentanément indisponible.");
     } finally { setLoading(false); }
   };
 
-  const regenerateMeme = async () => {
-    if (!meme) return;
-    setRegenerating(true);
-    setMsg("Je fusionne ton texte en pied de page de l'image...");
-    
+  const handleAction = async (type) => {
+    if (isProcessing) return;
+    setIsProcessing(true);
     try {
-      const url = apiUrl("/api/memes/compose");
-      const res = await axios.post(url, {
+      const res = await axios.post(apiUrl("/api/memes/compose"), {
         imageUrl: meme.imageUrl,
-        topText: "",
-        bottomText: editBottomText || editTopText
+        topText, bottomText, topY, bottomY
       });
-      setMeme({
-        ...meme, 
-        composedImageUrl: res.data.composedImageUrl,
-        share: res.data.share,
-        topText: "",
-        bottomText: editBottomText || editTopText
-      });
-      setMsg("Image fusionnée prête !");
-      resultAnim.setValue(0);
-      Animated.spring(resultAnim, { toValue: 1, tension: 70, friction: 8, useNativeDriver: true }).start();
-      
-      await saveMemeToDB({
-        ...meme, 
-        composedImageUrl: res.data.composedImageUrl,
-        share: res.data.share,
-        topText: "",
-        bottomText: editBottomText || editTopText
-      });
-    } catch (error) {
-      console.error('[ContextReader] Erreur régénération:', error);
-      const serverMsg = error.response?.data?.error || error.response?.data?.message || "Échec de la régénération.";
-      setMsg("Échec: " + serverMsg);
-      Alert.alert("Erreur", serverMsg);
-    } finally {
-      setRegenerating(false);
-    }
-  };
-
-  const saveMemeToDB = async (memeData) => {
-    try {
-      const memeRecord = {
-        id: memeData.id || `meme_${Date.now()}`,
-        userId: userId || 'guest',
-        imageUrl: memeData.imageUrl,
-        topText: memeData.topText,
-        bottomText: memeData.bottomText,
-        sourceType: 'context',
-        shareId: memeData.share?.shareId,
-        publicUrl: memeData.share?.publicUrl,
-        published: false,
-        likes: 0,
-      };
-      await memeDB.saveMeme(memeRecord);
-      if (userId && userId !== 'guest') {
-        await statsDB.incrementMemesCreated(userId);
-      }
-    } catch (error) {
-      console.error('Erreur sauvegarde mème:', error);
-    }
-  };
-
-  const publishToForum = async () => {
-    if (!meme || published) return;
-    try {
-      await axios.post(apiUrl("/api/forum/publish"), {
-        shareId: meme.share?.shareId,
-        imageUrl: meme.composedImageUrl || meme.share?.publicUrl || meme.imageUrl,
-        topText: meme.topText,
-        bottomText: meme.bottomText,
-        userId: userId // Envoyer le userId réel au backend
-      });
-      setPublished(true);
-      Alert.alert("Succès", "Mème propulsé sur le Forum !");
-      await memeDB.updateMemePublished(meme.id, true);
+      const finalUrl = res.data.composedImageUrl;
+      if (type === 'whatsapp') await shareToWhatsApp(finalUrl, "");
+      else await downloadImageToGallery(finalUrl);
     } catch (e) {
-      Alert.alert("Erreur publication", e.message);
-    }
-  };
-
-  const handleShareWhatsApp = async () => {
-    const imageUrl = meme.composedImageUrl || meme.share?.publicUrl || meme.imageUrl;
-    if (imageUrl) {
-      await shareToWhatsApp(imageUrl, '');
-    }
-  };
-
-  const handleDownload = async () => {
-    const imageUrl = meme.composedImageUrl || meme.share?.publicUrl || meme.imageUrl;
-    if (imageUrl) {
-      try {
-        await downloadImageToGallery(imageUrl);
-        Alert.alert('Succès', 'Image sauvegardée dans votre galerie !');
-      } catch (error) {
-        Alert.alert('Erreur', 'Impossible de télécharger l\'image.');
-      }
-    }
+      Alert.alert("Export", "Erreur lors de la fusion finale.");
+    } finally { setIsProcessing(false); }
   };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={theme.background} />
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <GlassCard style={styles.hero}>
-          <View style={[styles.badge, { backgroundColor: theme.secondaryLight }]}><Text style={[styles.badgeText, { color: theme.secondary }]}>MODULE 01 · CONTEXT READER</Text></View>
-          <Text style={[styles.title, { color: theme.textPrimary }]}>Context <Text style={{ color: theme.warning }}>Reader</Text></Text>
-          <Text style={[styles.sub, { color: theme.textSecondary }]}>Transforme une situation en mème drôle et postable.</Text>
-          <View style={{ alignItems: "center", marginTop: spacing.md }}>
-            <CompanionAvatar companion="art" size={96} floating message={msg} showRing={false} />
-          </View>
-        </GlassCard>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 
-        <GlassCard style={styles.card}>
-          <Text style={[styles.label, { color: theme.textSecondary }]}>Décris la scène ou la contradiction</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border, color: theme.textPrimary }]}
-            value={text} onChangeText={setText}
-            placeholder="Ex: Mon pote dit «5 minutes» depuis 1h30…"
-            placeholderTextColor={theme.textMuted}
-            multiline numberOfLines={6} textAlignVertical="top" maxLength={500}
-          />
-          <View style={styles.meta}>
-            <View style={[styles.progressTrack, { backgroundColor: theme.border }]}>
-              <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: theme.secondary }]} />
+        <GlassCard style={styles.header}>
+          <View style={styles.headerTop}>
+            <View>
+              <Text style={[styles.title, { color: theme.textPrimary }]}>Context <Text style={{ color: theme.warning }}>Reader</Text></Text>
+              <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Analyseur de situation IA</Text>
             </View>
-            <Text style={[styles.counter, { color: theme.textMuted }]}>{text.length}/500</Text>
-          </View>
-          <View style={{ gap: 6, marginTop: spacing.sm }}>
-            {QUICK_IDEAS.map((idea) => (
-              <Text key={idea} style={[styles.quickIdea, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border, color: theme.textSecondary }]} onPress={() => setText(idea)}>{idea}</Text>
-            ))}
+            <CompanionAvatar companion="art" size={50} floating />
           </View>
         </GlassCard>
 
-        <View style={styles.actions}>
-          <AnimatedButton title={loading ? "Génération..." : "Générer le mème"} onPress={generateMeme} loading={loading} disabled={loading} size="lg" style={{ flex: 1 }} />
-          <AnimatedButton title="Reset" onPress={() => { setText(""); setMeme(null); }} variant="ghost" size="lg" style={{ flex: 1 }} />
-        </View>
-
-        {loading && (
-          <GlassCard style={styles.loadCard}>
-            <ActivityIndicator color={theme.secondary} size="large" />
-            <Text style={[styles.loadTitle, { color: theme.textPrimary }]}>Analyse en cours…</Text>
-            <Text style={[styles.loadSub, { color: theme.textMuted }]}>Détection de l'angle comique et de la meilleure scène.</Text>
+        {!meme ? (
+          <GlassCard style={styles.inputCard}>
+            <TextInput
+              style={[styles.input, { color: theme.textPrimary, borderColor: theme.border }]}
+              placeholder="Décris ta situation..."
+              placeholderTextColor={theme.textMuted}
+              multiline value={text} onChangeText={setText}
+            />
+            <TouchableOpacity style={[styles.mainBtn, { backgroundColor: theme.primary }, shadows.btn]} onPress={generateMeme} disabled={loading}>
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnLabel}>GÉNÉRER LE MÈME</Text>}
+            </TouchableOpacity>
           </GlassCard>
-        )}
+        ) : (
+          <View style={styles.studio}>
+            <View style={[styles.canvas, shadows.card, { borderColor: theme.border, borderWidth: 1 }]}>
+              <Image source={{ uri: meme.imageUrl }} style={styles.baseImg} resizeMode="cover" />
+              <View style={[styles.overlay, { top: `${topY}%` }]}><Text style={styles.memeText}>{topText}</Text></View>
+              <View style={[styles.overlay, { top: `${bottomY}%` }]}><Text style={styles.memeText}>{bottomText}</Text></View>
+            </View>
 
-        {meme && (
-          <Animated.View style={{ opacity: resultAnim, transform: [{ translateY: resultAnim.interpolate({ inputRange: [0,1], outputRange: [24,0] }) }] }}>
-            <GlassCard style={styles.card}>
-              <View style={[styles.badge, { backgroundColor: theme.secondaryLight }]}><Text style={[styles.badgeText, { color: theme.secondary }]}>✅ RÉSULTAT IA</Text></View>
-              
-              {!editMode ? (
-                <>
-                  <View style={[styles.memePreview, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
-                    {meme.composedImageUrl || meme.share?.imageDataUrl || meme.imageUrl ? (
-                      <Image
-                        source={{ uri: meme.composedImageUrl || meme.share?.imageDataUrl || meme.imageUrl }}
-                        style={styles.fullMeme}
-                        resizeMode="contain"
-                      />
-                    ) : (
-                      <>
-                        <Text style={[styles.memeText, { color: theme.textPrimary }]}>{meme.topText || ""}</Text>
-                        <View style={[styles.memeScene, { backgroundColor: theme.backgroundCard, borderColor: theme.border }]}>
-                          <AppIcon name="image" color={theme.primary} size={36} />
-                          <Text style={[styles.memeSceneText, { color: theme.textSecondary }]}>{meme.descriptionImage || "Scène en attente"}</Text>
-                        </View>
-                        <Text style={[styles.memeText, { color: theme.textPrimary }]}>{meme.bottomText || ""}</Text>
-                      </>
-                    )}
-                  </View>
-                  <View style={styles.grid}>
-                    {[["TOP TEXT", meme.topText], ["BOTTOM TEXT", meme.bottomText]].map(([l, v]) => (
-                      <View key={l} style={[styles.gridItem, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
-                        <Text style={[styles.gridLabel, { color: theme.textMuted }]}>{l}</Text>
-                        <Text style={[styles.gridValue, { color: theme.textPrimary }]}>{v}</Text>
-                      </View>
-                    ))}
-                  </View>
-                  <View style={styles.actions}>
-                    <AnimatedButton title="Éditer" onPress={() => setEditMode(true)} size="lg" variant="ghost" style={{ flex: 1 }} />
-                    <AnimatedButton title="Galerie" onPress={handleDownload} size="lg" style={{ flex: 1, backgroundColor: theme.primary }} />
-                    <AnimatedButton title="WhatsApp" onPress={handleShareWhatsApp} size="lg" style={{ flex: 1, backgroundColor: '#25D366' }} />
-                    {!published ? (
-                      <AnimatedButton title="Propulser" onPress={publishToForum} size="lg" variant="primary" style={{ flex: 1, backgroundColor: theme.secondary }} />
-                    ) : (
-                      <View style={[styles.publishedBadge, { backgroundColor: theme.secondaryLight }]}>
-                        <Text style={[styles.publishedText, { color: theme.secondary }]}>PUBLIÉ</Text>
-                      </View>
-                    )}
-                  </View>
-                </>
-              ) : (
-                <>
-                  <View style={[styles.memePreview, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
-                    <Image
-                      source={{ uri: meme.composedImageUrl || meme.share?.imageDataUrl || meme.imageUrl }}
-                      style={styles.fullMeme}
-                      resizeMode="contain"
-                    />
-                  </View>
-                  
-                  <View style={styles.editSection}>
-                    <Text style={[styles.editLabel, { color: theme.textSecondary }]}>Texte du haut</Text>
-                    <TextInput
-                      style={[styles.editInput, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border, color: theme.textPrimary }]}
-                      value={editTopText}
-                      onChangeText={setEditTopText}
-                      placeholder="Texte du haut..."
-                      placeholderTextColor={theme.textMuted}
-                    />
-                    <Text style={[styles.editLabel, { color: theme.textSecondary }]}>Texte du bas</Text>
-                    <TextInput
-                      style={[styles.editInput, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border, color: theme.textPrimary }]}
-                      value={editBottomText}
-                      onChangeText={setEditBottomText}
-                      placeholder="Texte du bas..."
-                      placeholderTextColor={theme.textMuted}
-                    />
-                  </View>
-                  
-                  <View style={styles.actions}>
-                    <AnimatedButton title="Annuler" onPress={() => setEditMode(false)} size="lg" variant="ghost" style={{ flex: 1 }} disabled={regenerating} />
-                    <AnimatedButton title={regenerating ? "..." : "Régénérer"} onPress={regenerateMeme} size="lg" style={{ flex: 1 }} disabled={regenerating} loading={regenerating} />
-                  </View>
-                </>
-              )}
+            <GlassCard style={styles.controls}>
+              <Text style={[styles.label, { color: theme.textMuted }]}>ÉDITION DU TEXTE</Text>
+              <TextInput style={[styles.studioInput, { color: theme.textPrimary }]} value={topText} onChangeText={setTopText} />
+              <Slider style={styles.slider} minimumValue={5} maximumValue={45} value={topY} onValueChange={setTopY} minimumTrackTintColor={theme.primary} thumbTintColor={theme.primary} />
+
+              <View style={{ height: 10 }} />
+
+              <TextInput style={[styles.studioInput, { color: theme.textPrimary }]} value={bottomText} onChangeText={setBottomText} />
+              <Slider style={styles.slider} minimumValue={55} maximumValue={95} value={bottomY} onValueChange={setBottomY} minimumTrackTintColor={theme.secondary} thumbTintColor={theme.secondary} />
             </GlassCard>
-          </Animated.View>
+
+            <View style={styles.actionFixedBar}>
+              <TouchableOpacity style={[styles.shareBtn, { backgroundColor: '#22C55E' }, shadows.btn]} onPress={() => handleAction('whatsapp')} disabled={isProcessing}>
+                {isProcessing ? <ActivityIndicator color="#fff" /> : <><AppIcon name="share-2" color="#fff" size={22} /><Text style={styles.actionText}>WHATSAPP</Text></>}
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.iconAction, { backgroundColor: theme.primary }, shadows.btn]} onPress={() => handleAction('download')}>
+                <AppIcon name="download" color="#fff" size={24} />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.iconAction, { backgroundColor: 'rgba(150,150,150,0.2)' }]} onPress={() => setMeme(null)}>
+                <AppIcon name="refresh-cw" color={theme.textPrimary} size={24} />
+              </TouchableOpacity>
+            </View>
+          </View>
         )}
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -304,39 +118,29 @@ const ContextReaderScreen = ({ navigate }) => {
 };
 
 const styles = StyleSheet.create({
-  safe:        { flex: 1 },
-  scroll:      { paddingHorizontal: spacing.md, paddingTop: spacing.md },
-  hero:        { padding: spacing.lg, marginBottom: spacing.md },
-  badge:       { borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4, alignSelf: "flex-start", marginBottom: 10 },
-  badgeText:   { fontSize: 10, fontWeight: "800", letterSpacing: 1 },
-  title:       { fontSize: 32, fontWeight: "900", letterSpacing: -0.5 },
-  sub:         { fontSize: 14, marginTop: 6, lineHeight: 20 },
-  card:        { marginBottom: spacing.md },
-  label:       { fontSize: 14, fontWeight: "800", marginBottom: 8 },
-  input:       { minHeight: 140, borderWidth: 1, borderRadius: radius.md, padding: spacing.md, fontSize: 15 },
-  meta:        { flexDirection: "row", alignItems: "center", gap: spacing.sm, marginTop: 8 },
-  progressTrack:{ flex: 1, height: 6, borderRadius: radius.pill, overflow: "hidden" },
-  progressFill: { height: "100%", borderRadius: radius.pill },
-  counter:     { fontSize: 12, fontWeight: "700" },
-  quickIdea:   { borderWidth: 1, borderRadius: radius.md, padding: 10, fontSize: 13, fontWeight: "600" },
-  actions:     { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
-  loadCard:    { alignItems: "center", gap: spacing.sm, marginBottom: spacing.md, padding: spacing.md },
-  loadTitle:   { fontSize: 17, fontWeight: "800", marginTop: spacing.sm },
-  loadSub:     { textAlign: "center", fontSize: 13, lineHeight: 18 },
-  memePreview: { borderWidth: 1, borderRadius: radius.md, padding: spacing.md, alignItems: "center", marginBottom: spacing.md, overflow: "hidden" },
-  fullMeme:    { width: "100%", aspectRatio: 1 },
-  memeText:    { fontSize: 17, fontWeight: "900", textTransform: "uppercase", textAlign: "center", lineHeight: 22 },
-  memeScene:   { marginVertical: spacing.md, width: "100%", minHeight: 120, borderWidth: 1, borderRadius: radius.md, alignItems: "center", justifyContent: "center", padding: spacing.md },
-  memeSceneText:{ textAlign: "center", fontSize: 13, lineHeight: 19, marginTop: 8 },
-  grid:        { gap: spacing.sm },
-  gridItem:    { padding: spacing.md, borderRadius: radius.md, borderWidth: 1 },
-  gridLabel:   { fontSize: 11, fontWeight: "800", letterSpacing: 1, marginBottom: 6 },
-  gridValue:   { fontSize: 14, fontWeight: "700", lineHeight: 19 },
-  editSection: { marginTop: spacing.md, marginBottom: spacing.md },
-  editLabel:   { fontSize: 13, fontWeight: "800", marginBottom: 8 },
-  editInput:   { borderWidth: 1, borderRadius: radius.md, padding: spacing.md, fontSize: 15, marginBottom: spacing.md, minHeight: 50 },
-  publishedBadge: { flex: 1, height: 54, borderRadius: radius.md, justifyContent: "center", alignItems: "center" },
-  publishedText: { fontWeight: "900" },
+  safe: { flex: 1 },
+  scroll: { padding: spacing.md },
+  header: { marginBottom: 20, padding: 15 },
+  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  title: { fontSize: 28, fontWeight: '900', letterSpacing: -1 },
+  subtitle: { fontSize: 13, fontWeight: '600', marginTop: 2 },
+  inputCard: { padding: 20 },
+  input: { minHeight: 120, fontSize: 18, borderBottomWidth: 1, marginBottom: 25, textAlignVertical: 'top' },
+  mainBtn: { height: 65, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  btnLabel: { color: '#fff', fontWeight: '900', fontSize: 16, letterSpacing: 1 },
+  studio: { width: '100%' },
+  canvas: { width: '100%', aspectRatio: 1, borderRadius: 32, overflow: 'hidden', backgroundColor: '#000', position: 'relative' },
+  baseImg: { width: '100%', height: '100%', opacity: 0.8 },
+  overlay: { position: 'absolute', left: 0, right: 0, alignItems: 'center', paddingHorizontal: 20 },
+  memeText: { color: '#fff', fontSize: 26, fontWeight: '900', textAlign: 'center', textShadowColor: '#000', textShadowOffset: { width: 2, height: 2 }, textShadowRadius: 4, textTransform: 'uppercase' },
+  controls: { marginTop: 15, padding: 18 },
+  label: { fontSize: 10, fontWeight: '900', letterSpacing: 1.5, marginBottom: 8 },
+  studioInput: { backgroundColor: 'rgba(150,150,150,0.1)', borderRadius: 12, padding: 14, fontSize: 16, fontWeight: '800' },
+  slider: { width: '100%', height: 45 },
+  actionFixedBar: { flexDirection: 'row', gap: 10, marginTop: 15 },
+  shareBtn: { flex: 3, height: 65, borderRadius: 22, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 },
+  iconAction: { flex: 1, height: 65, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
+  actionText: { color: '#fff', fontWeight: '900', fontSize: 17 }
 });
 
 export default ContextReaderScreen;
