@@ -75,7 +75,7 @@ const MemeController = {
       autoPublish(req, withShare, "text");
       res.status(200).json(withShare);
     } catch (error) {
-      console.error("[MemeController] createFromText Error:", error);
+      console.error("[MemeController] createFromText Error full:", error);
       res.status(500).json({ error: "L'IA a eu un petit problème technique.", details: error.message });
     }
   },
@@ -107,7 +107,7 @@ const MemeController = {
       autoPublish(req, withShare, "remix");
       res.status(200).json(withShare);
     } catch (error) {
-      console.error("[MemeController] statusRemixer Error:", error);
+      console.error("[MemeController] statusRemixer Error full:", error);
       res.status(500).json({ error: "Impossible de remixer cette image.", details: error.message });
     }
   },
@@ -128,7 +128,7 @@ const MemeController = {
         share
       });
     } catch (error) {
-      console.error("[MemeController] compose Error:", error);
+      console.error("[MemeController] compose Error full:", error);
       res.status(500).json({ error: "Erreur lors de la fusion de l'image." });
     }
   },
@@ -144,7 +144,7 @@ const MemeController = {
       autoPublish(req, withShare, "voice");
       res.status(200).json(withShare);
     } catch (error) {
-      console.error("[MemeController] createFromVoice Error:", error);
+      console.error("[MemeController] createFromVoice Error full:", error);
       res.status(500).json({ error: "Erreur lors du traitement de la voix." });
     }
   },
@@ -157,6 +157,7 @@ const MemeController = {
       const reply = await AIService.chatWithCompanion(companionId, message);
       res.json({ reply });
     } catch (error) {
+      console.error("[MemeController] chat Error full:", error);
       res.status(500).json({ error: "Le compagnon ne répond pas." });
     }
   }
