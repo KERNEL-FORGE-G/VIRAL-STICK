@@ -135,12 +135,9 @@ const AIService = {
       "OBJECTIF: créer un mème texte premium, social-first et drôle.",
     ].join("\n\n");
 
-    // Étape 1 — Fabrique un prompt optimisé via le pipeline texte
-    const generatedPrompt = await buildGenerationPrompt(PROMPT_FACTORY.memeText, rawContext, "text");
-
-    // Étape 2 — Génère les textes du mème via le pipeline texte
+    // Étape 1 — Utiliser DIRECTEMENT le contexte utilisateur sans transformation
     const raw = await runText(
-      (call) => call(MODULE_PROMPTS.contextReader, generatedPrompt, "json"),
+      (call) => call(MODULE_PROMPTS.contextReader, rawContext, "json"),
       {
         topText:          "QUAND TU VEUX GÉRER TRANQUILLE",
         bottomText:       "ET QUE LE CHAOS CHOISIT TON NOM",
@@ -148,7 +145,7 @@ const AIService = {
       }
     );
 
-    // Étape 3 — Génère l'image via le pipeline image
+    // Étape 2 — Génère l'image via le pipeline image
     const imageResult = await AIService.generateImage(raw?.descriptionImage || text);
 
     return sanitizeMemePayload(raw, false, imageResult);
@@ -162,10 +159,9 @@ const AIService = {
       "OBJECTIF: créer un mème issu d'une parole spontanée, garder l'énergie et la chute comique.",
     ].join("\n\n");
 
-    const generatedPrompt = await buildGenerationPrompt(PROMPT_FACTORY.memeText, rawContext, "text");
-
+    // Utiliser DIRECTEMENT la transcription sans transformation
     const raw = await runText(
-      (call) => call(MODULE_PROMPTS.voiceToMeme, generatedPrompt, "json"),
+      (call) => call(MODULE_PROMPTS.voiceToMeme, rawContext, "json"),
       {
         topText:          "QUAND TU PARLES TROP VITE",
         bottomText:       "MAIS QUE LE DRAME RESTE COMPRÉHENSIBLE",
@@ -193,10 +189,9 @@ const AIService = {
       "OBJECTIF: fabriquer une caption mème premium et des améliorations visuelles.",
     ].filter(Boolean).join("\n\n");
 
-    const generatedPrompt = await buildGenerationPrompt(PROMPT_FACTORY.memeText, rawContext, "text");
-
+    // Utiliser DIRECTEMENT le contexte sans transformation
     const remixData = await runText(
-      (call) => call(MODULE_PROMPTS.statusRemixer, generatedPrompt, "json"),
+      (call) => call(MODULE_PROMPTS.statusRemixer, rawContext, "json"),
       {
         meme_text:           "MOI QUI PENSAIS POSTER ÇA TRANQUILLE",
         visual_enhancements: ["Renforcer le contraste", "Ajouter une caption courte", "Recadrer sur la réaction"],

@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { View, TouchableOpacity, StyleSheet, SafeAreaView, Platform, Animated } from "react-native";
-import { useTheme } from "../theme";
+import { useTheme, colors } from "../theme";
 import AppIcon from "../components/AppIcon";
 
 const TAB_ITEMS = [
@@ -11,7 +11,7 @@ const TAB_ITEMS = [
   { key: "Menu",           icon: "settings",       accentKey: "textPrimary" },
 ];
 
-const TabButton = ({ item, active, accentColor, onPress, theme }) => {
+const TabButton = ({ item, active, accentColor, onPress }) => {
   const scale = useRef(new Animated.Value(1)).current;
 
   const onPressIn = () => Animated.spring(scale, { toValue: 0.85, useNativeDriver: true }).start();
@@ -28,7 +28,7 @@ const TabButton = ({ item, active, accentColor, onPress, theme }) => {
       <Animated.View style={{ transform: [{ scale }], alignItems: "center" }}>
         <AppIcon
           name={item.icon}
-          color={active ? accentColor : theme.textMuted}
+          color={active ? accentColor : colors.silver}
           size={24}
         />
         {active && <View style={[styles.activeIndicator, { backgroundColor: accentColor }]} />}
@@ -41,7 +41,7 @@ const BottomTabNavigator = ({ children, currentScreen, onNavigate }) => {
   const { theme } = useTheme();
 
   return (
-    <View style={[styles.root, { backgroundColor: theme.background }]}>
+    <View style={[styles.root, { backgroundColor: colors.snowWhite }]}>
       {/* Contenu de l'écran */}
       <View style={styles.content}>
         {children}
@@ -52,18 +52,22 @@ const BottomTabNavigator = ({ children, currentScreen, onNavigate }) => {
         <View style={[
           styles.tabBar,
           {
-            backgroundColor: theme.backgroundCard,
-            borderColor: theme.border,
-            shadowColor: theme.cardShadow.shadowColor,
-            shadowOffset: theme.cardShadow.shadowOffset,
-            shadowOpacity: theme.cardShadow.shadowOpacity,
-            shadowRadius: theme.cardShadow.shadowRadius,
-            elevation: theme.cardShadow.elevation,
+            backgroundColor: colors.snowWhite,
+            borderColor: colors.cloudGray,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+            elevation: 8,
           }
         ]}>
           {TAB_ITEMS.map((item) => {
             const active = currentScreen === item.key;
-            const accentColor = theme[item.accentKey] || theme.primary;
+            const accentColor = active 
+              ? (item.key === 'Home' || item.key === 'Menu' ? colors.duoGreen : 
+                 item.key === 'Forum' ? colors.skyBlue : 
+                 item.key === 'ContextReader' ? colors.sunshineYellow : colors.duoGreen) 
+              : colors.silver;
             return (
               <TabButton
                 key={item.key}
@@ -71,7 +75,6 @@ const BottomTabNavigator = ({ children, currentScreen, onNavigate }) => {
                 active={active}
                 accentColor={accentColor}
                 onPress={() => onNavigate(item.key)}
-                theme={theme}
               />
             );
           })}
@@ -87,6 +90,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    paddingBottom: 100, // Add padding for the bottom tab bar!
   },
   safeArea: {
     position: "absolute",
@@ -101,7 +105,7 @@ const styles = StyleSheet.create({
     width: "90%",
     maxWidth: 420,
     borderRadius: 32,
-    borderWidth: 1,
+    borderWidth: 2,
     alignItems: "center",
     justifyContent: "space-around",
     paddingHorizontal: 8,
@@ -114,9 +118,9 @@ const styles = StyleSheet.create({
   },
   activeIndicator: {
     marginTop: 4,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
 });
 
