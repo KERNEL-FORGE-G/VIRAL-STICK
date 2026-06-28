@@ -51,7 +51,6 @@ const WebShell = ({ children, title, companion }) => {
       }}>
         {/* Logo */}
         <Link to="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", flexShrink: 0 }}>
-          <img src="/asset/logo/logo_sans_fond.png" alt="Viral Stick" style={{ width: 36, height: 36, objectFit: "contain" }} />
           <span style={{
             fontFamily: "'Fredoka One', cursive",
             fontSize: 22,

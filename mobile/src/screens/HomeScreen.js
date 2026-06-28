@@ -54,7 +54,7 @@ const HomeScreen = ({ navigate }) => {
                 </Text>
                 <Text style={[styles.heroSub, { color: theme.textSecondary }]}>Avec tes compagnons IA.</Text>
               </View>
-              <Image source={require("../../assets/logo/logo_sans_fond.png")} style={styles.logo} resizeMode="contain" />
+              <Image source={require("../../assets/logo/logo.png")} style={styles.logo} resizeMode="contain" />
             </View>
             <View style={styles.heroBottom}>
               <CompanionAvatar companion={COMPANIONS[companionIdx]} size={96} floating message={MESSAGES[companionIdx]} showRing={false} />
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   badgeText:  { fontSize: 10, fontWeight: "800", letterSpacing: 1 },
   heroTitle:  { fontSize: 38, fontWeight: "800", letterSpacing: -1, lineHeight: 44 },
   heroSub:    { fontSize: 15, marginTop: 10, lineHeight: 22 },
-  logo:       { width: 70, height: 70, opacity: 0.8 },
+  logo:       { width: 90, height: 90, opacity: 1 },
   section:    { fontSize: 11, fontWeight: "700", letterSpacing: 2, marginBottom: spacing.md, textAlign: "center" },
   moduleCard: { marginBottom: spacing.md, padding: 0 },
   moduleInner:{ flexDirection: "row", alignItems: "center", paddingVertical: spacing.lg, paddingHorizontal: spacing.md, gap: spacing.md },

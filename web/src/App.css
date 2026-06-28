@@ -1,18 +1,83 @@
-/* Viral Stick — Global CSS — Style Duolingo */
+/* Viral Stick — Global CSS — Duolingo Style */
 
 @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;500;600;700;800;900&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; }
 
+:root {
+  /* Colors — Duolingo */
+  --color-duo-green: #58cc02;
+  --color-duo-green-dark: #3f8f01;
+  --color-duo-green-light: #d7ffb8;
+  --color-sky-blue: #1cb0f6;
+  --color-sky-blue-dark: #1899d6;
+  --color-sunshine-yellow: #ffc700;
+  --color-grape-soda: #a570ff;
+  --color-bubblegum-pink: #cc348d;
+  --color-snow-white: #ffffff;
+  --color-cloud-gray: #e5e5e5;
+  --color-silver: #afafaf;
+  --color-graphite: #777777;
+  --color-charcoal: #4b4b4b;
+  --color-almost-black: #3c3c3c;
+
+  /* Typography */
+  --font-feather: 'Fredoka One', ui-sans-serif, system-ui, sans-serif;
+  --font-din-round: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+
+  /* Typography Scale */
+  --text-caption: 13px;
+  --leading-caption: 1.4;
+  --tracking-caption: 0.69px;
+  --text-body: 15px;
+  --leading-body: 1.4;
+  --tracking-body: 0.8px;
+  --text-heading-sm: 19px;
+  --leading-heading-sm: 1.2;
+  --tracking-heading-sm: 1.01px;
+  --text-heading: 32px;
+  --leading-heading: 1.2;
+  --tracking-heading: 1.7px;
+  --text-heading-lg: 48px;
+  --leading-heading-lg: 1.2;
+  --tracking-heading-lg: -0.96px;
+  --text-display: 64px;
+  --leading-display: 1.2;
+  --tracking-display: -1.28px;
+
+  /* Spacing */
+  --spacing-unit: 4px;
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+  --spacing-40: 40px;
+  --spacing-48: 48px;
+  --spacing-64: 64px;
+  --spacing-80: 80px;
+  --spacing-96: 96px;
+
+  /* Layout */
+  --page-max-width: 1140px;
+  --card-padding: 24px;
+  --element-gap: 16px;
+
+  /* Border Radius */
+  --radius-cards: 12px;
+  --radius-inputs: 12px;
+  --radius-buttons: 12px;
+}
+
 html, body, #root {
   margin: 0;
   min-height: 100%;
-  background: #ffffff;
+  background: var(--color-snow-white);
 }
 
 body {
-  font-family: 'Nunito', ui-sans-serif, system-ui, sans-serif;
-  color: #3c3c3c;
+  font-family: var(--font-din-round);
+  color: var(--color-almost-black);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
@@ -24,8 +89,8 @@ button, input, textarea, select { font: inherit; }
 /* Scrollbar légère */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #f7f7f7; }
-::-webkit-scrollbar-thumb { background: #e5e5e5; border-radius: 999px; }
-::-webkit-scrollbar-thumb:hover { background: #afafaf; }
+::-webkit-scrollbar-thumb { background: var(--color-cloud-gray); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-silver); }
 
 /* ── Keyframes ───────────────────────────── */
 @keyframes fadeUp {
@@ -50,12 +115,12 @@ button, input, textarea, select { font: inherit; }
   to   { transform: rotate(360deg) translateX(22px); }
 }
 
-/* ── Utilitaires ─────────────────────────── */
+/* ── Utilitaires — Duolingo Style ────────── */
 .duo-card {
-  background: #ffffff;
-  border: 2px solid #e5e5e5;
-  border-radius: 16px;
-  box-shadow: 0 2px 0 0 #e5e5e5;
+  background: var(--color-snow-white);
+  border: 2px solid var(--color-cloud-gray);
+  border-radius: var(--radius-cards);
+  box-shadow: var(--shadows-card, 0 2px 0 0 var(--color-cloud-gray));
   transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
 .duo-card:hover {
@@ -65,19 +130,48 @@ button, input, textarea, select { font: inherit; }
 
 .duo-input {
   width: 100%;
-  background: #ffffff;
-  border: 2px solid #e5e5e5;
-  border-radius: 12px;
+  background: var(--color-snow-white);
+  border: 2px solid var(--color-cloud-gray);
+  border-radius: var(--radius-inputs);
   padding: 12px 16px;
-  font-size: 15px;
-  color: #3c3c3c;
+  font-size: var(--text-body);
+  color: var(--color-almost-black);
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .duo-input:focus {
-  border-color: #1cb0f6;
+  border-color: var(--color-sky-blue);
   box-shadow: 0 0 0 3px rgba(28,176,246,0.15);
 }
+
+.duo-btn-primary {
+  background: var(--color-duo-green);
+  color: white;
+  border: none;
+  border-radius: var(--radius-buttons);
+  padding: 16px 32px;
+  font-size: var(--text-body);
+  font-weight: 700;
+  box-shadow: 0 4px 0 var(--color-duo-green-dark);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.duo-btn-primary:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
+.duo-btn-outline {
+  background: transparent;
+  color: var(--color-sky-blue);
+  border: 2px solid var(--color-cloud-gray);
+  border-radius: var(--radius-buttons);
+  padding: 14px 24px;
+  font-size: var(--text-body);
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .nav-item {
   display: flex;
   align-items: center;
@@ -86,13 +180,13 @@ button, input, textarea, select { font: inherit; }
   border-radius: 12px;
   font-weight: 700;
   font-size: 14px;
-  color: #777777;
+  color: var(--color-graphite);
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
   text-decoration: none;
 }
-.nav-item:hover  { background: #f7f7f7; color: #3c3c3c; }
-.nav-item.active { background: #d0f0fd; color: #1899d6; }
+.nav-item:hover  { background: #f7f7f7; color: var(--color-almost-black); }
+.nav-item.active { background: var(--color-duo-green-light); color: var(--color-duo-green-dark); }
 
 .tag {
   display: inline-block;

@@ -45,18 +45,25 @@ async function applyMemeText(imageBuffer, options = {}) {
     }
     const strokeW = Math.max(Math.round(fontSize * 0.18), 4);
 
-    // SVG with proper text alignment
+    // SVG with proper text alignment (better visibility)
     const svgOverlay = Buffer.from(`
       <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="textShadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="1"/>
+          </filter>
+        </defs>
         <style>
           .txt {
             fill: white;
             stroke: black;
             stroke-width: ${strokeW}px;
+            stroke-linejoin: round;
             font-family: Impact, Arial Black, sans-serif;
-            font-weight: bold;
+            font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            filter: url(#textShadow);
           }
           .top {
             dominant-baseline: hanging;

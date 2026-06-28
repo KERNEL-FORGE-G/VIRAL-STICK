@@ -7,8 +7,8 @@ import { colors } from "../theme/tokens";
 
 const VARIANTS = {
   primary: {
-    bg:     colors.duoBlue,
-    shadow: colors.duoBlueDark,
+    bg:     colors.duoGreen,
+    shadow: colors.duoGreenDark,
     color:  "#ffffff",
     border: "transparent",
   },
@@ -21,7 +21,7 @@ const VARIANTS = {
   ghost: {
     bg:     "#ffffff",
     shadow: "#b5b5b5",
-    color:  colors.duoBlue,
+    color:  colors.skyBlue,
     border: colors.cloudGray,
   },
   danger: {

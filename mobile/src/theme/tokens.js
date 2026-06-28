@@ -1,65 +1,60 @@
-// Viral Stick Mobile — Design Tokens — Style Sapphire & Obsidian
+// Viral Stick Mobile — Design Tokens — Duolingo Style
 export const colors = {
-  // ── Primary : Sapphire ─────────────────────
-  sapphire:       "#2563EB",
-  sapphireDark:   "#1D4ED8",
-  sapphireLight:  "#BFDBFE",
-  sapphireCyan:   "#06B6D4",
+  // ── Duolingo Core Colors ──────────────────
+  brandPrimary: "#58cc02",
+  brandPrimaryDark: "#3f8f01",
+  brandPrimaryLight: "#d7ffb8",
+  brandSecondary: "#1cb0f6",
+  brandSecondaryDark: "#1899d6",
 
-  // ── Success / validation ───────────────────
-  successGreen:      "#4ADE80",
-  successGreenDark:  "#22C55E",
-  successGreenLight: "#DCFCE7",
+  // ── Accent Colors for Illustrations ───────
+  sunshineYellow: "#ffc700",
+  grapeSoda: "#a570ff",
+  bubblegumPink: "#cc348d",
 
-  // ── Accents illustration ───────────────────
-  skyBlue:       "#3B82F6",
-  sunshineYellow:"#F59E0B",
-  grapeSoda:     "#8B5CF6",
-  bubblegumPink: "#F43F5E",
-  emerald:       "#10B981",
+  // ── Neutrals (Light Theme) ────────────────
+  snowWhite:   "#ffffff",
+  cloudGray:   "#e5e5e5",
+  silver:      "#afafaf",
+  graphite:    "#777777",
+  charcoal:    "#4b4b4b",
+  almostBlack: "#3c3c3c",
 
-  // ── Neutrals ──────────────────────────────
-  snowWhite:   "#FFFFFF",
-  cloudGray:   "#F3F4F6",
-  silver:      "#9CA3AF",
-  graphite:    "#6B7280",
-  charcoal:    "#374151",
-  darkGray:    "#1F2937",
-  cardBg:      "#141414",
-  almostBlack: "#0D0D0D",
-
-  // ── Semantic ──────────────────────────────
-  bg:            "#0D0D0D",
-  bgSecondary:   "#141414",
-  border:        "rgba(255,255,255,0.06)",
-  text:          "#FFFFFF",
-  textSecondary: "#A0A0A0",
-  textMuted:     "#6B7280",
-  success:       "#10B981",
-  warning:       "#F59E0B",
-  danger:        "#EF4444",
+  // ── Semantic ───────────────────────────────
+  bg:            "#ffffff",
+  bgSecondary:   "#ffffff",
+  backgroundElevated: "#ffffff",
+  border:        "#e5e5e5",
+  text:          "#3c3c3c",
+  textSecondary: "#4b4b4b",
+  textMuted:     "#777777",
+  textPlaceholder: "#afafaf",
+  success:       "#58cc02",
+  warning:       "#ffc700",
+  danger:        "#ef4444",
   
-  // ── Compagnons ────────────────────────────
-  arch: "#3B82F6",   // bleu
-  art:  "#F59E0B",   // ambre
-  bio:  "#10B981",   // vert
-  data: "#06B6D4",   // cyan
-  para: "#8B5CF6",   // violet
-  secu: "#6366F1",   // indigo
-  ubu:  "#EF4444",   // rouge
+  // ── Compagnons ─────────────────────────────
+  arch: "#1cb0f6",
+  art:  "#ffc700",
+  bio:  "#a570ff",
+  data: "#58cc02",
+  para: "#ff9600",
+  secu: "#cc348d",
+  ubu:  "#ce82ff",
 };
 
 export const spacing = {
-  xs: 6, sm: 10, md: 16, lg: 24, xl: 32, xxl: 48,
+  xs: 8, sm: 12, md: 16, lg: 24, xl: 32, xxl: 48,
 };
 
 export const borderRadius = {
-  sm: 8, md: 12, lg: 16, xl: 20, pill: 999,
+  sm: 8, md: 12, lg: 16, pill: 999,
+  cards: 12, inputs: 12, buttons: 12,
 };
 
 export const radius = borderRadius;
 
 export const shadows = {
-  card: { shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 5 },
-  btn:  { shadowColor: "#2563EB", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
+  card: { shadowColor: "#e5e5e5", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 1, shadowRadius: 0, elevation: 1 },
+  btn: { shadowColor: "#3f8f01", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 0, elevation: 2 },
 };

@@ -135,7 +135,13 @@ const MemeController = {
 
   createFromVoice: async (req, res) => {
     try {
-      let { transcription } = req.body;
+      let transcription = req.body.transcription;
+      
+      // If we have an audio file, transcribe it first
+      if (req.file) {
+        transcription = await AIService.transcribeAudio(req.file.buffer, req.file.mimetype);
+      }
+
       if (!transcription) return res.status(400).json({ error: "Transcription manquante" });
 
       const memeData = await AIService.generateMemeFromVoice(transcription);

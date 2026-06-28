@@ -1,26 +1,19 @@
 /**
- * Viral Stick — Design Tokens
- * Inspiré Duolingo : fond blanc, vert vif, formes arrondies, énergie ludique
+ * Viral Stick — Design Tokens — Duolingo Style
  */
 
 export const colors = {
-  // ── Primary : Bleu Duo ──────────────────────
-  duoBlue:       "#1cb0f6",
-  duoBlueDark:   "#1899d6",
-  duoBlueLight:  "#d0f0fd",
-
-  // ── Success ────────────────────────────────
+  // ── Duolingo Core Colors ──────────────────
   duoGreen:       "#58cc02",
   duoGreenDark:   "#3f8f01",
   duoGreenLight:  "#d7ffb8",
-
-  skyBlue:        "#1cb0f6",   // alias
+  skyBlue:        "#1cb0f6",
   skyBlueDark:    "#1899d6",
   sunshineYellow: "#ffc700",
   grapeSoda:      "#a570ff",
   bubblegumPink:  "#cc348d",
 
-  // ── Neutrals ───────────────────────────────
+  // ── Neutrals (Light Theme) ────────────────
   snowWhite:   "#ffffff",
   cloudGray:   "#e5e5e5",
   silver:      "#afafaf",
@@ -30,24 +23,25 @@ export const colors = {
 
   // ── Semantic ───────────────────────────────
   bg:            "#ffffff",
-  bgSecondary:   "#f7f7f7",
+  bgSecondary:   "#ffffff",
   panel:         "#ffffff",
   border:        "#e5e5e5",
   text:          "#3c3c3c",
   textSecondary: "#4b4b4b",
-  textMuted:     "#afafaf",
+  textMuted:     "#777777",
+  textPlaceholder: "#afafaf",
   success:       "#58cc02",
   warning:       "#ffc700",
-  danger:        "#ee2a2a",
+  danger:        "#ef4444",
 
   // ── Compagnons ─────────────────────────────
-  arch: "#1cb0f6",   // bleu
-  art:  "#ffc700",   // jaune
-  bio:  "#a570ff",   // violet
-  data: "#58cc02",   // vert
-  para: "#ff9600",   // orange
-  secu: "#cc348d",   // rose
-  ubu:  "#ce82ff",   // lavande
+  arch: "#1cb0f6",
+  art:  "#ffc700",
+  bio:  "#a570ff",
+  data: "#58cc02",
+  para: "#ff9600",
+  secu: "#cc348d",
+  ubu:  "#ce82ff",
 };
 
 export const spacing = {
@@ -69,24 +63,24 @@ export const radius = {
   xl:   20,
   xxl:  24,
   pill: 9999,
+  cards: 12,
+  inputs: 12,
+  buttons: 12,
 };
 
 export const shadows = {
-  // Signature style : ombre solide en bas = effet bouton physique
-  btnPrimary:   "0 4px 0 #1899d6",   // bleu
-  btnGreen:     "0 4px 0 #3f8f01",   // vert (success)
+  btnPrimary:   "0 4px 0 #3f8f01",
+  btnBlue:      "0 4px 0 #1899d6",
   btnGray:      "0 4px 0 #b5b5b5",
   card:         "0 2px 0 0 #e5e5e5",
   cardHover:    "0 4px 0 0 #d0d0d0",
 };
 
 export const typography = {
-  // Titres : Fredoka One (substitut "feather")
-  // Corps  : Nunito (substitut "din-round")
-  display: { fontSize: 48, lineHeight: 1.2, letterSpacing: -0.96, weight: "700" },
-  headingLg: { fontSize: 36, lineHeight: 1.2, weight: "700" },
-  heading: { fontSize: 28, lineHeight: 1.2, weight: "700" },
-  headingSm: { fontSize: 20, lineHeight: 1.2, weight: "700" },
-  body: { fontSize: 16, lineHeight: 1.47, letterSpacing: 0.8, weight: "500" },
+  display: { fontSize: 64, lineHeight: 1.2, letterSpacing: -1.28, weight: "700" },
+  headingLg: { fontSize: 48, lineHeight: 1.2, letterSpacing: -0.96, weight: "700" },
+  heading: { fontSize: 32, lineHeight: 1.2, letterSpacing: 1.7, weight: "700" },
+  headingSm: { fontSize: 19, lineHeight: 1.2, letterSpacing: 1.01, weight: "700" },
+  body: { fontSize: 15, lineHeight: 1.4, letterSpacing: 0.8, weight: "500" },
   caption: { fontSize: 13, lineHeight: 1.4, letterSpacing: 0.69, weight: "500" },
 };

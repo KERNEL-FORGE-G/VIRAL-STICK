@@ -57,7 +57,6 @@ const SplashScreen = ({ onFinish }) => {
   const scale = useRef(new Animated.Value(0.5)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
-  const [progressWidth, setProgressWidth] = useState(0);
 
   useEffect(() => {
     Animated.parallel([
@@ -65,24 +64,15 @@ const SplashScreen = ({ onFinish }) => {
       Animated.timing(opacity, { toValue: 1, duration: 600, useNativeDriver: true }),
     ]).start();
 
-    // Progress animation for exactly 5 seconds
+    // Progress animation for exactly 5 seconds (0 to 1)
     Animated.timing(progressAnim, {
-      toValue: 100,
+      toValue: 1,
       duration: 5000,
       useNativeDriver: false,
       easing: (t) => t, // Linear
     }).start(() => {
       onFinish?.();
     });
-
-    // Update state for width
-    const listenerId = progressAnim.addListener(({ value }) => {
-      setProgressWidth(value);
-    });
-
-    return () => {
-      progressAnim.removeListener(listenerId);
-    };
   }, []);
 
   return (
@@ -120,10 +110,10 @@ const SplashScreen = ({ onFinish }) => {
           styles.progressBar, 
           {
             width: progressAnim.interpolate({
-              inputRange: [0, 100],
+              inputRange: [0, 1],
               outputRange: ["0%", "100%"]
             }),
-            backgroundColor: "#ff6b35" // Default color for now
+            backgroundColor: "#ff6b35"
           }
         ]} />
       </View>
