@@ -26,7 +26,6 @@ const AnimatedButton = ({ title, onPress, variant = "primary", size = "md", load
 
   // Animate translateY instead of scale to match web!
   const translateY = pressed.interpolate({ inputRange: [0, 1], outputRange: [0, 4] });
-  const shadowHeight = pressed.interpolate({ inputRange: [0, 1], outputRange: [4, 0] });
 
   return (
     <TouchableWithoutFeedback
@@ -42,7 +41,7 @@ const AnimatedButton = ({ title, onPress, variant = "primary", size = "md", load
           paddingHorizontal: pad.h,
           borderRadius: radius.buttons, // 12px, match web
           shadowColor: disabled ? "transparent" : v.shadow,
-          shadowOffset: { width: 0, height: shadowHeight }, // Animated shadow height!
+          shadowOffset: { width: 0, height: 4 }, // Fixed shadow height!
           shadowOpacity: variant === 'ghost' ? 0 : 1, // Solid shadow!
           shadowRadius: 0, // No blur for solid shadow!
           elevation: variant === 'ghost' ? 0 : 2,

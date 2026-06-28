@@ -6,6 +6,7 @@ import { useTheme, spacing, radius, colors } from '../theme';
 import AnimatedButton from '../components/AnimatedButton';
 import authService from '../services/authService';
 import AppIcon from '../components/AppIcon';
+import Avatar from '../components/Avatar';
 
 const TABS = [
   { id: 'createdAt', label: 'Récents', icon: 'clock' },
@@ -59,9 +60,7 @@ const ForumScreen = ({ navigate }) => {
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <View style={styles.userInfo}>
-          <View style={[styles.avatarCircle, { backgroundColor: colors.duoGreenLight }]}>
-            <Text style={{ color: colors.duoGreen, fontWeight: '900', fontFamily: 'Nunito' }}>{item.username?.[0]?.toUpperCase() || 'V'}</Text>
-          </View>
+          <Avatar name={item.username || 'Anonyme'} size={36} />
           <Text style={styles.username}>{item.username || 'Anonyme'}</Text>
         </View>
       </View>
@@ -115,10 +114,10 @@ const ForumScreen = ({ navigate }) => {
           <TouchableOpacity
             key={tab.id}
             onPress={() => setSortBy(tab.id)}
-            style={[styles.tab, sortBy === tab.id && { backgroundColor: colors.duoGreen }]}
+            style={[styles.tab, sortBy === tab.id && { backgroundColor: colors.duoGreen, borderColor: colors.duoGreen }]}
           >
-            <AppIcon name={tab.icon} color={sortBy === tab.id ? '#fff' : colors.silver} size={16} />
-            <Text style={[styles.tabText, { color: sortBy === tab.id ? '#fff' : colors.silver }]}>{tab.label}</Text>
+            <AppIcon name={tab.icon} color={sortBy === tab.id ? '#fff' : colors.charcoal} size={16} />
+            <Text style={[styles.tabText, { color: sortBy === tab.id ? '#fff' : colors.charcoal }]}>{tab.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -148,7 +147,6 @@ const styles = StyleSheet.create({
   card: { borderRadius: radius.buttons, marginBottom: 25, padding: 0, overflow: 'hidden', backgroundColor: colors.snowWhite, borderWidth: 2, borderColor: colors.cloudGray },
   cardHeader: { flexDirection: 'row', alignItems: 'center', padding: 15, justifyContent: 'space-between' },
   userInfo: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  avatarCircle: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
   username: { fontSize: 14, fontWeight: '800', color: colors.almostBlack, fontFamily: 'Nunito' },
   imageContainer: { width: '100%', aspectRatio: 1, backgroundColor: '#000' },
   image: { width: '100%', height: '100%' },
