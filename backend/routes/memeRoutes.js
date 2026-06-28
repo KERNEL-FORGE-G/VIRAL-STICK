@@ -13,7 +13,15 @@ const upload = multer({
 router.post("/generate-from-text", MemeController.createFromText);
 // Alias conforme au contrat d'API (docs/contrat-api.md) : POST /api/context-reader
 router.post("/context-reader", MemeController.createFromText);
-router.post("/voice-to-meme", upload.single("audio"), MemeController.createFromVoice);
+// Handle both cases: transcription JSON (mobile) and audio file (web)
+router.post("/voice-to-meme", (req, res, next) => {
+  // If it's JSON with transcription, skip multer
+  if (req.headers['content-type']?.includes('application/json') && req.body.transcription) {
+    return next();
+  }
+  // Otherwise use multer for audio file
+  upload.single("audio")(req, res, next);
+}, MemeController.createFromVoice);
 router.post("/chat", MemeController.chat);
 router.post("/chat/greeting", MemeController.getGreeting);
 router.post("/generate-image", MemeController.generateImage);

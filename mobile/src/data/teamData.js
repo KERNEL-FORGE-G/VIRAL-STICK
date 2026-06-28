@@ -63,10 +63,10 @@ export const TEAM_MEMBERS = [
   {
     id: 'hassane',
     name: 'HASSANE YOUSSOUF OUMAR',
-    role: 'Backend Dev 2',
+    role: 'Dev 2 mobile',
     github: 'Hawadja',
-    companion: 'data',
-    position: 'backend'
+    companion: 'secu',
+    position: 'mobile'
   }
 ];
 

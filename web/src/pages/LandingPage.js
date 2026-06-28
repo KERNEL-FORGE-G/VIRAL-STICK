@@ -60,23 +60,20 @@ const LandingPage = () => {
         padding: "60px 0 80px",
         marginBottom: 8,
       }}>
-        {/* Colonne gauche — Grand compagnon */}
+        {/* Colonne gauche — Grand Logo */}
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
           <div style={{
-            width: 340,
-            height: 340,
-            borderRadius: "50%",
-            background: `${colors.duoGreen}18`,
-            border: `3px solid ${colors.duoGreen}33`,
+            width: 680,
+            height: 680,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             animation: "floatSoft 4s ease-in-out infinite",
           }}>
             <img
-              src="/asset/compagnons/arch_sans_fond.png"
-              alt="Archlord"
-              style={{ width: "80%", height: "80%", objectFit: "contain" }}
+              src="/asset/logo/logo.png"
+              alt="Viral Stick"
+              style={{ width: "100%", height: "100%", objectFit: "contain" }}
             />
           </div>
         </div>

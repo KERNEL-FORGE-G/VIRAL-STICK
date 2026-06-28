@@ -19,7 +19,7 @@ const TEAM = [
   { name: "NGUEMA ARIDTIDE", role: "Testeur et rapport", companion: "ubu", github: "@ngurmaaristide" },
   { name: "Nguiffo pierre Ivan", role: "Testeur et rapport", companion: "bio", github: "@nguiffoloic" },
   { name: "SALWE MARSALA", role: "Backend dev 1", companion: "para", github: "@salwe-marsala" },
-  { name: "HASSANE YOUSSOUF OUMAR", role: "Backend Dev 2", companion: "data", github: "@Hawadja" },
+  { name: "HASSANE YOUSSOUF OUMAR", role: "Dev 2 mobile", companion: "secu", github: "@Hawadja" },
 ];
 
 const TECH = [

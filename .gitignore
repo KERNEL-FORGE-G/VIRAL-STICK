@@ -16,6 +16,10 @@ backend/.env
 
 # Configuration Firebase (Autorisé explicitement pour le déploiement)
 !backend/firebase-service-account.json
+# Backup files (Firebase service account backups are sensitive)
+*.BAK
+*.bak
+backend/firebase-service-account.json.*
 
 # Builds
 dist/
