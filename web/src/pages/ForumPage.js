@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import WebShell from "../components/WebShell";
 import PremiumButton from "../components/PremiumButton";
@@ -16,20 +16,37 @@ const handleDownloadImage = (imageUrl) => {
   document.body.removeChild(link);
 };
 
+// Skeleton Loader Component
+const MemeSkeleton = () => (
+  <div className="duo-card" style={{ overflow: "hidden", display: "flex", flexDirection: "column", position: "relative", padding: "16px" }}>
+    <div style={{
+      width: "100%", aspectRatio: "1/1", backgroundColor: colors.cloudGray, borderRadius: radius.md, animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite" }} />
+    <div style={{ marginTop: 12, height: 20, backgroundColor: colors.cloudGray, borderRadius: radius.sm, width: "80%" }} />
+  </div>
+);
+
 const ForumPage = () => {
   const [memes, setMemes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("createdAt");
   const [likingId, setLikingId] = useState(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const observer = useRef();
   const navigate = useNavigate();
   const { userId } = useUser();
 
-  useEffect(() => { fetchMemes(); }, [sortBy, userId]);
-
-  const fetchMemes = async () => {
+  const fetchMemes = useCallback(async (reset = false) => {
+    const currentPage = reset ? 1 : page;
+    if (reset) {
+      setMemes([]);
+      setPage(1);
+      setHasMore(true);
+    }
     setLoading(true);
     try {
-      const params = new URLSearchParams({ sortBy });
+      const params = new URLSearchParams({ sortBy, page: currentPage, limit: 20 });
       if (userId) params.append("userId", userId);
       const res = await fetch(`/api/forum/memes?${params.toString()}`);
       if (!res.ok) {
@@ -40,13 +57,43 @@ const ForumPage = () => {
         throw new Error("Response is not JSON");
       }
       const data = await res.json();
-      setMemes(Array.isArray(data) ? data : []);
+      const newMemes = Array.isArray(data) ? data : [];
+      if (reset) {
+        setMemes(newMemes);
+      } else {
+          setMemes(prev => [...prev, ...newMemes]);
+      }
+      setHasMore(newMemes.length === 20);
     } catch (e) {
       console.error("Fetch memes error:", e);
-      setMemes([]);
+      if (reset) setMemes([]);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
     }
-    finally { setLoading(false); }
-  };
+  }, [sortBy, userId, page]);
+
+  useEffect(() => {
+    fetchMemes(true);
+  }, [sortBy, userId]);
+
+  const lastMemeElementRef = useCallback(node => {
+    if (loading || loadingMore) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore && memes.length > 0) {
+        setLoadingMore(true);
+        setPage(prev => prev + 1);
+      }
+    }, { rootMargin: "200px" });
+    if (node) observer.current.observe(node);
+  }, [loading, loadingMore, hasMore, memes.length]);
+
+  useEffect(() => {
+    if (page > 1 && !loading && !loadingMore) {
+      fetchMemes(false);
+    }
+  }, [page]);
 
   const handleLike = async (id) => {
     if (!userId) {
@@ -126,7 +173,9 @@ const ForumPage = () => {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: "center", padding: 80, color: colors.silver }}>Chargement du flux...</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
+          {[1, 2, 3, 4, 5, 6].map(i => <MemeSkeleton key={i} />)}
+        </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
           {memes.length === 0 && (
@@ -135,7 +184,12 @@ const ForumPage = () => {
             </div>
           )}
           {memes.map((meme, index) => (
-            <div key={meme.id} className="duo-card" style={{ overflow: "hidden", display: "flex", flexDirection: "column", position: "relative" }}>
+            <div 
+              key={meme.id} 
+              ref={index === memes.length -1 ? lastMemeElementRef : null}
+              className="duo-card" 
+              style={{ overflow: "hidden", display: "flex", flexDirection: "column", position: "relative" }}
+            >
               {sortBy !== "createdAt" && index < 3 && (
                 <div style={{ position: "absolute", top: 12, left: 12, zIndex: 10, background: colors.sunshineYellow, padding: "4px 10px", borderRadius: radius.pill, fontWeight: 900, fontSize: 12 }}>
                   #{index + 1} TOP
@@ -165,8 +219,9 @@ const ForumPage = () => {
                     variant={meme.likedByUser ? "green" : "ghost"} 
                     onClick={() => handleLike(meme.id)} 
                     style={{ flex: 1, minHeight: 40 }}
+                    disabled={likingId === meme.id}
                   >
-                    {meme.likedByUser ? "❤️ Liked" : "❤️ Liker"}
+                    {likingId === meme.id ? "⏳" : (meme.likedByUser ? "❤️ Liked" : "❤️ Liker")}
                   </PremiumButton>
                   <PremiumButton
                     variant="primary"
@@ -194,6 +249,18 @@ const ForumPage = () => {
               </div>
             </div>
           ))}
+          {loadingMore && (
+            <div style={{ gridColumn: "1/-1", textAlign: "center", padding: 20 }}>
+              <div style={{ 
+                width: 30, height: 30, 
+                border: `3px solid ${colors.cloudGray}`, 
+                borderTopColor: colors.duoGreen, 
+                borderRadius: "50%", 
+                animation: "spin 0.8s linear infinite", 
+                margin: "0 auto"
+              }} />
+            </div>
+          )}
         </div>
       )}
     </WebShell>

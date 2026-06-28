@@ -80,7 +80,9 @@ const ForumController = {
   getMemes: async (req, res) => {
     try {
       const allowedSortFields = ["createdAt", "likes", "remixes"];
-      let { sortBy = "createdAt", userId } = req.query;
+      let { sortBy = "createdAt", userId, page = 1, limit = 20 } = req.query;
+      page = Math.max(1, parseInt(page) || 1);
+      limit = Math.max(1, Math.min(100, parseInt(limit) || 20));
       
       if (!allowedSortFields.includes(sortBy)) {
           console.warn(`[Forum Get] Invalid sortBy parameter: ${sortBy}. Defaulting to createdAt.`);

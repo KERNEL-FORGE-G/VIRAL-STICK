@@ -160,6 +160,39 @@ const MemeController = {
       console.error("[MemeController] chat Error full:", error);
       res.status(500).json({ error: "Le compagnon ne répond pas." });
     }
+  },
+
+  getGreeting: async (req, res) => {
+    try {
+      const { companionId } = req.body;
+      const greetings = {
+        art: "Salut ! Je suis Art, ton compagnon créatif. Prêt à générer des memes incroyables ?",
+        bio: "Hey ! C’est Bio, l’expert visuel. Remixons des images ensemble !",
+        ubu: "Bonjour ! Ubu ici, ton guide pour le forum viral.",
+      };
+      res.json({
+        greeting: greetings[companionId] || "Salut ! Prêt à créer des memes ?"
+      });
+    } catch (error) {
+      console.error("[MemeController] getGreeting Error full:", error);
+      res.status(500).json({ error: "Erreur chargement du message de bienvenue." });
+    }
+  },
+
+  generateImage: async (req, res) => {
+    try {
+      const { prompt } = req.body;
+      if (!prompt) return res.status(400).json({ error: "Prompt manquant" });
+      const imageResult = await AIService.generateImage(prompt);
+      res.json({
+        imageUrl: imageResult.imageUrl,
+        provider: imageResult.provider,
+        fallback: imageResult.fallback
+      });
+    } catch (error) {
+      console.error("[MemeController] generateImage Error full:", error);
+      res.status(500).json({ error: "Erreur lors de la génération de l'image." });
+    }
   }
 };
 

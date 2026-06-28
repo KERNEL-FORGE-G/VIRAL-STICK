@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "build": "node -c server.js && for file in controllers/*.js routes/*.js services-ia/*.js; do node -c \"$file\" || exit 1; done && echo \"Backend syntax check passed\"",
     "test": "jest",
     "test:gembine": "node scripts/testGemini.js"
   },
