@@ -2,6 +2,7 @@
  * taskRouter.js — Viral Stick
  * ─────────────────────────────────────────────────────────────────────────────
  * Routing intelligent : chaque type de tâche a son pipeline IA dédié.
+ * Ordre de priorité : EXCELLENT (Grok, Gemini) > FALLBACKS > GRATUIT
  */
 
 const textProviders  = require("./providers/text");
@@ -13,32 +14,34 @@ const audioProviders = require("./providers/audio");
 const PIPELINES = {
   /**
    * TEXT — Génération de mème, chat compagnon, remix de status
-   * Pipeline : Grok (si clé présente) > Gemini > Mistral > Puter
+   * Pipeline : Grok (x.ai 4.3) > Gemini (Multi-modèles) > DeepSeek > Mistral > Puter > OpenRouter
    */
   text: [
-    { name: "Grok",         fn: textProviders.callGrok },
-    { name: "Gemini",       fn: textProviders.callGemini },
-    { name: "Mistral",      fn: textProviders.callMistral },
-    { name: "Puter",        fn: textProviders.callPuter },
-    { name: "DeepSeek",     fn: textProviders.callDeepSeek },
-    { name: "OpenRouter",   fn: textProviders.callOpenRouter },
+    { name: "Grok-4.3",     fn: textProviders.callGrok },     // PRIORITÉ EXCELLENTE
+    { name: "Gemini",       fn: textProviders.callGemini },   // EXCELLENT & STABLE
+    { name: "DeepSeek",     fn: textProviders.callDeepSeek }, // HAUTE QUALITÉ
+    { name: "Mistral",      fn: textProviders.callMistral },  // FIABLE
+    { name: "Puter",        fn: textProviders.callPuter },    // ROBUSTE
+    { name: "OpenRouter",   fn: textProviders.callOpenRouter }, // ULTIME SECOURS
   ],
 
   /**
-   * IMAGE — Génération text-to-image (Flux via Pollinations est prioritaire car gratuit)
+   * IMAGE — Génération text-to-image
+   * Priorité : Puter (Premium SDXL) > Pollinations (Gratuit en dernier)
    */
   image: [
-    { name: "PollinationsFlux", fn: imageProviders.callPollinationsFlux },
-    { name: "Pollinations",     fn: imageProviders.callPollinations },
-    { name: "Puter",            fn: imageProviders.callPuterImage },
+    { name: "Puter-SDXL",       fn: imageProviders.callPuterImage },     // PREMIUM
+    { name: "PollinationsFlux", fn: imageProviders.callPollinationsFlux }, // GRATUIT SECOURS
+    { name: "Pollinations",     fn: imageProviders.callPollinations },     // GRATUIT SECOURS
   ],
 
   /**
    * AUDIO — Transcription Whisper
+   * Priorité : Groq (Instant-Whisper) > Puter (Fallback)
    */
   audio: [
-    { name: "Groq",  fn: audioProviders.callGroqWhisper },
-    { name: "Puter", fn: audioProviders.callPuterWhisper },
+    { name: "Groq-Whisper",  fn: audioProviders.callGroqWhisper },  // ULTRA-RAPIDE
+    { name: "Puter-Whisper", fn: audioProviders.callPuterWhisper }, // FALLBACK
   ],
 };
 
@@ -48,6 +51,7 @@ async function runPipeline(taskType, callFn, fallback = null) {
 
   for (const { name, fn } of pipeline) {
     try {
+      if (typeof fn !== 'function') continue;
       const result = await callFn(fn);
       console.log(`[Router] ${taskType.toUpperCase()} — ${name} OK`);
       return result;
@@ -58,7 +62,7 @@ async function runPipeline(taskType, callFn, fallback = null) {
   }
 
   if (fallback !== null) return fallback;
-  throw lastError || new Error(`[Router] Pipeline ${taskType} échoué`);
+  throw lastError || new Error(`[Router] Pipeline ${taskType} totalement échoué`);
 }
 
 module.exports = {

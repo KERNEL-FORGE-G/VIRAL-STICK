@@ -1,19 +1,25 @@
 /**
  * providers/text.js — Viral Stick
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Gestion des IA textuelles avec chaînage de modèles pour la robustesse.
  */
 
 const axios = require("axios");
-
-// ─── URLs ─────────────────────────────────────────────────────────────────────
 
 const GEMINI_BASE    = "https://generativelanguage.googleapis.com/v1/models";
 const MISTRAL_URL    = "https://api.mistral.ai/v1/chat/completions";
 const DEEPSEEK_URL   = "https://api.deepseek.com/chat/completions";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const PUTER_URL      = "https://api.puter.com/drivers/call";
-const XAI_URL        = "https://api.x.ai/v1/chat/completions";
+const XAI_CHAT_URL   = "https://api.x.ai/v1/chat/completions";
+const XAI_RESP_URL   = "https://api.x.ai/v1/responses"; // Nouvel endpoint X.AI
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+const GEMINI_MODELS = [
+  "gemini-2.0-flash",
+  "gemini-1.5-flash",
+  "gemini-1.5-pro",
+  "gemini-pro"
+];
 
 function normalizeText(value) {
   return String(value || "")
@@ -25,86 +31,153 @@ function normalizeText(value) {
 
 function parseJSON(text) {
   const raw = String(text || "").replace(/```json|```/gi, "").trim();
-  const candidates = [raw];
   const obj = raw.match(/\{[\s\S]*\}/);
-  if (obj) candidates.push(obj[0]);
-  for (const c of candidates) {
-    try { return JSON.parse(c); } catch { /* continue */ }
-  }
-  throw new Error("Impossible de parser le JSON");
+  try { return JSON.parse(obj ? obj[0] : raw); } catch { throw new Error("JSON Parse Error"); }
 }
 
 function format(text, schema) {
-  return schema === "text" ? normalizeText(text) : parseJSON(text);
+  return schema === "json" ? parseJSON(text) : normalizeText(text);
 }
 
 // ─── Grok (x.ai) ──────────────────────────────────────────────────────────────
-// Le maître du sarcasme. Idéal pour les punchlines virales.
-
+/**
+ * callGrok — Utilise le nouveau modèle grok-4.3 et le nouvel endpoint
+ */
 async function callGrok(systemPrompt, userPrompt, schema) {
+  // Sécurisé : Utilisation exclusive de la variable d'environnement
   const key = process.env.XAI_API_KEY;
-  if (!key) throw new Error("Grok: XAI_API_KEY manquant");
 
-  const res = await axios.post(XAI_URL, {
-    model: "grok-beta",
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user",   content: userPrompt },
-    ],
-    temperature: schema === "json" ? 0.4 : 0.8,
-    stream: false,
-    response_format: schema === "json" ? { type: "json_object" } : undefined,
-  }, {
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
-    timeout: 30000,
-  });
+  if (!key) {
+    throw new Error("Grok: XAI_API_KEY non configurée");
+  }
 
-  const text = res.data?.choices?.[0]?.message?.content || "";
-  return format(text, schema);
+  try {
+    console.log("[Text] Tentative Grok (x.ai)...");
+
+    const res = await axios.post(XAI_RESP_URL, {
+      model: "grok-4.3",
+      input: [
+        { role: "system", content: systemPrompt },
+        { role: "user",   content: userPrompt },
+      ],
+    }, {
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json"
+      },
+      timeout: 20000
+    });
+
+    const text = res.data?.message?.content || res.data?.choices?.[0]?.message?.content || res.data?.output;
+    return format(text, schema);
+  } catch (e) {
+    console.warn("[Text] Grok failed, fallback standard OpenAI compatible...");
+    try {
+      const res = await axios.post(XAI_CHAT_URL, {
+        model: "grok-beta",
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+        response_format: schema === "json" ? { type: "json_object" } : undefined,
+      }, {
+        headers: { Authorization: `Bearer ${key}` },
+        timeout: 20000
+      });
+      return format(res.data?.choices?.[0]?.message?.content, schema);
+    } catch (err) {
+       console.error("[Text] Grok fallback failed:", err.message);
+       throw err;
+    }
+  }
 }
 
-// ─── Gemini 2.5 Flash ─────────────────────────────────────────────────────────
-
+// ─── Gemini (Multi-modèles) ───────────────────────────────────────────────────
 async function callGemini(systemPrompt, userPrompt, schema) {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) throw new Error("Gemini: GEMINI_API_KEY manquant");
-  const model = "gemini-1.5-flash";
-  const generationConfig = schema === "json" ? { responseMimeType: "application/json" } : {};
-  const systemInstruction = schema === "json"
-    ? `${systemPrompt}\n\nIMPORTANT: réponds en JSON strict.`
-    : systemPrompt;
+  if (!key) throw new Error("Gemini: Clé manquante");
 
-  const res = await axios.post(
-    `${GEMINI_BASE}/${model}:generateContent?key=${key}`,
-    {
-      contents: [{ parts: [{ text: `${systemInstruction}\n\n${userPrompt}` }] }],
-      generationConfig,
-    },
-    { timeout: 30000 }
-  );
-
-  const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  return format(text, schema);
+  let lastError;
+  for (const model of GEMINI_MODELS) {
+    try {
+      const generationConfig = schema === "json" ? { responseMimeType: "application/json" } : {};
+      const res = await axios.post(
+        `${GEMINI_BASE}/${model}:generateContent?key=${key}`,
+        {
+          contents: [{ parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
+          generationConfig,
+        },
+        { timeout: 15000 }
+      );
+      const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) {
+        console.log(`[Text] Gemini ${model} OK`);
+        return format(text, schema);
+      }
+    } catch (e) {
+      lastError = e;
+      console.warn(`[Text] Gemini ${model} failed, trying next...`);
+    }
+  }
+  throw lastError || new Error("Gemini failed all models");
 }
 
-// ─── Autres providers (Mistral, Puter, etc.) ──────────────────────────────────
-// [Gardés à l'identique pour la stabilité]
+// ─── Puter (Text) ─────────────────────────────────────────────────────────────
+async function callPuter(systemPrompt, userPrompt, schema) {
+  const token = process.env.PUTER_TOKEN;
+  if (!token) throw new Error("Puter: No token");
+
+  const res = await axios.post(PUTER_URL, {
+    driver: "lib-ai",
+    method: "chat",
+    params: {
+      model: process.env.PUTER_TEXT_MODEL || "openai/gpt-4o-mini",
+      messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+    }
+  }, { headers: { Authorization: `Bearer ${token}` }, timeout: 25000 });
+
+  return format(res.data?.message?.content, schema);
+}
+
+// ─── Mistral / DeepSeek / OpenRouter ──────────────────────────────────────────
 async function callMistral(systemPrompt, userPrompt, schema) {
   const key = process.env.MISTRAL_API_KEY;
-  if (!key) throw new Error("Mistral: MISTRAL_API_KEY manquant");
-  const body = {
+  if (!key) throw new Error("Mistral: No key");
+  const res = await axios.post(MISTRAL_URL, {
     model: "mistral-small-latest",
     messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
-    response_format: schema === "json" ? { type: "json_object" } : undefined,
-  };
-  const res = await axios.post(MISTRAL_URL, body, {
-    headers: { Authorization: `Bearer ${key}` },
-    timeout: 30000,
-  });
-  return format(res.data?.choices?.[0]?.message?.content || "", schema);
+  }, { headers: { Authorization: `Bearer ${key}` }, timeout: 20000 });
+  return format(res.data?.choices?.[0]?.message?.content, schema);
 }
 
-module.exports = { callGrok, callGemini, callMistral, normalizeText, parseJSON };
+async function callDeepSeek(systemPrompt, userPrompt, schema) {
+  const key = process.env.DEEPSEEK_API_KEY;
+  if (!key) throw new Error("DeepSeek: No key");
+  const res = await axios.post(DEEPSEEK_URL, {
+    model: "deepseek-chat",
+    messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+  }, { headers: { Authorization: `Bearer ${key}` }, timeout: 25000 });
+  return format(res.data?.choices?.[0]?.message?.content, schema);
+}
+
+async function callOpenRouter(systemPrompt, userPrompt, schema) {
+  const key = process.env.OPENROUTER_API_KEY;
+  if (!key) throw new Error("OpenRouter: Key missing");
+
+  const res = await axios.post(OPENROUTER_URL, {
+    model: process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
+    messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }]
+  }, {
+    headers: { Authorization: `Bearer ${key}` },
+    timeout: 30000
+  });
+  return format(res.data?.choices?.[0]?.message?.content, schema);
+}
+
+module.exports = {
+  callGrok,
+  callGemini,
+  callPuter,
+  callMistral,
+  callDeepSeek,
+  callOpenRouter,
+  normalizeText,
+  parseJSON
+};

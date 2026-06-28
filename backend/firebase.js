@@ -1,57 +1,54 @@
 const admin = require("firebase-admin");
+const fs = require("fs");
+const path = require("path");
 
 let db = null;
 
 try {
   if (!admin.apps.length) {
-    const serviceAccountVar = process.env.FIREBASE_SERVICE_ACCOUNT;
+    let serviceAccount = null;
+    const filePath = path.join(__dirname, "firebase-service-account.json");
 
-    // Check if the service account is a valid-looking JSON string (not just placeholder)
-    if (serviceAccountVar && serviceAccountVar.includes('"type": "service_account"') && !serviceAccountVar.includes('...')) {
+    // 1. Essayer de charger depuis le fichier local (autorisé dans .gitignore)
+    if (fs.existsSync(filePath)) {
       try {
-        const serviceAccount = JSON.parse(serviceAccountVar);
-        admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount),
-          storageBucket: "viral-stick-4320c.firebasestorage.app"
-        });
-        console.log("[Firebase] Initialized with service account");
-      } catch (parseError) {
-        console.warn("[Firebase] Failed to parse service account JSON, trying default credentials:", parseError.message);
+        serviceAccount = JSON.parse(fs.readFileSync(filePath, "utf8"));
+        console.log("[Firebase] Chargement via fichier JSON local");
+      } catch (e) {
+        console.warn("[Firebase] Erreur lecture fichier JSON:", e.message);
+      }
+    }
+
+    // 2. Si pas de fichier, essayer la variable d'environnement (Vercel)
+    if (!serviceAccount || !serviceAccount.project_id) {
+      const envServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
+      if (envServiceAccount && envServiceAccount.includes('"type": "service_account"')) {
         try {
-          admin.initializeApp({
-            credential: admin.credential.applicationDefault(),
-            storageBucket: "viral-stick-4320c.firebasestorage.app"
-          });
-          console.log("[Firebase] Initialized with default credentials");
-        } catch (defaultError) {
-          console.warn("[Firebase] Default credentials failed, running in demo mode:", defaultError.message);
+          serviceAccount = JSON.parse(envServiceAccount);
+          console.log("[Firebase] Chargement via variable d'environnement");
+        } catch (e) {
+          console.warn("[Firebase] Erreur parse variable ENV:", e.message);
         }
       }
+    }
+
+    if (serviceAccount && serviceAccount.project_id && serviceAccount.private_key) {
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        storageBucket: `${serviceAccount.project_id}.firebasestorage.app`
+      });
+      console.log("[Firebase] Initialisé avec succès");
     } else {
-      console.log("[Firebase] No valid service account provided, trying default credentials");
-      try {
-        admin.initializeApp({
-          credential: admin.credential.applicationDefault(),
-          storageBucket: "viral-stick-4320c.firebasestorage.app"
-        });
-        console.log("[Firebase] Initialized with default credentials");
-      } catch (defaultError) {
-        console.warn("[Firebase] Default credentials failed, running in demo mode:", defaultError.message);
-      }
+      console.warn("[Firebase] Aucune configuration valide trouvée. Mode démo activé.");
     }
   }
-  // Try to get Firestore even if init had issues
+
   if (admin.apps.length > 0) {
-    try {
-      db = admin.firestore();
-      console.log("[Firebase] Firestore initialized successfully");
-    } catch (firestoreError) {
-      console.warn("[Firebase] Firestore failed, running in demo mode:", firestoreError.message);
-      db = null;
-    }
+    db = admin.firestore();
+    console.log("[Firebase] Firestore prêt.");
   }
 } catch (error) {
-  console.error("[Firebase] Complete initialization error:", error.message);
+  console.error("[Firebase] Erreur critique initialisation:", error.message);
   db = null;
 }
 

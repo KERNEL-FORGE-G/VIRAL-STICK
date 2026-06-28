@@ -4,12 +4,15 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { View, Text } from "react-native";
+import { View, Text, LogBox } from "react-native";
 import { ThemeProvider } from "./src/theme";
 import RootNavigator from "./src/navigation/RootNavigator";
 import SplashScreen from "./src/components/SplashScreen";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
 import { initDatabase } from "./src/services/database";
+
+// Ignorer les warnings NativeEventEmitter liés aux anciennes versions de Voice
+LogBox.ignoreLogs(['new NativeEventEmitter()']);
 
 class AppErrorBoundary extends React.Component {
   constructor(props) {
@@ -64,15 +67,15 @@ const App = () => {
   const [dbReady, setDbReady] = useState(false);
 
   useEffect(() => {
-    // Initialiser la base de données SQLite au démarrage
+    // Initialiser le stockage persistant AsyncStorage au démarrage
     initDatabase()
       .then(() => {
-        console.log('Base de données prête');
+        console.log('✅ Stockage local prêt');
         setDbReady(true);
       })
       .catch((error) => {
-        console.error('Erreur initialisation DB:', error);
-        setDbReady(true); // Continuer quand même
+        console.error('❌ Erreur initialisation stockage:', error);
+        setDbReady(true);
       });
   }, []);
 

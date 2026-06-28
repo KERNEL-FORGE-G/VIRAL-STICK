@@ -23,7 +23,7 @@ const requestStoragePermission = async () => {
 };
 
 const prepareFileForSharing = async (source) => {
-  if (!source) throw new Error('Source image manquante');
+  if (!source) throw new Error("Source de l'image manquante");
 
   const timestamp = Date.now();
   const fileName = `vs_share_${timestamp}.jpg`;
@@ -46,8 +46,6 @@ const prepareFileForSharing = async (source) => {
         await RNFS.copyFile(cleanPath, destPath);
       }
     }
-
-    // Format URI critique pour Android
     return Platform.OS === 'android' ? `file://${destPath}` : destPath;
   } catch (error) {
     console.error('[prepareFileForSharing] Erreur:', error);
@@ -56,32 +54,21 @@ const prepareFileForSharing = async (source) => {
 };
 
 export const shareToWhatsApp = async (imageUrl, text = '') => {
-  if (!imageUrl) {
-    Alert.alert('Erreur', 'Image non disponible pour le partage.');
-    return;
-  }
-
   try {
+    console.log('[shareToWhatsApp] Source:', imageUrl);
     const localUri = await prepareFileForSharing(imageUrl);
+    if (!localUri) throw new Error("URI de partage nulle");
 
-    // Pour WhatsApp, sur Android, Share.open sans social spécifié est souvent plus stable
-    // ou Share.shareSingle si on veut forcer l'app.
     const shareOptions = {
       title: 'Partager le mème',
       message: text,
       url: localUri,
       type: 'image/jpeg',
+      social: Share.Social.WHATSAPP,
       failOnCancel: false,
     };
 
-    if (Platform.OS === 'android') {
-      await Share.open({
-        ...shareOptions,
-        social: Share.Social.WHATSAPP
-      });
-    } else {
-      await Share.open(shareOptions);
-    }
+    await Share.open(shareOptions);
   } catch (error) {
     console.error('[shareToWhatsApp] Erreur:', error);
     if (error.message && !error.message.includes('User did not share')) {
@@ -93,10 +80,7 @@ export const shareToWhatsApp = async (imageUrl, text = '') => {
 export const downloadImageToGallery = async (imageUrl) => {
   try {
     const hasPermission = await requestStoragePermission();
-    if (!hasPermission) {
-      Alert.alert("Permission", "Accès au stockage requis.");
-      return;
-    }
+    if (!hasPermission) return;
 
     const timestamp = Date.now();
     const fileName = `viral_stick_${timestamp}.jpg`;

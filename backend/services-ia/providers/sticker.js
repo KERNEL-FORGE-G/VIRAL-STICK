@@ -2,33 +2,51 @@
  * providers/sticker.js — Viral Stick
  * ─────────────────────────────────────────────────────────────────────────────
  * Traitement local et IA pour stickers (Suppression de fond & Composition).
+ * Intègre Eden AI, Puter et Sharp en fallback.
  */
 
 const sharp  = require("sharp");
-const path   = require("path");
-const fs     = require("fs");
-const os     = require("os");
 const axios  = require("axios");
-const { v4: uuid } = require("uuid");
-
-const TMP_DIR = path.join(os.tmpdir(), "viral-stick-stickers");
-
-function ensureDir() {
-  if (!fs.existsSync(TMP_DIR)) fs.mkdirSync(TMP_DIR, { recursive: true });
-}
 
 /**
  * Supprime le fond d'une image pour en faire un sticker transparent.
- * Utilise l'Inference Puter (modèle segment-anything ou similaire si dispo)
- * ou un fallback de détourage par couleur.
+ * Ordre de priorité : Eden AI > Puter > Fallback Sharp
  */
 async function removeBackground(inputBuffer) {
-  const key = process.env.PUTER_TOKEN || process.env.PUTER_KEY;
-
-  if (key) {
+  // 1. Essai Eden AI (Multi-providers: clipdrop, picsart, api4ai)
+  const edenKey = process.env.EDENAI_API_KEY;
+  if (edenKey) {
     try {
-      console.log("[Sticker] Tentative de détourage via Puter...");
-      // Appel à l'IA de segmentation Puter
+      console.log("[Sticker] Tentative Eden AI (clipdrop, picsart)...");
+      // Eden AI nécessite souvent un FormData pour les buffers
+      const FormData = require("form-data");
+      const form = new FormData();
+      form.append("providers", "clipdrop,picsart,api4ai");
+      form.append("file", inputBuffer, { filename: "image.png" });
+
+      const res = await axios.post("https://api.edenai.run/v2/image/background_removal", form, {
+        headers: {
+          ...form.getHeaders(),
+          Authorization: `Bearer ${edenKey}`
+        },
+        timeout: 30000
+      });
+
+      const result = res.data?.clipdrop || res.data?.picsart || res.data?.api4ai;
+      if (result?.status === "success" && result.image_resource_url) {
+        const imgRes = await axios.get(result.image_resource_url, { responseType: "arraybuffer" });
+        return Buffer.from(imgRes.data);
+      }
+    } catch (e) {
+      console.warn("[Sticker] Eden AI failed:", e.message);
+    }
+  }
+
+  // 2. Essai Puter (ai-removebg / segmentation)
+  const puterToken = process.env.PUTER_TOKEN || process.env.PUTER_KEY;
+  if (puterToken) {
+    try {
+      console.log("[Sticker] Tentative Puter segmentation...");
       const res = await axios.post("https://api.puter.com/drivers/call", {
         driver: "lib-ai",
         method: "segmentation",
@@ -36,7 +54,7 @@ async function removeBackground(inputBuffer) {
           image: inputBuffer.toString("base64"),
         }
       }, {
-        headers: { Authorization: `Bearer ${key}` },
+        headers: { Authorization: `Bearer ${puterToken}` },
         timeout: 30000
       });
 
@@ -44,14 +62,15 @@ async function removeBackground(inputBuffer) {
         return Buffer.from(res.data.image, "base64");
       }
     } catch (e) {
-      console.warn("[Sticker] Détourage IA échoué, fallback sur détourage local.");
+      console.warn("[Sticker] Puter failed:", e.message);
     }
   }
 
-  // Fallback : Rend le blanc et les couleurs claires transparents (détourage "chroma key" basique)
+  // 3. Fallback Local Sharp (Chroma key / Trim)
+  console.log("[Sticker] Fallback Sharp local (détourage basique)");
   return sharp(inputBuffer)
     .ensureAlpha()
-    .trim() // Enlève les bords vides
+    .trim()
     .toBuffer();
 }
 
@@ -59,12 +78,15 @@ async function removeBackground(inputBuffer) {
  * Export sticker : redimensionne et rend transparent
  */
 async function exportSticker(inputBuffer, options = {}) {
-  ensureDir();
   const { size = 512, doRemoveBackground = true } = options;
 
   let processedBuffer = inputBuffer;
   if (doRemoveBackground) {
-    processedBuffer = await removeBackground(inputBuffer);
+    try {
+      processedBuffer = await removeBackground(inputBuffer);
+    } catch (e) {
+      processedBuffer = inputBuffer;
+    }
   }
 
   const outBuffer = await sharp(processedBuffer)
@@ -77,27 +99,39 @@ async function exportSticker(inputBuffer, options = {}) {
     dataUrl: `data:image/png;base64,${outBuffer.toString("base64")}`,
     width: size,
     height: size,
-    provider: "sharp-ia-remover",
+    provider: "sticker-processor",
   };
 }
 
+/**
+ * Applique le texte de mème sur une image
+ */
 async function applyMemeText(imageBuffer, options = {}) {
-  // ... (Logique existante de texte gardée)
   const { topText = "", bottomText = "" } = options;
   const info = await sharp(imageBuffer).metadata();
   const w = info.width || 1024;
   const h = info.height || 1024;
 
-  const fontSize = Math.max(Math.round(w * 0.08), 32);
-  const strokeW = Math.max(Math.round(fontSize * 0.1), 3);
+  const fontSize = Math.max(Math.round(w * 0.07), 28);
+  const strokeW = Math.max(Math.round(fontSize * 0.15), 2);
 
-  const svg = `<svg width="${w}" height="${h}">
-    <style>
-      .text { fill: white; stroke: black; stroke-width: ${strokeW}px; font-family: Impact; font-weight: 900; text-transform: uppercase; }
-    </style>
-    <text x="50%" y="10%" text-anchor="middle" class="text" font-size="${fontSize}">${topText}</text>
-    <text x="50%" y="90%" text-anchor="middle" class="text" font-size="${fontSize}">${bottomText}</text>
-  </svg>`;
+  // SVG Overlay pour le texte style mème
+  const svg = `
+    <svg width="${w}" height="${h}">
+      <style>
+        .text {
+          fill: white;
+          stroke: black;
+          stroke-width: ${strokeW}px;
+          font-family: Impact, sans-serif;
+          font-weight: 900;
+          text-transform: uppercase;
+        }
+      </style>
+      ${topText ? `<text x="50%" y="12%" text-anchor="middle" class="text" font-size="${fontSize}">${topText}</text>` : ""}
+      ${bottomText ? `<text x="50%" y="92%" text-anchor="middle" class="text" font-size="${fontSize}">${bottomText}</text>` : ""}
+    </svg>
+  `;
 
   return sharp(imageBuffer)
     .composite([{ input: Buffer.from(svg), top: 0, left: 0 }])

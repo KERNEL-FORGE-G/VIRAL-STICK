@@ -1,200 +1,121 @@
-// Service de persistance simplifié avec localStorage-like storage
-// Utilise un simple objet en mémoire pour éviter les conflits de dépendances
-
-const DB_PREFIX = 'ViralStick_';
-
-let users = {};
-let memes = {};
-let stats = {};
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
- * Initialise la base de données (mémoire)
+ * Viral Stick — Service de Persistance Locale
+ * Utilise AsyncStorage pour la persistance entre les sessions.
+ * Remplace l'ancien système en mémoire et évite SQLite pour plus de stabilité.
  */
-export const initDatabase = async () => {
+
+const DB_KEYS = {
+  USERS: 'ViralStick_users',
+  MEMES: 'ViralStick_memes',
+  STATS: 'ViralStick_stats',
+};
+
+// Helper générique pour lire des données
+const getData = async (key) => {
   try {
-    console.log('Base de données en mémoire initialisée avec succès');
-    return true;
-  } catch (error) {
-    console.error('Erreur initialisation DB:', error);
-    throw error;
+    const data = await AsyncStorage.getItem(key);
+    return data ? JSON.parse(data) : {};
+  } catch (e) {
+    console.error(`[DB] Erreur lecture ${key}:`, e);
+    return {};
   }
 };
 
-/**
- * Opérations sur les utilisateurs
- */
+// Helper générique pour écrire des données
+const setData = async (key, value) => {
+  try {
+    await AsyncStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (e) {
+    console.error(`[DB] Erreur écriture ${key}:`, e);
+    return false;
+  }
+};
+
+export const initDatabase = async () => {
+  console.log('✅ Base de données locale (AsyncStorage) prête.');
+  return true;
+};
+
 export const userDB = {
   saveUser: async (user) => {
-    try {
-      users[user.id] = {
-        ...user,
-        joined_at: user.joinedAt || Date.now(),
-        avatar: user.avatar || 'arch',
-      };
-      return true;
-    } catch (error) {
-      console.error('Erreur sauvegarde utilisateur:', error);
-      throw error;
-    }
+    const users = await getData(DB_KEYS.USERS);
+    users[user.id] = {
+      ...user,
+      joined_at: user.joinedAt || Date.now(),
+      avatar: user.avatar || 'arch',
+    };
+    return await setData(DB_KEYS.USERS, users);
   },
 
   getUserById: async (userId) => {
-    try {
-      return users[userId] || null;
-    } catch (error) {
-      console.error('Erreur récupération utilisateur:', error);
-      throw error;
-    }
-  },
-
-  getUserByEmail: async (email) => {
-    try {
-      return Object.values(users).find(u => u.email === email) || null;
-    } catch (error) {
-      console.error('Erreur récupération utilisateur par email:', error);
-      throw error;
-    }
-  },
-
-  deleteUser: async (userId) => {
-    try {
-      delete users[userId];
-      return true;
-    } catch (error) {
-      console.error('Erreur suppression utilisateur:', error);
-      throw error;
-    }
+    const users = await getData(DB_KEYS.USERS);
+    return users[userId] || null;
   },
 };
 
-/**
- * Opérations sur les mèmes locaux
- */
 export const memeDB = {
   saveMeme: async (meme) => {
-    try {
-      memes[meme.id] = {
-        ...meme,
-        created_at: Date.now(),
-      };
-      return true;
-    } catch (error) {
-      console.error('Erreur sauvegarde mème:', error);
-      throw error;
-    }
+    const memes = await getData(DB_KEYS.MEMES);
+    const id = meme.id || `meme_${Date.now()}`;
+    memes[id] = {
+      ...meme,
+      id,
+      created_at: Date.now(),
+    };
+    return await setData(DB_KEYS.MEMES, memes);
   },
 
   getUserMemes: async (userId) => {
-    try {
-      return Object.values(memes)
-        .filter(m => m.user_id === userId)
-        .sort((a, b) => b.created_at - a.created_at);
-    } catch (error) {
-      console.error('Erreur récupération mèmes utilisateur:', error);
-      throw error;
-    }
-  },
-
-  getMemeById: async (memeId) => {
-    try {
-      return memes[memeId] || null;
-    } catch (error) {
-      console.error('Erreur récupération mème:', error);
-      throw error;
-    }
+    const memes = await getData(DB_KEYS.MEMES);
+    return Object.values(memes)
+      .filter(m => m.userId === userId || m.user_id === userId)
+      .sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
   },
 
   updateMemePublished: async (memeId, published) => {
-    try {
-      if (memes[memeId]) {
-        memes[memeId].published = published;
-      }
-      return true;
-    } catch (error) {
-      console.error('Erreur mise à jour publication:', error);
-      throw error;
+    const memes = await getData(DB_KEYS.MEMES);
+    if (memes[memeId]) {
+      memes[memeId].published = published;
+      return await setData(DB_KEYS.MEMES, memes);
     }
+    return false;
   },
 
   deleteMeme: async (memeId) => {
-    try {
-      delete memes[memeId];
-      return true;
-    } catch (error) {
-      console.error('Erreur suppression mème:', error);
-      throw error;
-    }
+    const memes = await getData(DB_KEYS.MEMES);
+    delete memes[memeId];
+    return await setData(DB_KEYS.MEMES, memes);
   },
 };
 
-/**
- * Opérations sur les statistiques
- */
 export const statsDB = {
-  incrementMemesCreated: async (userId) => {
-    try {
-      if (!stats[userId]) {
-        stats[userId] = { memes_created: 0, likes_received: 0, remixes_count: 0 };
-      }
-      stats[userId].memes_created = (stats[userId].memes_created || 0) + 1;
-      return true;
-    } catch (error) {
-      console.error('Erreur incrémentation mèmes créés:', error);
-      throw error;
-    }
-  },
-
-  incrementLikesReceived: async (userId) => {
-    try {
-      if (!stats[userId]) {
-        stats[userId] = { memes_created: 0, likes_received: 0, remixes_count: 0 };
-      }
-      stats[userId].likes_received = (stats[userId].likes_received || 0) + 1;
-      return true;
-    } catch (error) {
-      console.error('Erreur incrémentation likes:', error);
-      throw error;
-    }
-  },
-
-  incrementRemixes: async (userId) => {
-    try {
-      if (!stats[userId]) {
-        stats[userId] = { memes_created: 0, likes_received: 0, remixes_count: 0 };
-      }
-      stats[userId].remixes_count = (stats[userId].remixes_count || 0) + 1;
-      return true;
-    } catch (error) {
-      console.error('Erreur incrémentation remixes:', error);
-      throw error;
-    }
-  },
-
   getUserStats: async (userId) => {
-    try {
-      return stats[userId] || { memes_created: 0, likes_received: 0, remixes_count: 0 };
-    } catch (error) {
-      console.error('Erreur récupération statistiques:', error);
-      throw error;
-    }
+    const stats = await getData(DB_KEYS.STATS);
+    return stats[userId] || { memes_created: 0, likes_received: 0, remixes_count: 0 };
   },
-};
 
-export const closeDatabase = async () => {
-  console.log('Base de données fermée');
+  incrementMemesCreated: async (userId) => {
+    const stats = await getData(DB_KEYS.STATS);
+    if (!stats[userId]) {
+      stats[userId] = { memes_created: 0, likes_received: 0, remixes_count: 0 };
+    }
+    stats[userId].memes_created++;
+    return await setData(DB_KEYS.STATS, stats);
+  },
 };
 
 export const resetDatabase = async () => {
   try {
-    users = {};
-    memes = {};
-    stats = {};
-    console.log('Base de données réinitialisée');
+    await AsyncStorage.clear();
+    console.log('[DB] Base de données réinitialisée.');
     return true;
   } catch (error) {
-    console.error('Erreur réinitialisation DB:', error);
-    throw error;
+    console.error('[DB] Erreur reset:', error);
+    return false;
   }
 };
 
-export default { initDatabase, userDB, memeDB, statsDB, closeDatabase, resetDatabase };
+export default { initDatabase, userDB, memeDB, statsDB, resetDatabase };

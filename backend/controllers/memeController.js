@@ -4,62 +4,44 @@ const ForumController = require("./forumController");
 
 async function attachMemeShare(req, memeData) {
   const baseUrl = `${req.protocol}://${req.get("host")}`;
-  const share = await ShareService.buildShareBundle({
-    topText: memeData.topText,
-    bottomText: memeData.bottomText,
-    imageUrl: memeData.imageUrl,
-    baseUrl,
-  });
-  return {
-    ...memeData,
-    composedImageUrl: share.imageDataUrl || memeData.imageUrl || null,
-    share,
-  };
-}
-
-async function attachRemixShare(req, remix) {
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
-  const sourceImage =
-    remix.sourceImageUrl && String(remix.sourceImageUrl).startsWith("data:")
-      ? remix.sourceImageUrl
-      : remix.imageUrl;
-
-  const share = await ShareService.buildShareBundle({
-    caption: remix.meme_text,
-    bottomText: remix.meme_text,
-    imageUrl: sourceImage,
-    baseUrl,
-  });
-
-  return {
-    ...remix,
-    composedImageUrl: share.imageDataUrl || sourceImage || null,
-    share,
-  };
+  try {
+    const share = await ShareService.buildShareBundle({
+      topText: memeData.topText,
+      bottomText: memeData.bottomText,
+      imageUrl: memeData.imageUrl,
+      baseUrl,
+    });
+    return {
+      ...memeData,
+      composedImageUrl: share.imageDataUrl || memeData.imageUrl || null,
+      share,
+    };
+  } catch (e) {
+    console.warn("[MemeController] Share bundle failed, returning raw data:", e.message);
+    return { ...memeData, share: null };
+  }
 }
 
 /**
- * Aide à la publication automatique sur le forum
+ * Publication automatique sur le forum (Non-bloquant)
  */
 async function autoPublish(req, memeData, type) {
   try {
     const { userId, username } = req.body;
-    // On simule un objet req pour ForumController.publishMeme
     const fakeReq = {
       body: {
         shareId: memeData.share?.shareId || `auto_${Date.now()}`,
         imageUrl: memeData.composedImageUrl || memeData.imageUrl,
-        topText: memeData.topText || memeData.meme_text || "",
+        topText: memeData.topText || "",
         bottomText: memeData.bottomText || "",
         userId: userId || "anon",
-        username: username || "IA Creator"
+        username: username || "Viral Creator"
       }
     };
-    // On appelle directement la logique de publication
-    await ForumController.publishMeme(fakeReq, { json: () => {} });
-    console.log(`[AutoPublish] Mème (${type}) publié automatiquement.`);
+    // On ne bloque pas la réponse principale
+    ForumController.publishMeme(fakeReq, { json: () => {} }).catch(() => {});
   } catch (e) {
-    console.error("[AutoPublish] Échec:", e.message);
+    console.error("[AutoPublish] Error:", e.message);
   }
 }
 
@@ -67,21 +49,26 @@ const MemeController = {
   createFromText: async (req, res) => {
     try {
       const { text, location } = req.body;
-      if (!text) return res.status(400).json({ error: "Texte requis" });
+      if (!text) return res.status(400).json({ error: "Texte manquant" });
+
+      console.log(`[MemeController] Generating from text: "${text.substring(0, 30)}..."`);
 
       const memeData = await AIService.generateMemeFromText(text, location);
       const withShare = await attachMemeShare(req, memeData);
 
-      // Publication automatique
-      await autoPublish(req, withShare, "text");
+      // Publish in background
+      autoPublish(req, withShare, "text");
 
       res.status(200).json({
-        message: "Mème généré et publié",
         ...withShare,
-        companionComment: "Art valide ce concept !",
+        companionComment: "Ton concept est maintenant viral !",
       });
     } catch (error) {
-      res.status(500).json({ error: "Erreur génération" });
+      console.error("[MemeController] Error:", error.message);
+      res.status(500).json({
+        error: "Le studio IA est temporairement indisponible.",
+        details: error.message
+      });
     }
   },
 
@@ -91,21 +78,21 @@ const MemeController = {
       if (req.file) {
         transcription = await AIService.transcribeAudio(req.file.buffer, req.file.mimetype);
       }
-      if (!transcription) return res.status(400).json({ error: "Audio requis" });
+      if (!transcription) return res.status(400).json({ error: "Contenu audio ou transcription manquant" });
 
       const memeData = await AIService.generateMemeFromVoice(transcription);
       const withShare = await attachMemeShare(req, memeData);
 
-      await autoPublish(req, withShare, "voice");
+      autoPublish(req, withShare, "voice");
 
       res.status(200).json({
-        message: "Mème vocal généré et publié",
         transcription,
         ...withShare,
-        companionComment: "Ubu adore ta voix !",
+        companionComment: "J'ai capturé l'essence de ton message !",
       });
     } catch (error) {
-      res.status(500).json({ error: "Erreur vocale" });
+      console.error("[MemeController] Voice Error:", error.message);
+      res.status(500).json({ error: "Échec du traitement vocal" });
     }
   },
 
@@ -113,29 +100,58 @@ const MemeController = {
     try {
       const { text, location, inputImageUrl, inputImageBase64 } = req.body;
       const remix = await AIService.generateStatusRemix({
-        text: text || "Remix",
+        text,
         location,
         inputImageUrl,
         inputImageBase64,
       });
 
-      const withShare = await attachRemixShare(req, remix);
-      await autoPublish(req, withShare, "remix");
-
-      res.status(200).json({
-        ...withShare,
-        companionComment: "Bio valide le remix !",
+      // Simple wrapper for remix share
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      const share = await ShareService.buildShareBundle({
+        caption: remix.meme_text,
+        imageUrl: remix.imageUrl,
+        baseUrl,
       });
+
+      const withShare = { ...remix, share };
+      autoPublish(req, withShare, "remix");
+
+      res.status(200).json(withShare);
     } catch (error) {
-      res.status(500).json({ error: "Erreur remix" });
+      console.error("[MemeController] Remix Error:", error.message);
+      res.status(500).json({ error: "Impossible de remixer ce contenu" });
     }
   },
 
-  // Autres méthodes inchangées...
-  chat: async (req, res) => { /* ... */ },
-  getGreeting: async (req, res) => { /* ... */ },
-  generateImage: async (req, res) => { /* ... */ },
-  compose: async (req, res) => { /* ... */ },
+  compose: async (req, res) => {
+    try {
+      const { imageUrl, topText, bottomText } = req.body;
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      const share = await ShareService.buildShareBundle({
+        topText,
+        bottomText,
+        imageUrl,
+        baseUrl,
+      });
+      res.json({
+        composedImageUrl: share.imageDataUrl,
+        share
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Erreur de composition" });
+    }
+  },
+
+  chat: async (req, res) => {
+    try {
+      const { companionId, message } = req.body;
+      const response = await AIService.chatWithCompanion(companionId, message);
+      res.json({ response });
+    } catch (error) {
+      res.status(500).json({ error: "Le compagnon ne répond pas" });
+    }
+  }
 };
 
 module.exports = MemeController;
