@@ -2,37 +2,32 @@ const admin = require("firebase-admin");
 const fs = require("fs");
 const path = require("path");
 
-let db = null;
+let _db = null;
 
-try {
-  if (!admin.apps.length) {
+/**
+ * Viral Stick — Firebase Initialization
+ * Gère le chargement sécurisé via JSON local ou variable d'environnement.
+ */
+function init() {
+  if (admin.apps.length > 0) return admin.firestore();
+
+  try {
     let serviceAccount = null;
     const filePath = path.join(__dirname, "firebase-service-account.json");
 
+    // 1. Essai via le fichier JSON local
     if (fs.existsSync(filePath)) {
-      try {
-        const fileContent = fs.readFileSync(filePath, "utf8");
-        if (!fileContent.includes("TON_CONTENU_ICI")) {
-          serviceAccount = JSON.parse(fileContent);
-          console.log("[Firebase] Configuration chargée via fichier JSON.");
-        } else {
-          console.warn("[Firebase] ATTENTION : Le fichier JSON contient des valeurs d'exemple (TON_CONTENU_ICI).");
-        }
-      } catch (e) {
-        console.warn("[Firebase] Erreur lecture JSON:", e.message);
+      const content = fs.readFileSync(filePath, "utf8");
+      if (content.includes("private_key") && !content.includes("TON_CONTENU_ICI")) {
+        serviceAccount = JSON.parse(content);
+        console.log("[Firebase] Initialisé via JSON local.");
       }
     }
 
-    if (!serviceAccount) {
-      const envVar = process.env.FIREBASE_SERVICE_ACCOUNT;
-      if (envVar && envVar.includes("private_key")) {
-        try {
-          serviceAccount = JSON.parse(envVar);
-          console.log("[Firebase] Configuration chargée via variable d'environnement.");
-        } catch (e) {
-          console.warn("[Firebase] Erreur parse variable ENV.");
-        }
-      }
+    // 2. Essai via variable d'environnement (Vercel)
+    if (!serviceAccount && process.env.FIREBASE_SERVICE_ACCOUNT) {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      console.log("[Firebase] Initialisé via ENV.");
     }
 
     if (serviceAccount && serviceAccount.private_key) {
@@ -40,16 +35,25 @@ try {
         credential: admin.credential.cert(serviceAccount),
         storageBucket: `${serviceAccount.project_id}.firebasestorage.app`
       });
-      db = admin.firestore();
-      console.log("✅ [Firebase] Firestore connecté avec succès.");
-    } else {
-      console.error("❌ [Firebase] ÉCHEC : Aucune clé privée valide trouvée. Le forum sera temporaire (mémoire).");
+      _db = admin.firestore();
+      return _db;
     }
-  } else {
-    db = admin.firestore();
+  } catch (e) {
+    console.error("[Firebase] Erreur d'initialisation:", e.message);
   }
-} catch (error) {
-  console.error("❌ [Firebase] Erreur critique:", error.message);
+
+  console.warn("⚠️ [Firebase] Mode démo activé (aucune base de données connectée).");
+  return null;
 }
 
-module.exports = { db, admin };
+// On initialise une fois au chargement du module
+_db = init();
+
+module.exports = {
+  // On utilise un getter pour s'assurer que si _db change (re-init), on l'ait
+  get db() {
+    if (!_db && admin.apps.length > 0) _db = admin.firestore();
+    return _db;
+  },
+  admin
+};

@@ -15,7 +15,6 @@ async function attachMemeShare(req, memeData) {
       baseUrl,
     });
 
-    // On donne la priorité à l'URL Cloudinary pour la persistance
     return {
       ...memeData,
       composedImageUrl: share.publicUrl || share.imageDataUrl || memeData.imageUrl,
@@ -28,19 +27,19 @@ async function attachMemeShare(req, memeData) {
 }
 
 /**
- * Publication automatique sur le forum (URL Cloudinary uniquement)
+ * Publication automatique sur le forum (Non-bloquant)
  */
 async function autoPublish(req, withShare, type) {
   try {
     const { userId, username } = req.body;
     const imageUrl = withShare.share?.publicUrl || withShare.composedImageUrl;
 
-    // On refuse de publier du base64 sur Firestore (limite de taille)
     if (!imageUrl || imageUrl.startsWith('data:')) {
-      console.log(`[AutoPublish] En attente d'URL permanente pour ${type}...`);
+      console.log(`[AutoPublish] Ignoré: Pas d'URL permanente pour ${type}`);
       return;
     }
 
+    // On utilise une version simplifiée de req/res pour ne pas faire planter le serveur
     const fakeReq = {
       body: {
         shareId: withShare.share?.shareId || `auto_${Date.now()}`,
@@ -52,10 +51,15 @@ async function autoPublish(req, withShare, type) {
       }
     };
 
-    await ForumController.publishMeme(fakeReq, { json: () => {} });
-    console.log(`[AutoPublish] Mème ${type} publié sur Firestore via Cloudinary.`);
+    // On appelle la logique de publication sans attendre (fire and forget)
+    // On passe un objet res simulé qui ne fait rien
+    ForumController.publishMeme(fakeReq, {
+      json: () => {},
+      status: () => ({ json: () => {} })
+    }).catch(e => console.error("[AutoPublish] Error:", e.message));
+
   } catch (e) {
-    console.error("[AutoPublish] Erreur:", e.message);
+    console.error("[AutoPublish] Global Error:", e.message);
   }
 }
 
@@ -63,19 +67,28 @@ const MemeController = {
   createFromText: async (req, res) => {
     try {
       const { text, location } = req.body;
+      if (!text) return res.status(400).json({ error: "Texte manquant" });
+
       const memeData = await AIService.generateMemeFromText(text, location);
       const withShare = await attachMemeShare(req, memeData);
+
       autoPublish(req, withShare, "text");
       res.status(200).json(withShare);
     } catch (error) {
-      res.status(500).json({ error: "Erreur IA" });
+      console.error("[MemeController] createFromText Error:", error);
+      res.status(500).json({ error: "L'IA a eu un petit problème technique.", details: error.message });
     }
   },
 
   statusRemixer: async (req, res) => {
     try {
       const { text, location, inputImageUrl, inputImageBase64 } = req.body;
-      const remix = await AIService.generateStatusRemix({ text: text || "Remix", location, inputImageUrl, inputImageBase64 });
+      const remix = await AIService.generateStatusRemix({
+        text: text || "Remix",
+        location,
+        inputImageUrl,
+        inputImageBase64
+      });
 
       const baseUrl = `${req.protocol}://${req.get("host")}`;
       const share = await ShareService.buildShareBundle({
@@ -85,11 +98,17 @@ const MemeController = {
         baseUrl,
       });
 
-      const withShare = { ...remix, share, composedImageUrl: share.publicUrl || share.imageDataUrl };
+      const withShare = {
+        ...remix,
+        share,
+        composedImageUrl: share.publicUrl || share.imageDataUrl || remix.imageUrl
+      };
+
       autoPublish(req, withShare, "remix");
       res.status(200).json(withShare);
     } catch (error) {
-      res.status(500).json({ error: "Erreur Remix" });
+      console.error("[MemeController] statusRemixer Error:", error);
+      res.status(500).json({ error: "Impossible de remixer cette image.", details: error.message });
     }
   },
 
@@ -97,22 +116,49 @@ const MemeController = {
     try {
       const { imageUrl, imageBase64, topText, bottomText, topY, bottomY } = req.body;
       const share = await ShareService.buildShareBundle({
-        topText, bottomText, imageUrl, imageBase64, topY, bottomY
+        topText: topText || "",
+        bottomText: bottomText || "",
+        imageUrl,
+        imageBase64,
+        topY,
+        bottomY
       });
-      res.json({ composedImageUrl: share.finalUrl || share.publicUrl || share.imageDataUrl, share });
+      res.json({
+        composedImageUrl: share.publicUrl || share.imageDataUrl || imageUrl || imageBase64,
+        share
+      });
     } catch (error) {
-      res.status(500).json({ error: "Erreur de fusion" });
+      console.error("[MemeController] compose Error:", error);
+      res.status(500).json({ error: "Erreur lors de la fusion de l'image." });
     }
   },
 
   createFromVoice: async (req, res) => {
     try {
       let { transcription } = req.body;
+      if (!transcription) return res.status(400).json({ error: "Transcription manquante" });
+
       const memeData = await AIService.generateMemeFromVoice(transcription);
       const withShare = await attachMemeShare(req, memeData);
+
       autoPublish(req, withShare, "voice");
       res.status(200).json(withShare);
-    } catch (e) { res.status(500).json({ error: "Erreur Voice" }); }
+    } catch (error) {
+      console.error("[MemeController] createFromVoice Error:", error);
+      res.status(500).json({ error: "Erreur lors du traitement de la voix." });
+    }
+  },
+
+  chat: async (req, res) => {
+    try {
+      const { companionId, message } = req.body;
+      if (!message) return res.status(400).json({ error: "Message vide" });
+
+      const reply = await AIService.chatWithCompanion(companionId, message);
+      res.json({ reply });
+    } catch (error) {
+      res.status(500).json({ error: "Le compagnon ne répond pas." });
+    }
   }
 };
 
