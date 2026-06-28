@@ -9,11 +9,9 @@ const axios = require("axios");
 async function uploadToCloudinary(buffer, fileName) {
   return new Promise((resolve) => {
     if (!cloudinary.config().cloud_name) {
-      console.error("[Cloudinary] Erreur : cloud_name non configuré. Vérifiez vos variables d'environnement.");
+      console.error("[Cloudinary] Erreur : cloud_name non configuré.");
       return resolve(null);
     }
-
-    console.log(`[Cloudinary] Tentative d'upload de l'image fusionnée (${buffer.length} octets)...`);
 
     const uploadStream = cloudinary.uploader.upload_stream(
       {
@@ -50,17 +48,18 @@ async function composeMemeImage({ imageUrl, imageBase64, topText = "", bottomTex
       if (match) buffer = Buffer.from(match[2], "base64");
     } else if (imageUrl && imageUrl.startsWith("http")) {
       const response = await axios.get(imageUrl, { responseType: 'arraybuffer', timeout: 15000 });
-      buffer = Buffer.from(response.data, 'binary');
+      // Correction: Utilisation directe du buffer retourné par axios
+      buffer = Buffer.from(response.data);
     }
 
-    if (!buffer) {
+    if (!buffer || buffer.length === 0) {
       console.warn("[Compose] Aucun buffer image valide trouvé pour la fusion.");
       return null;
     }
 
     return await applyMemeText(buffer, { topText, bottomText, topY, bottomY });
   } catch (e) {
-    console.error("[Compose] Erreur lors de la fusion Sharp:", e.message);
+    console.error("[Compose] Erreur lors de la récupération/fusion de l'image:", e.message);
     return null;
   }
 }
@@ -85,7 +84,7 @@ async function buildShareBundle({ topText, bottomText, imageUrl, imageBase64, to
 
   return {
     text: `${topText} ${bottomText}`.trim(),
-    publicUrl: publicUrl, // Sera utilisé par le forum
+    publicUrl: publicUrl,
     shareId,
     imageDataUrl: composed?.dataUrl || null,
     hasImage: !!composed,

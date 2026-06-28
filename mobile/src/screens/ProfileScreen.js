@@ -82,6 +82,10 @@ const ProfileScreen = ({ navigate }) => {
         <View style={{ marginTop: 30 }}>
           <AnimatedButton title="SE DÉCONNECTER" variant="danger" onPress={handleLogout} />
         </View>
+
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+            <Text style={styles.logoutText}>🚪 Déconnexion sécurisée</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -97,7 +101,9 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: 'row', gap: 10 },
   statItem: { flex: 1, padding: 15, backgroundColor: '#fff', borderWidth: 2, borderBottomWidth: 4, borderColor: '#eee', borderRadius: 15, alignItems: 'center' },
   statVal: { fontSize: 20, fontWeight: '900' },
-  statLab: { fontSize: 10, fontWeight: '700', color: '#999' }
+  statLab: { fontSize: 10, fontWeight: '700', color: '#999' },
+  logoutBtn: { marginTop: 20, alignItems: 'center', padding: 16 },
+  logoutText: { fontWeight: '800', color: colors.bubblegumPink }
 });
 
 export default ProfileScreen;

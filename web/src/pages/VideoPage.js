@@ -1,6 +1,8 @@
 import React from "react";
 import WebShell from "../components/WebShell";
 import { colors, radius } from "../theme/tokens";
+// Import de la vidéo pour qu'elle soit gérée par le build system
+import viralVideo from "../../video/whatsapp-video-2026-06-28-at-135933_ZNbdb5i5.mp4";
 
 const VideoPage = () => {
   return (
@@ -26,7 +28,7 @@ const VideoPage = () => {
         <video
           controls
           style={{ width: "100%", display: "block" }}
-          src="/video/whatsapp-video-2026-06-28-at-135933_ZNbdb5i5.mp4"
+          src={viralVideo}
         >
           Votre navigateur ne supporte pas la lecture de vidéos.
         </video>
