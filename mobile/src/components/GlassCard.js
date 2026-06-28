@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
-import { StyleSheet, Animated } from "react-native";
-import { useTheme } from "../theme";
+import { View, StyleSheet, Animated } from "react-native";
+import { useTheme, colors, radius } from "../theme";
 
 const GlassCard = ({ children, style, animate = false, delay = 0 }) => {
   const { theme } = useTheme();
@@ -19,16 +19,12 @@ const GlassCard = ({ children, style, animate = false, delay = 0 }) => {
     <Animated.View style={[
       styles.card,
       {
-        backgroundColor: theme.backgroundCard,
-        borderColor: theme.border,
-        shadowColor: theme.cardShadow.shadowColor,
-        shadowOffset: theme.cardShadow.shadowOffset,
-        shadowOpacity: theme.cardShadow.shadowOpacity,
-        shadowRadius: theme.cardShadow.shadowRadius,
-        elevation: theme.cardShadow.elevation,
+        backgroundColor: colors.snowWhite,
+        borderColor: colors.cloudGray,
+        opacity: fade,
+        transform: [{ translateY: ty }]
       },
-      style,
-      { opacity: fade, transform: [{ translateY: ty }] }
+      style
     ]}>
       {children}
     </Animated.View>
@@ -37,9 +33,12 @@ const GlassCard = ({ children, style, animate = false, delay = 0 }) => {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 20, // Plus d'espace intérieur
+    borderRadius: radius.md || 16,
+    borderWidth: 2,
+    borderBottomWidth: 4, // Design 3D sans ombres natives pour éviter le crash
+    padding: 20,
+    elevation: 0,
+    shadowOpacity: 0
   },
 });
 

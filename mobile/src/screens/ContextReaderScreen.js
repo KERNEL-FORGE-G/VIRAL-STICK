@@ -18,7 +18,7 @@ const ContextReaderScreen = ({ navigate }) => {
 
   const [topText, setTopText] = useState("");
   const [bottomText, setBottomText] = useState("");
-  const [topY, setTopY] = useState(10);
+  const [topY, setTopY] = useState(12);
   const [bottomY, setBottomY] = useState(88);
 
   const generateMeme = async () => {
@@ -42,7 +42,7 @@ const ContextReaderScreen = ({ navigate }) => {
     try {
       const user = await authService.getUser();
       const username = user?.email?.split('@')[0] || "Anonyme";
-      await axios.post(apiUrl("/api/forum/memes"), {
+      await axios.post(apiUrl("/api/forum/publish"), {
         imageUrl: composedImageUrl,
         topText,
         bottomText,
@@ -60,7 +60,7 @@ const ContextReaderScreen = ({ navigate }) => {
     setIsProcessing(true);
     try {
       const res = await axios.post(apiUrl("/api/memes/compose"), {
-        imageUrl: meme.imageUrl,
+        imageUrl: meme.rawImageUrl || meme.imageUrl,
         topText, bottomText, topY, bottomY
       });
       const finalUrl = res.data.composedImageUrl;
@@ -69,6 +69,7 @@ const ContextReaderScreen = ({ navigate }) => {
         await shareToWhatsApp(finalUrl, "");
       } else if (type === 'download') {
         await downloadImageToGallery(finalUrl);
+        Alert.alert("Export", "Image enregistrée dans la galerie.");
       } else if (type === 'forum') {
         await saveToForum(finalUrl);
       }
@@ -84,7 +85,7 @@ const ContextReaderScreen = ({ navigate }) => {
       <StatusBar barStyle="dark-content" />
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <Text style={styles.title}>Context <Text style={{ color: colors.sunshineYellow }}>Reader</Text></Text>
+          <Text style={styles.title}>Context <Text style={{ color: colors.brandPrimary }}>Reader</Text></Text>
           <Text style={styles.subtitle}>Analyseur de situation IA</Text>
         </View>
 
@@ -109,7 +110,7 @@ const ContextReaderScreen = ({ navigate }) => {
         ) : (
           <View style={styles.studio}>
             <View style={styles.canvas}>
-              <Image source={{ uri: meme.imageUrl }} style={styles.baseImg} resizeMode="cover" />
+              <Image source={{ uri: meme.rawImageUrl || meme.imageUrl }} style={styles.baseImg} resizeMode="cover" />
               <View style={[styles.overlay, { top: `${topY}%` }]}>
                 <Text style={styles.memeText}>{topText}</Text>
               </View>
@@ -135,8 +136,8 @@ const ContextReaderScreen = ({ navigate }) => {
                   maximumValue={45}
                   value={topY}
                   onValueChange={setTopY}
-                  minimumTrackTintColor={colors.duoGreen}
-                  thumbTintColor={colors.duoGreen}
+                  minimumTrackTintColor={colors.brandPrimary}
+                  thumbTintColor={colors.brandPrimary}
                   maximumTrackTintColor={colors.cloudGray}
                 />
               </View>
@@ -156,52 +157,47 @@ const ContextReaderScreen = ({ navigate }) => {
                   maximumValue={95}
                   value={bottomY}
                   onValueChange={setBottomY}
-                  minimumTrackTintColor={colors.skyBlue}
-                  thumbTintColor={colors.skyBlue}
+                  minimumTrackTintColor={colors.brandSecondary}
+                  thumbTintColor={colors.brandSecondary}
                   maximumTrackTintColor={colors.cloudGray}
                 />
               </View>
             </View>
 
             <View style={styles.actionFixedBar}>
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.actionBtnWhatsapp, { backgroundColor: '#25D366' }]}
-            onPress={() => handleAction('whatsapp')}
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <>
-                <AppIcon name="share-2" color="#fff" size={20} />
-                <Text style={styles.actionText}>WHATSAPP</Text>
-              </>
-            )}
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionBtn, { backgroundColor: '#25D366', borderColor: '#12b534' }]}
+                onPress={() => handleAction('whatsapp')}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <AppIcon name="share-2" color="#fff" size={24} />
+                )}
+              </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.actionBtnGreen, { backgroundColor: colors.duoGreen }]}
-            onPress={() => handleAction('download')}
-          >
-            <AppIcon name="download" color="#fff" size={20} />
-            <Text style={styles.actionText}>SAUVEGARDER</Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionBtn, { backgroundColor: colors.brandPrimary, borderColor: colors.brandPrimaryDark, flex: 2 }]}
+                onPress={() => handleAction('download')}
+              >
+                <Text style={styles.actionText}>SAUVEGARDER</Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.actionBtnBlue, { backgroundColor: colors.skyBlue }]}
-            onPress={() => handleAction('forum')}
-          >
-            <AppIcon name="globe" color="#fff" size={20} />
-            <Text style={styles.actionText}>FORUM</Text>
-          </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionBtn, { backgroundColor: colors.brandSecondary, borderColor: colors.brandSecondaryDark }]}
+                onPress={() => handleAction('forum')}
+              >
+                <AppIcon name="globe" color="#fff" size={24} />
+              </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.actionBtnGray, { backgroundColor: colors.cloudGray }]}
-            onPress={() => setMeme(null)}
-          >
-            <AppIcon name="refresh-cw" color={colors.charcoal} size={20} />
-          </TouchableOpacity>
-        </View>
+              <TouchableOpacity
+                style={[styles.actionBtn, { backgroundColor: colors.cloudGray, borderColor: '#b5b5b5' }]}
+                onPress={() => setMeme(null)}
+              >
+                <AppIcon name="refresh-cw" color={colors.charcoal} size={22} />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
         <View style={{ height: 100 }} />
@@ -213,31 +209,37 @@ const ContextReaderScreen = ({ navigate }) => {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   scroll: { padding: spacing.md },
-  header: { marginBottom: 20, padding: 10, alignItems: 'center' },
-  title: { fontSize: 32, fontWeight: '900', color: colors.almostBlack, fontFamily: 'Nunito' },
-  subtitle: { fontSize: 14, color: colors.charcoal, marginTop: 4, fontFamily: 'Nunito' },
-  inputCard: { padding: 20, backgroundColor: colors.snowWhite, borderWidth: 2, borderColor: colors.cloudGray, borderRadius: radius.buttons },
-  label: { fontSize: 12, fontWeight: '800', letterSpacing: 1.5, marginBottom: 10, color: colors.charcoal, fontFamily: 'Nunito' },
+  header: { marginBottom: 20, alignItems: 'center' },
+  title: { fontSize: 28, fontWeight: '900', color: colors.almostBlack },
+  subtitle: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
+  inputCard: {
+    padding: 20,
+    backgroundColor: colors.snowWhite,
+    borderWidth: 2,
+    borderBottomWidth: 4,
+    borderColor: colors.cloudGray,
+    borderRadius: radius.md
+  },
+  label: { fontSize: 11, fontWeight: '800', letterSpacing: 1.5, marginBottom: 10, color: colors.textMuted },
   input: {
-    minHeight: 140,
+    minHeight: 120,
     fontSize: 16,
     borderWidth: 2,
     borderColor: colors.cloudGray,
-    borderRadius: radius.buttons,
+    borderRadius: radius.md,
     marginBottom: 20,
     padding: 16,
     textAlignVertical: 'top',
     color: colors.almostBlack,
-    fontFamily: 'Nunito'
+    backgroundColor: '#f9f9f9'
   },
   studio: { width: '100%' },
   canvas: {
     width: '100%',
     aspectRatio: 1,
-    borderRadius: radius.buttons,
+    borderRadius: radius.md,
     overflow: 'hidden',
     backgroundColor: '#000',
-    position: 'relative',
     borderWidth: 2,
     borderColor: colors.cloudGray
   },
@@ -247,71 +249,59 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    paddingHorizontal: 16
+    paddingHorizontal: 12
   },
   memeText: {
     color: '#fff',
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '900',
     textAlign: 'center',
     textShadowColor: '#000',
-    textShadowOffset: { width: 3, height: 3 },
-    textShadowRadius: 6,
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 4,
     textTransform: 'uppercase',
-    fontFamily: 'Nunito'
   },
   controls: {
-    marginTop: 18,
-    padding: 20,
+    marginTop: 15,
+    padding: 15,
     backgroundColor: colors.snowWhite,
     borderWidth: 2,
+    borderBottomWidth: 4,
     borderColor: colors.cloudGray,
-    borderRadius: radius.buttons
+    borderRadius: radius.md
   },
   sliderContainer: { marginVertical: 10 },
   sliderLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.charcoal,
+    color: colors.almostBlack,
     marginBottom: 4,
-    fontFamily: 'Nunito'
   },
   studioInput: {
-    backgroundColor: colors.duoGreenLight + '40',
-    borderRadius: radius.buttons,
-    padding: 16,
-    fontSize: 16,
-    fontWeight: '800',
+    backgroundColor: '#f5f5f5',
+    borderRadius: radius.sm,
+    padding: 12,
+    fontSize: 15,
+    fontWeight: '700',
     borderWidth: 2,
     borderColor: colors.cloudGray,
-    color: colors.almostBlack,
-    fontFamily: 'Nunito'
+    color: colors.almostBlack
   },
-  slider: { width: '100%', height: 45 },
-  actionFixedBar: { flexDirection: 'row', gap: 10, marginTop: 18 },
+  slider: { width: '100%', height: 40 },
+  actionFixedBar: { flexDirection: 'row', gap: 8, marginTop: 15, marginBottom: 50 },
   actionBtn: {
     flex: 1,
-    height: 60,
-    borderRadius: radius.buttons,
-    flexDirection: 'row',
+    height: 55,
+    borderRadius: radius.md,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
     borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.1)',
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4
+    borderBottomWidth: 4,
   },
-  actionBtnWhatsapp: { shadowColor: '#12b534', shadowOffset: { width: 0, height: 4 } },
-  actionBtnGreen: { shadowColor: '#3f8f01', shadowOffset: { width: 0, height: 4 } },
-  actionBtnBlue: { shadowColor: '#1899d6', shadowOffset: { width: 0, height: 4 } },
-  actionBtnGray: { shadowColor: '#b5b5b5', shadowOffset: { width: 0, height: 4 } },
   actionText: {
     color: '#fff',
     fontWeight: '900',
     fontSize: 14,
-    fontFamily: 'Nunito'
   }
 });
 

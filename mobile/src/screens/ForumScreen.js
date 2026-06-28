@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert, RefreshControl, SafeAreaView, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, RefreshControl, SafeAreaView, StatusBar } from 'react-native';
 import { apiUrl } from '../config/api';
 import { shareToWhatsApp, downloadImageToGallery } from '../utils/shareUtils';
 import { useTheme, spacing, radius, colors } from '../theme';
-import AnimatedButton from '../components/AnimatedButton';
 import authService from '../services/authService';
 import AppIcon from '../components/AppIcon';
 import Avatar from '../components/Avatar';
@@ -11,7 +10,7 @@ import Avatar from '../components/Avatar';
 const TABS = [
   { id: 'createdAt', label: 'Récents', icon: 'clock' },
   { id: 'likes', label: 'Top', icon: 'flame' },
-  { id: 'remixes', label: 'Viraux', icon: 'zap' },
+  { id: 'leaderboard', label: 'Leaderboard', icon: 'award' },
 ];
 
 const ForumScreen = ({ navigate }) => {
@@ -23,6 +22,9 @@ const ForumScreen = ({ navigate }) => {
   const [userId, setUserId] = useState(null);
 
   const fetchMemes = useCallback(async (isRefresh = false) => {
+    if (sortBy === 'leaderboard') {
+      return navigate('Leaderboard');
+    }
     if (!isRefresh) setLoading(true);
     try {
       const id = await authService.getUserId();
@@ -37,7 +39,7 @@ const ForumScreen = ({ navigate }) => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [sortBy]);
+  }, [sortBy, navigate]);
 
   useEffect(() => { fetchMemes(); }, [fetchMemes]);
 
@@ -83,7 +85,7 @@ const ForumScreen = ({ navigate }) => {
 
         <View style={styles.actionsRow}>
           <TouchableOpacity
-            style={[styles.actionBtn, styles.actionBtnWhatsapp, { backgroundColor: '#25D366' }]}
+            style={[styles.actionBtn, styles.actionBtnWhatsapp]}
             onPress={() => shareToWhatsApp(item.imageUrl)}
           >
             <AppIcon name="share-2" color="#fff" size={18} />
@@ -91,14 +93,14 @@ const ForumScreen = ({ navigate }) => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.actionBtn, styles.actionBtnRemix, { backgroundColor: colors.duoGreen }]}
+            style={[styles.actionBtn, styles.actionBtnRemix]}
             onPress={() => navigate('StatusRemixer', { imageUrl: item.imageUrl })}
           >
             <AppIcon name="refresh-cw" color="#fff" size={18} />
             <Text style={styles.btnText}>REMIXER</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.iconBtn, { backgroundColor: colors.cloudGray }]} onPress={() => downloadImageToGallery(item.imageUrl)}>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => downloadImageToGallery(item.imageUrl)}>
             <AppIcon name="download" color={colors.charcoal} size={22} />
           </TouchableOpacity>
         </View>
@@ -110,27 +112,39 @@ const ForumScreen = ({ navigate }) => {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.snowWhite }]}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
-        {TABS.map(tab => (
-          <TouchableOpacity
-            key={tab.id}
-            onPress={() => setSortBy(tab.id)}
-            style={[styles.tab, sortBy === tab.id && { backgroundColor: colors.duoGreen, borderColor: colors.duoGreen }]}
-          >
-            <AppIcon name={tab.icon} color={sortBy === tab.id ? '#fff' : colors.charcoal} size={16} />
-            <Text style={[styles.tabText, { color: sortBy === tab.id ? '#fff' : colors.charcoal }]}>{tab.label}</Text>
-          </TouchableOpacity>
-        ))}
+        {TABS.map(tab => {
+          const isActive = sortBy === tab.id;
+          return (
+            <TouchableOpacity
+              key={tab.id}
+              onPress={() => {
+                if (tab.id === 'leaderboard') navigate('Leaderboard');
+                else setSortBy(tab.id);
+              }}
+              style={[
+                styles.tab,
+                isActive && {
+                  backgroundColor: colors.brandPrimary,
+                  borderColor: colors.brandPrimaryDark
+                }
+              ]}
+            >
+              <AppIcon name={tab.icon} color={isActive ? '#fff' : colors.charcoal} size={16} />
+              <Text style={[styles.tabText, { color: isActive ? '#fff' : colors.charcoal }]}>{tab.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {loading ? (
-        <View style={styles.center}><ActivityIndicator color={colors.duoGreen} size="large" /></View>
+        <View style={styles.center}><ActivityIndicator color={colors.brandPrimary} size="large" /></View>
       ) : (
         <FlatList
           data={memes}
           renderItem={renderMeme}
           keyExtractor={m => m.id}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchMemes(true)} tintColor={colors.duoGreen} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchMemes(true)} tintColor={colors.brandPrimary} />}
           ListEmptyComponent={<Text style={styles.empty}>Aucun mème trouvé sur le forum.</Text>}
         />
       )}
@@ -141,62 +155,65 @@ const ForumScreen = ({ navigate }) => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', padding: 12, gap: 8, backgroundColor: colors.snowWhite },
-  tab: { flex: 1, flexDirection: 'row', height: 42, borderRadius: radius.buttons, justifyContent: 'center', alignItems: 'center', gap: 6, backgroundColor: colors.cloudGray, borderWidth: 2, borderColor: 'rgba(0,0,0,0.1)' },
-  tabText: { fontWeight: '900', fontSize: 13, fontFamily: 'Nunito' },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    height: 45,
+    borderRadius: radius.buttons,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.cloudGray,
+    borderWidth: 2,
+    borderBottomWidth: 4,
+    borderColor: 'rgba(0,0,0,0.1)'
+  },
+  tabText: { fontWeight: '900', fontSize: 13 },
   list: { padding: spacing.md, paddingBottom: 100 },
-  card: { borderRadius: radius.buttons, marginBottom: 25, padding: 0, overflow: 'hidden', backgroundColor: colors.snowWhite, borderWidth: 2, borderColor: colors.cloudGray },
+  card: { borderRadius: radius.buttons, marginBottom: 25, padding: 0, overflow: 'hidden', backgroundColor: colors.snowWhite, borderWidth: 2, borderBottomWidth: 4, borderColor: colors.cloudGray },
   cardHeader: { flexDirection: 'row', alignItems: 'center', padding: 15, justifyContent: 'space-between' },
   userInfo: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  username: { fontSize: 14, fontWeight: '800', color: colors.almostBlack, fontFamily: 'Nunito' },
+  username: { fontSize: 14, fontWeight: '800', color: colors.almostBlack },
   imageContainer: { width: '100%', aspectRatio: 1, backgroundColor: '#000' },
   image: { width: '100%', height: '100%' },
   cardFooter: { padding: 18 },
   statsRow: { flexDirection: 'row', gap: 20, marginBottom: 15 },
   statBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  statText: { fontWeight: '900', fontSize: 15, color: colors.almostBlack, fontFamily: 'Nunito' },
+  statText: { fontWeight: '900', fontSize: 15, color: colors.almostBlack },
   actionsRow: { flexDirection: 'row', gap: 10 },
   actionBtn: {
     flex: 1,
-    height: 55,
+    height: 50,
     borderRadius: radius.buttons,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 10,
     borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.1)'
+    borderBottomWidth: 4,
   },
   actionBtnWhatsapp: {
-    shadowColor: '#12b534',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4
+    backgroundColor: '#25D366',
+    borderColor: '#12b534',
   },
   actionBtnRemix: {
-    shadowColor: '#3f8f01',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4
+    backgroundColor: colors.brandPrimary,
+    borderColor: colors.brandPrimaryDark,
   },
   iconBtn: {
-    width: 55,
-    height: 55,
+    width: 50,
+    height: 50,
     borderRadius: radius.buttons,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.cloudGray,
     borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.1)',
-    shadowColor: '#b5b5b5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4
+    borderBottomWidth: 4,
+    borderColor: '#b5b5b5',
   },
-  btnText: { color: '#fff', fontWeight: '900', fontSize: 14, letterSpacing: 0.5, fontFamily: 'Nunito' },
+  btnText: { color: '#fff', fontWeight: '900', fontSize: 14, letterSpacing: 0.5 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  empty: { textAlign: 'center', marginTop: 50, fontWeight: '700', color: colors.silver, fontFamily: 'Nunito' }
+  empty: { textAlign: 'center', marginTop: 50, fontWeight: '700', color: colors.silver }
 });
 
 export default ForumScreen;
