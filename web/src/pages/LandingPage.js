@@ -24,14 +24,6 @@ const FEATURES = [
     icon: "remix",
   },
   {
-    title: "Session Vidéo",
-    desc: "Regardez la démonstration complète de Viral Stick en action.",
-    companion: "para",
-    to: "/video",
-    accent: colors.skyBlue,
-    icon: "context",
-  },
-  {
     title: "Chat Compagnons",
     desc: "Discute avec tes compagnons IA spécialisés pour booster ta créativité.",
     companion: "ubu",
@@ -41,146 +33,76 @@ const FEATURES = [
   },
 ];
 
-const COMPANIONS_INFO = [
-  { id: "arch", name: "Archlord", role: "Direction produit" },
-  { id: "art",  name: "Art",      role: "Direction artistique" },
-  { id: "bio",  name: "Bio",      role: "Énergie visuelle" },
-  { id: "data", name: "Data",     role: "Analyse & structure" },
-  { id: "para", name: "Para",     role: "Clarté & onboarding" },
-  { id: "secu", name: "Secu",     role: "Sécurité & vigilance" },
-  { id: "ubu",  name: "Ubu",      role: "Humour & imprévu" },
-];
-
 const LandingPage = () => {
   return (
     <WebShell companion="arch">
+      {/* HERO SECTION */}
       <section style={{
         display: "grid",
         gridTemplateColumns: "1fr 1fr",
         gap: 48,
         alignItems: "center",
         padding: "60px 0 80px",
-        marginBottom: 8,
       }}>
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-          <div style={{
-            width: 680,
-            height: 680,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            animation: "floatSoft 4s ease-in-out infinite",
-          }}>
-            <img
-              src="/asset/logo/logo.png"
-              alt="Viral Stick"
-              style={{ width: "100%", height: "100%", objectFit: "contain" }}
-            />
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <div style={{ width: 600, height: 600, animation: "floatSoft 4s ease-in-out infinite" }}>
+            <img src="/asset/logo/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           </div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-          <div style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            background: colors.duoGreenLight,
-            color: colors.duoGreenDark,
-            padding: "6px 14px",
-            borderRadius: radius.pill,
-            fontSize: 13,
-            fontWeight: 800,
-            width: "fit-content",
-          }}>
-            <span>✨</span> Créez du contenu viral avec l'IA
-          </div>
-
-          <h1 style={{
-            fontFamily: "'Fredoka One', cursive",
-            fontSize: "clamp(36px, 5vw, 56px)",
-            lineHeight: 1.15,
-            color: colors.almostBlack,
-            margin: 0,
-          }}>
-            Générez des mèmes{" "}
-            <span style={{ color: colors.duoGreen }}>viraux</span>{" "}
-            en quelques secondes
+          <h1 style={{ fontFamily: "'Fredoka One', cursive", fontSize: 52, color: colors.almostBlack, lineHeight: 1.1 }}>
+            Générez des mèmes <span style={{ color: colors.duoGreen }}>viraux</span> en un éclair
           </h1>
-
-          <p style={{
-            fontFamily: "'Nunito', sans-serif",
-            fontSize: 18,
-            color: colors.graphite,
-            lineHeight: 1.6,
-            margin: 0,
-            maxWidth: 480,
-          }}>
-            Viral Stick combine des compagnons IA spécialisés et des outils de création
-            pour transformer n'importe quelle idée en contenu prêt à l'emploi.
+          <p style={{ fontSize: 18, color: colors.graphite, lineHeight: 1.6, maxWidth: 500 }}>
+            L'IA qui comprend votre culture et transforme vos idées en contenu prêt pour WhatsApp et les réseaux sociaux.
           </p>
-
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
-            <Link to="/context">
-              <PremiumButton variant="primary" icon={<AppIcon name="context" size={18} color="#fff" />}>
-                Commencer gratuitement
-              </PremiumButton>
-            </Link>
-            <Link to="/video">
-              <PremiumButton variant="ghost">
-                Voir la démo vidéo
-              </PremiumButton>
-            </Link>
+          <div style={{ display: "flex", gap: 16 }}>
+            <Link to="/context"><PremiumButton variant="primary">Essayer maintenant</PremiumButton></Link>
+            <Link to="/video"><PremiumButton variant="ghost">Voir la démo</PremiumButton></Link>
           </div>
         </div>
       </section>
 
-      <section style={{ marginBottom: 80 }}>
-        <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <h2 style={{
-            fontFamily: "'Fredoka One', cursive",
-            fontSize: 36,
-            color: colors.almostBlack,
-            margin: "0 0 12px",
-          }}>
-            Tout ce dont tu as besoin
-          </h2>
-        </div>
-
+      {/* SESSION VIDÉO HIGHLIGHT */}
+      <section style={{
+        background: colors.duoGreenLight,
+        borderRadius: radius.xl,
+        padding: "60px 40px",
+        marginBottom: 80,
+        textAlign: "center",
+        border: `2px solid ${colors.duoGreen}33`
+      }}>
+        <h2 style={{ fontFamily: "'Fredoka One', cursive", fontSize: 32, marginBottom: 16 }}>Session Démo Live</h2>
+        <p style={{ fontSize: 16, color: colors.charcoal, marginBottom: 32, maxWidth: 600, marginLeft: "auto", marginRight: "auto" }}>
+          Regardez comment Viral Stick transforme une simple idée en un mème explosif.
+        </p>
         <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: 24,
+          maxWidth: 700,
+          margin: "0 auto",
+          borderRadius: radius.lg,
+          overflow: "hidden",
+          boxShadow: `0 10px 0 0 ${colors.duoGreen}44`,
+          border: `4px solid #fff`,
+          background: "#000"
         }}>
+          <video
+            src="/video/whatsapp-video-2026-06-28-at-135933_ZNbdb5i5.mp4"
+            controls
+            style={{ width: "100%", display: "block" }}
+          />
+        </div>
+      </section>
+
+      {/* FEATURES GRID */}
+      <section style={{ marginBottom: 80 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
           {FEATURES.map((f) => (
             <Link key={f.to} to={f.to} style={{ textDecoration: "none" }}>
-              <div
-                className="duo-card"
-                style={{
-                  padding: 32,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 20,
-                  height: "100%",
-                  cursor: "pointer",
-                  transition: "transform 0.15s ease",
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "center" }}>
-                  <CompanionAvatarWeb companion={f.companion} size={96} floating />
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <h3 style={{ fontFamily: "'Fredoka One', cursive", fontSize: 22, color: colors.almostBlack, margin: "0 0 10px" }}>
-                    {f.title}
-                  </h3>
-                  <p style={{ fontFamily: "'Nunito', sans-serif", fontSize: 15, color: colors.graphite, lineHeight: 1.5, margin: 0 }}>
-                    {f.desc}
-                  </p>
-                </div>
-                <div style={{ marginTop: "auto", display: "flex", justifyContent: "center" }}>
-                  <span style={{ fontWeight: 800, fontSize: 14, color: f.accent, display: "flex", alignItems: "center", gap: 6 }}>
-                    Explorer →
-                  </span>
-                </div>
+              <div className="duo-card" style={{ padding: 32, textAlign: "center", height: "100%" }}>
+                <CompanionAvatarWeb companion={f.companion} size={80} floating />
+                <h3 style={{ fontFamily: "'Fredoka One', cursive", fontSize: 20, marginTop: 20, marginBottom: 10 }}>{f.title}</h3>
+                <p style={{ fontSize: 14, color: colors.graphite }}>{f.desc}</p>
               </div>
             </Link>
           ))}
