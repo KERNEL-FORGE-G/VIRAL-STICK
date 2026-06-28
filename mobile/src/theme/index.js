@@ -1,15 +1,22 @@
 import React, { createContext, useContext, useState } from "react";
 import { colors, spacing as tokenSpacing, radius as tokenRadius, shadows as tokenShadows } from "./tokens";
 
-// Fallback shadows to prevent crashes if tokens are missing
-const defaultShadows = {
+/**
+ * Viral Stick — Theme Engine
+ * Centralise les tokens et gère le mode sombre/clair.
+ * Sécurisé contre les propriétés undefined pour éviter les crashs.
+ */
+
+// Valeurs de secours robustes (Fallbacks)
+const fallbackShadows = {
   card: { shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 5 },
   btn:  { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
 };
 
-export const spacing  = tokenSpacing || { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
-export const radius   = tokenRadius || { sm: 4, md: 8, lg: 12, xl: 16, pill: 999 };
-export const shadows  = tokenShadows || defaultShadows;
+// Fusion des tokens avec les fallbacks pour garantir la présence des propriétés
+export const spacing = tokenSpacing || { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
+export const radius = tokenRadius || { sm: 4, md: 8, lg: 12, xl: 16, pill: 999 };
+export const shadows = { ...fallbackShadows, ...(tokenShadows || {}) };
 
 export const lightTheme = {
   isDark: false,
@@ -67,8 +74,13 @@ export const ThemeProvider = ({ children }) => {
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
+  // On s'assure que shadows est toujours présent dans le retour du hook
   return {
     ...context,
-    shadows: shadows // Garantit que shadows est accessible via useTheme()
+    shadows: shadows,
+    spacing: spacing,
+    radius: radius
   };
 };
+
+export { colors };
