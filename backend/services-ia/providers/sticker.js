@@ -68,7 +68,7 @@ async function applyMemeText(imageBuffer, options = {}) {
       maxCharsPerLine = Math.max(Math.round(w / (fontSize * 0.6)), 8);
     }
     const strokeW = Math.max(Math.round(fontSize * 0.18), 4);
-    const lineHeight = fontSize * 1.2;
+    const lineHeight = fontSize * 1.3;
 
     // Wrap text into lines
     const topLines = safeTopText ? wrapText(safeTopText, maxCharsPerLine) : [];
@@ -76,23 +76,31 @@ async function applyMemeText(imageBuffer, options = {}) {
 
     // Generate SVG text elements
     let topTextSvg = '';
-    topLines.forEach((line, index) => {
-      const y = (topY / 100) * h + (index * lineHeight);
-      topTextSvg += `<text x="50%" y="${y}" text-anchor="middle" class="txt top" font-size="${fontSize}">${line}</text>`;
-    });
+    if (topLines.length > 0) {
+      const totalTopHeight = (topLines.length - 1) * lineHeight;
+      const topStartY = (topY / 100) * h - (totalTopHeight / 2);
+      topLines.forEach((line, index) => {
+        const y = topStartY + (index * lineHeight);
+        topTextSvg += `<text x="50%" y="${y}" text-anchor="middle" class="txt top" font-size="${fontSize}">${line}</text>`;
+      });
+    }
 
     let bottomTextSvg = '';
-    bottomLines.forEach((line, index) => {
-      const y = (bottomY / 100) * h - ((bottomLines.length - 1 - index) * lineHeight);
-      bottomTextSvg += `<text x="50%" y="${y}" text-anchor="middle" class="txt bottom" font-size="${fontSize}">${line}</text>`;
-    });
+    if (bottomLines.length > 0) {
+      const totalBottomHeight = (bottomLines.length - 1) * lineHeight;
+      const bottomStartY = (bottomY / 100) * h - (totalBottomHeight / 2);
+      bottomLines.forEach((line, index) => {
+        const y = bottomStartY + (index * lineHeight);
+        bottomTextSvg += `<text x="50%" y="${y}" text-anchor="middle" class="txt bottom" font-size="${fontSize}">${line}</text>`;
+      });
+    }
 
     // SVG with proper text alignment (better visibility)
     const svgOverlay = Buffer.from(`
       <svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <filter id="textShadow" x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="1"/>
+            <feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#000000" flood-opacity="1"/>
           </filter>
         </defs>
         <style>
@@ -104,14 +112,14 @@ async function applyMemeText(imageBuffer, options = {}) {
             font-family: Impact, Arial Black, sans-serif;
             font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
             filter: url(#textShadow);
           }
           .top {
-            dominant-baseline: hanging;
+            dominant-baseline: middle;
           }
           .bottom {
-            dominant-baseline: auto;
+            dominant-baseline: middle;
           }
         </style>
         ${topTextSvg}
@@ -124,7 +132,7 @@ async function applyMemeText(imageBuffer, options = {}) {
         input: svgOverlay,
         blend: 'over'
       }])
-      .jpeg({ quality: 90 })
+      .jpeg({ quality: 95 })
       .toBuffer();
 
     return {
