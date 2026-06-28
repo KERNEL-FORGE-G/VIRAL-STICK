@@ -2,7 +2,7 @@ import React from "react";
 import {
   Home, BookOpen, Mic, Image as ImageIcon, MessageSquare, Users, Settings, Info,
   Rocket, ChevronRight, ChevronLeft, Share2, Heart, Sparkles, Globe, RefreshCw,
-  Download, Flame, Clock, Zap, MoreHorizontal, X, Camera, RefreshCcw, Layout
+  Download, Flame, Clock, Zap, MoreHorizontal, X, Camera, RefreshCcw, Layout, User
 } from "lucide-react-native";
 
 export const AppIcon = ({ name, color = "#777777", size = 20, filled = false }) => {
@@ -34,6 +34,7 @@ export const AppIcon = ({ name, color = "#777777", size = 20, filled = false }) 
     case "x": return <X {...props} />;
     case "camera": return <Camera {...props} />;
     case "layout": return <Layout {...props} />;
+    case "user": return <User {...props} />;
     default: return <ImageIcon {...props} />;
   }
 };

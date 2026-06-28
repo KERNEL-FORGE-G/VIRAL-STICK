@@ -1,62 +1,54 @@
 import React, { createContext, useContext, useState } from "react";
-import { colors } from "./tokens";
+import { colors, spacing as tokenSpacing, radius as tokenRadius, shadows as tokenShadows } from "./tokens";
 
-export const spacing  = { xs: 6, sm: 10, md: 16, lg: 24, xl: 32, xxl: 48 };
-export const radius   = { sm: 8, md: 12, lg: 16, xl: 20, pill: 999 };
-export const typography = {
-  fontSize: { xs: 12, sm: 14, md: 16, lg: 18, xl: 22, xxl: 28, xxxl: 36, display: 40 },
+// Fallback shadows to prevent crashes if tokens are missing
+const defaultShadows = {
+  card: { shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 5 },
+  btn:  { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
 };
 
-export const createShadow = (color = "#2563EB", elevation = 4) => ({
-  shadowColor: color,
-  shadowOffset: { width: 0, height: elevation },
-  shadowOpacity: 0.22,
-  shadowRadius: 2,
-  elevation: Math.max(2, elevation),
-});
+export const spacing  = tokenSpacing || { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
+export const radius   = tokenRadius || { sm: 4, md: 8, lg: 12, xl: 16, pill: 999 };
+export const shadows  = tokenShadows || defaultShadows;
 
 export const lightTheme = {
   isDark: false,
-  background:          colors.snowWhite,
-  backgroundCard:      colors.snowWhite,
-  backgroundSecondary: colors.cloudGray,
-  textPrimary:         colors.almostBlack,
-  textSecondary:       colors.charcoal,
-  textMuted:           colors.silver,
-  primary:             colors.sapphire,
-  primaryLight:        colors.sapphireLight,
-  primaryDark:         colors.sapphireDark,
-  secondary:           colors.sapphireCyan,
-  secondaryLight:      "#E0F7FA",
-  warning:             colors.sunshineYellow,
-  danger:              colors.danger,
-  border:              colors.cloudGray,
-  divider:             colors.cloudGray,
-  cardShadow:          { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
+  background:          colors?.snowWhite || "#FFFFFF",
+  backgroundCard:      colors?.snowWhite || "#FFFFFF",
+  backgroundSecondary: colors?.cloudGray || "#F3F4F6",
+  textPrimary:         colors?.almostBlack || "#0D0D0D",
+  textSecondary:       colors?.charcoal || "#374151",
+  textMuted:           colors?.silver || "#9CA3AF",
+  primary:             colors?.sapphire || "#2563EB",
+  primaryLight:        colors?.sapphireLight || "#BFDBFE",
+  secondary:           colors?.sapphireCyan || "#06B6D4",
+  warning:             colors?.sunshineYellow || "#F59E0B",
+  danger:              colors?.danger || "#EF4444",
+  border:              colors?.cloudGray || "#F3F4F6",
+  cardShadow:          shadows.card,
+  btnShadow:           shadows.btn,
 };
 
 export const darkTheme = {
   isDark: true,
-  background:          colors.bg,
-  backgroundCard:      colors.bgSecondary,
-  backgroundSecondary: colors.bg,
-  textPrimary:         colors.text,
-  textSecondary:       colors.textSecondary,
-  textMuted:           colors.textMuted,
-  primary:             colors.sapphire,
-  primaryLight:        "rgba(37,99,235,0.15)", // Translucent sapphire for badges
-  primaryDark:         colors.sapphireDark,
-  secondary:           colors.sapphireCyan,
-  secondaryLight:      "rgba(6,182,212,0.15)", // Translucent cyan
-  warning:             colors.warning,
-  danger:              colors.danger,
-  border:              colors.border,
-  divider:             colors.border,
-  cardShadow:          { shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 10, elevation: 4 },
+  background:          colors?.bg || "#0D0D0D",
+  backgroundCard:      colors?.bgSecondary || "#141414",
+  backgroundSecondary: colors?.almostBlack || "#0D0D0D",
+  textPrimary:         colors?.text || "#FFFFFF",
+  textSecondary:       colors?.textSecondary || "#A0A0A0",
+  textMuted:           colors?.textMuted || "#6B7280",
+  primary:             colors?.sapphire || "#2563EB",
+  primaryLight:        "rgba(37,99,235,0.15)",
+  secondary:           colors?.sapphireCyan || "#06B6D4",
+  warning:             colors?.warning || "#F59E0B",
+  danger:              colors?.danger || "#EF4444",
+  border:              colors?.border || "rgba(255,255,255,0.06)",
+  cardShadow:          shadows.card,
+  btnShadow:           shadows.btn,
 };
 
 const ThemeContext = createContext({
-  theme: darkTheme, // Par défaut darkTheme !
+  theme: darkTheme,
   isDark: true,
   toggleTheme: () => {},
 });
@@ -73,5 +65,10 @@ export const ThemeProvider = ({ children }) => {
   );
 };
 
-export const useTheme = () => useContext(ThemeContext);
-export { colors };
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  return {
+    ...context,
+    shadows: shadows // Garantit que shadows est accessible via useTheme()
+  };
+};

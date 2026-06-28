@@ -6,7 +6,7 @@ const os = require("os");
 const PERSISTENCE_FILE = path.join(os.tmpdir(), "forum_persistence.json");
 
 let demoMemes = [];
-let demoLikes = new Set(); // Local fallback only
+let demoLikes = new Set();
 
 function loadLocalPersistence() {
   try {
@@ -24,10 +24,9 @@ async function isDbUsable() {
   const db = Firebase.db;
   if (!db) return false;
   try {
-    // Timeout ultra-court pour Vercel
     await Promise.race([
       db.collection("memes").limit(1).get(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2500))
     ]);
     return true;
   } catch (e) {
@@ -57,7 +56,8 @@ const ForumController = {
         if (!demoMemes.find(m => m.id === id)) {
           demoMemes.unshift(newMeme);
         }
-        return res?.json ? res.json({ success: true, mode: 'demo' }) : null;
+        if (res && res.json) return res.json({ success: true, mode: 'demo' });
+        return;
       }
 
       await db.collection("memes").doc(id).set(newMeme);
@@ -70,16 +70,23 @@ const ForumController = {
         } catch (err) {}
       }
 
-      if (res?.json) res.json({ success: true });
+      if (res && res.json) res.json({ success: true });
     } catch (error) {
       console.error("[Forum Publish] Error:", error.message);
-      if (res?.status) res.status(500).json({ error: "Erreur publication" });
+      if (res && res.status) res.status(500).json({ error: "Erreur publication" });
     }
   },
 
   getMemes: async (req, res) => {
     try {
-      const { sortBy = "createdAt", userId } = req.query;
+      const allowedSortFields = ["createdAt", "likes", "remixes"];
+      let { sortBy = "createdAt", userId } = req.query;
+      
+      if (!allowedSortFields.includes(sortBy)) {
+          console.warn(`[Forum Get] Invalid sortBy parameter: ${sortBy}. Defaulting to createdAt.`);
+          sortBy = "createdAt";
+      }
+
       const db = Firebase.db;
       const usable = await isDbUsable();
 
@@ -95,12 +102,12 @@ const ForumController = {
         })));
       }
 
+      console.log(`[Forum Get] Querying memes with sortBy: ${sortBy}`);
       const snapshot = await db.collection("memes").orderBy(sortBy, "desc").limit(50).get();
 
       let userLikedIds = new Set();
       if (userId && snapshot.docs.length > 0) {
         const memeIds = snapshot.docs.map(d => d.id);
-        // Fetch likes for current user in one/two queries instead of 50
         const chunkSize = 30;
         for (let i = 0; i < memeIds.length; i += chunkSize) {
           const chunk = memeIds.slice(i, i + chunkSize);
@@ -120,7 +127,7 @@ const ForumController = {
 
       res.json(memes);
     } catch (e) {
-      console.error("[Forum Get] Error:", e.message);
+      console.error("[Forum Get] Error full object:", e);
       res.status(500).json({ error: "Erreur serveur forum", details: e.message });
     }
   },

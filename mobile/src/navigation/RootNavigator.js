@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, StatusBar } from "react-native";
+import { View, Text, StyleSheet, StatusBar, ActivityIndicator } from "react-native";
 import BottomTabNavigator from "./BottomTabNavigator";
 import Header from "../components/Header";
 import { useTheme } from "../theme";
@@ -32,8 +32,8 @@ const SCREENS = {
   Menu:          { comp: MenuScreen,          title: "Menu",          sub: "Options du Studio" },
   Forum:         { comp: ForumScreen,         title: "Forum",         sub: "Flux Viral" },
   Leaderboard:   { comp: LeaderboardScreen,   title: "Classement",    sub: "Top Créateurs" },
-  Auth:          { comp: AuthScreen,          title: "Compte",        sub: "Connexion / Inscription" },
-  Profile:       { comp: ProfileScreen,       title: "Profil",        sub: "Mon Compte" },
+  Auth:          { comp: AuthScreen,          title: "Compte",        sub: "Connexion" },
+  Profile:       { comp: ProfileScreen,       title: "Profil",        sub: "Tes stats" },
 };
 
 const RootNavigator = () => {
@@ -42,25 +42,15 @@ const RootNavigator = () => {
   const [currentScreen, setCurrentScreen] = useState("Home");
   const { theme } = useTheme();
 
-  // Charger la session au démarrage
   useEffect(() => {
     loadSession();
   }, []);
 
   const loadSession = async () => {
     try {
-      const session = await authService.getSession();
-      console.log('[RootNavigator] Session complète:', session);
       const loggedIn = await authService.isLoggedIn();
-      console.log('[RootNavigator] Session chargée, isLoggedIn:', loggedIn);
-      
-      if (session) {
-        console.log('[RootNavigator] userId:', session.userId, 'email:', session.email);
-      }
-      
       setIsLoggedIn(loggedIn);
     } catch (error) {
-      console.error('[RootNavigator] Erreur chargement session:', error);
       setIsLoggedIn(false);
     } finally {
       setIsLoading(false);
@@ -82,80 +72,53 @@ const RootNavigator = () => {
     }
   };
 
-  const handleLogout = async () => {
-    const loggedOut = await authService.logout();
-    if (loggedOut) {
-      setIsLoggedIn(false);
+  const handleProfileClick = () => {
+    if (isLoggedIn) {
+      setCurrentScreen("Profile");
+    } else {
       setCurrentScreen("Auth");
-    }
-  };
-
-  // Passer les données utilisateur à tous les écrans
-  const getUserData = async () => {
-    try {
-      const userId = await authService.getUserId();
-      const email = await authService.getUserEmail();
-      return { userId, email };
-    } catch (error) {
-      console.error('[RootNavigator] Erreur récupération user data:', error);
-      return { userId: null, email: null };
     }
   };
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} backgroundColor={theme.backgroundSecondary} />
-        <View style={styles.center}>
-          <Text style={{ color: theme.textPrimary }}>Chargement...</Text>
-        </View>
+      <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
 
-  if (!isLoggedIn && currentScreen !== "Auth") {
+  // Si pas connecté, forcer Auth
+  if (!isLoggedIn && currentScreen !== "Auth" && currentScreen !== "About") {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} backgroundColor={theme.backgroundSecondary} />
-        <Header title="Bienvenue" subtitle="Viral Stick Studio" />
-        <View style={styles.screenWrapper}>
-          <AuthScreen navigate={(s) => {
-            if (s === 'Home') setIsLoggedIn(true);
-            setCurrentScreen(s);
-          }} />
-        </View>
+        <Header title="Bienvenue" subtitle="Viral Stick Studio" onProfile={() => setCurrentScreen("Auth")} />
+        <AuthScreen navigate={(s) => {
+          if (s === 'Home') setIsLoggedIn(true);
+          setCurrentScreen(s);
+        }} />
       </View>
     );
   }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} backgroundColor={theme.backgroundSecondary} />
+      <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} />
       <Header
         title={screenInfo.title}
         subtitle={screenInfo.sub}
         onBack={showBack ? goBack : null}
-        onProfile={() => setCurrentScreen("Auth")}
+        onProfile={handleProfileClick}
       />
       <BottomTabNavigator currentScreen={currentScreen} onNavigate={setCurrentScreen}>
-        <ScreenComp navigate={setCurrentScreen} />
+        <ScreenComp navigate={setCurrentScreen} route={{ params: {} }} />
       </BottomTabNavigator>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  screenWrapper: {
-    flex: 1,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  container: { flex: 1 },
 });
 
 export default RootNavigator;
