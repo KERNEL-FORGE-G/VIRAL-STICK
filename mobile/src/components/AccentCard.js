@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { View, StyleSheet, Animated } from "react-native";
-import { useTheme } from "../theme";
+import { useTheme, colors, radius } from "../theme";
 
 const AccentCard = ({ children, style, accentColor, animate = false, delay = 0 }) => {
   const { theme } = useTheme();
@@ -19,16 +19,12 @@ const AccentCard = ({ children, style, accentColor, animate = false, delay = 0 }
     <Animated.View style={[
       styles.card,
       {
-        backgroundColor: theme.backgroundCard,
-        borderColor: theme.border,
-        shadowColor: theme.cardShadow.shadowColor,
-        shadowOffset: theme.cardShadow.shadowOffset,
-        shadowOpacity: theme.cardShadow.shadowOpacity,
-        shadowRadius: theme.cardShadow.shadowRadius,
-        elevation: theme.cardShadow.elevation,
+        backgroundColor: colors.snowWhite,
+        borderColor: colors.cloudGray,
+        opacity: fade,
+        transform: [{ translateY: ty }]
       },
-      style,
-      { opacity: fade, transform: [{ translateY: ty }] }
+      style
     ]}>
       {/* Accent color bar on the left */}
       {accentColor && (
@@ -43,13 +39,16 @@ const AccentCard = ({ children, style, accentColor, animate = false, delay = 0 }
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: radius.md || 16,
+    borderWidth: 2,
+    borderBottomWidth: 4, // Design 3D Duolingo style
     flexDirection: "row",
-    overflow: "hidden", // Keeps the accent bar inside the border radius
+    overflow: "hidden",
+    elevation: 0,
+    shadowOpacity: 0
   },
   accent: {
-    width: 4,
+    width: 6,
     height: "100%",
   },
   content: {

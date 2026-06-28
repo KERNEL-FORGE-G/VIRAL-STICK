@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, SafeAreaView, StatusBar } from 'react-native';
 import { colors, radius, spacing } from '../theme/tokens';
 import { useTheme } from '../theme';
 import AnimatedButton from '../components/AnimatedButton';
@@ -20,109 +20,112 @@ const AuthScreen = ({ navigate }) => {
       return;
     }
 
+    if (password.length < 6) {
+      Alert.alert('Erreur', 'Le mot de passe doit faire au moins 6 caractères');
+      return;
+    }
+
     setLoading(true);
     try {
-      const url = apiUrl('/health');
-      const res = await axios.get(url, { timeout: 5000 });
+      // Simulation d'un appel API pour valider l'existence du serveur
+      await axios.get(apiUrl('/health'), { timeout: 4000 });
       
-      if (res.status === 200) {
-        const userId = `user_${email.trim().toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
-        const saved = await authService.saveSession(userId, email);
-        
-        if (saved) {
-          console.log('[AuthScreen] Session sauvegardée avec userId:', userId);
-          Alert.alert('Succès', isLogin ? 'Connexion réussie !' : 'Compte créé avec succès !');
-          navigate('Home');
-        } else {
-          Alert.alert('Erreur', 'Impossible de sauvegarder la session');
-        }
+      const userId = `user_${email.trim().toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+      const success = await authService.saveSession(userId, email.trim());
+
+      if (success) {
+        Alert.alert('Bienvenue', isLogin ? 'Ravi de vous revoir !' : 'Compte créé avec succès !');
+        navigate('Home');
+      } else {
+        throw new Error("Échec stockage session");
       }
     } catch (error) {
-      console.error('Erreur auth:', error);
-      Alert.alert('Erreur', 'Impossible de contacter le serveur. Vérifiez votre connexion.');
+      console.error('[Auth] Error:', error);
+      Alert.alert('Erreur Connexion', 'Impossible de joindre le serveur. Mode hors-ligne activé.');
+
+      // Fallback offline pour permettre l'utilisation de l'app même sans backend configuré
+      const userId = `offline_${Date.now()}`;
+      await authService.saveSession(userId, email);
+      navigate('Home');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.snowWhite }]} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{isLogin ? 'Bon retour !' : 'Créer un compte'}</Text>
-        <Text style={styles.subtitle}>
-          {isLogin ? 'Connecte-toi pour tes mèmes.' : 'Rejoins la communauté Viral Stick !'}
-        </Text>
-      </View>
-
-      <View style={styles.form}>
-        <Text style={styles.label}>E-MAIL</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="ton@email.com"
-          placeholderTextColor={colors.silver}
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          autoCorrect={false}
-          spellCheck={false}
-          textContentType="none"
-        />
-
-        <Text style={styles.label}>MOT DE PASSE</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="••••••••"
-          placeholderTextColor={colors.silver}
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          autoCorrect={false}
-          spellCheck={false}
-          textContentType="none"
-          autoComplete="off"
-        />
-
-        <AnimatedButton 
-          title={isLogin ? 'SE CONNECTER' : 'CRÉER COMPTE'} 
-          onPress={handleAuth}
-          loading={loading}
-          disabled={loading}
-        />
-
-        <TouchableOpacity onPress={() => setIsLogin(!isLogin)} style={styles.switch}>
-          <Text style={styles.switchText}>
-            {isLogin ? "Pas encore de compte ? S'INSCRIRE" : "Déjà inscrit ? SE CONNECTER"}
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.snowWhite }}>
+      <StatusBar barStyle="dark-content" />
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <View style={styles.header}>
+          <Text style={styles.title}>{isLogin ? 'Bon retour !' : 'Créer un compte'}</Text>
+          <Text style={styles.subtitle}>
+            {isLogin ? 'Connecte-toi pour tes mèmes.' : 'Rejoins la communauté Viral Stick !'}
           </Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        </View>
+
+        <View style={styles.form}>
+          <Text style={styles.label}>E-MAIL</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="ton@email.com"
+            placeholderTextColor={colors.silver}
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+
+          <Text style={styles.label}>MOT DE PASSE</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="••••••••"
+            placeholderTextColor={colors.silver}
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+
+          <View style={{ marginTop: 10 }}>
+            <AnimatedButton
+              title={isLogin ? 'SE CONNECTER' : 'CRÉER MON COMPTE'}
+              onPress={handleAuth}
+              loading={loading}
+              disabled={loading}
+            />
+          </View>
+
+          <TouchableOpacity onPress={() => setIsLogin(!isLogin)} style={styles.switch}>
+            <Text style={styles.switchText}>
+              {isLogin ? "Pas encore de compte ? S'INSCRIRE" : "Déjà inscrit ? SE CONNECTER"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { padding: spacing.xl, alignItems: 'center' },
-  header: { alignItems: 'center', marginBottom: 40, marginTop: 60 },
-  title: { fontSize: 32, fontWeight: '900', color: colors.almostBlack, marginTop: 16, fontFamily: 'Nunito' },
-  subtitle: { fontSize: 16, textAlign: 'center', color: colors.graphite, marginTop: 8, fontFamily: 'Nunito' },
-  form: { width: '100%', padding: 24 },
-  label: { fontWeight: '800', fontSize: 13, marginBottom: 8, color: colors.charcoal, fontFamily: 'Nunito', letterSpacing: 1 },
+  content: { padding: spacing.xl, paddingBottom: 100 },
+  header: { alignItems: 'center', marginBottom: 40, marginTop: 40 },
+  title: { fontSize: 30, fontWeight: '900', color: colors.almostBlack, textAlign: 'center' },
+  subtitle: { fontSize: 15, textAlign: 'center', color: colors.graphite, marginTop: 10 },
+  form: { width: '100%' },
+  label: { fontWeight: '800', fontSize: 12, marginBottom: 8, color: colors.charcoal, letterSpacing: 1 },
   input: {
-    height: 56, 
+    height: 55,
     borderWidth: 2,
     borderColor: colors.cloudGray,
-    borderRadius: radius.buttons, 
-    paddingHorizontal: 20, 
-    marginBottom: 24,
+    borderRadius: radius.md,
+    paddingHorizontal: 16,
+    marginBottom: 20,
     fontSize: 16,
-    backgroundColor: colors.snowWhite,
+    backgroundColor: '#f9f9f9',
     color: colors.almostBlack,
-    fontFamily: 'Nunito',
     fontWeight: '600'
   },
-  switch: { marginTop: 24, alignItems: 'center' },
-  switchText: { fontWeight: '800', fontSize: 15, color: colors.skyBlue, fontFamily: 'Nunito' }
+  switch: { marginTop: 25, alignItems: 'center' },
+  switchText: { fontWeight: '800', fontSize: 14, color: colors.brandSecondary }
 });
 
 export default AuthScreen;

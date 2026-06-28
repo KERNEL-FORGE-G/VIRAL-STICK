@@ -3,26 +3,31 @@ const ShareService = require("../services-ia/shareService");
 const ForumController = require("./forumController");
 
 /**
- * Prépare l'image (Fusion + Upload Cloudinary)
+ * Prépare l'image fusionnée (Texte + Image) et gère l'upload
  */
 async function attachMemeShare(req, memeData) {
   const baseUrl = `${req.protocol}://${req.get("host")}`;
   try {
+    // On utilise les textes générés par l'IA pour créer la version fusionnée immédiatement
     const share = await ShareService.buildShareBundle({
-      topText: memeData.topText,
-      bottomText: memeData.bottomText,
+      topText: memeData.topText || "",
+      bottomText: memeData.bottomText || "",
       imageUrl: memeData.imageUrl,
       baseUrl,
     });
 
+    const fusedUrl = share.publicUrl || share.imageDataUrl || memeData.imageUrl;
+
     return {
       ...memeData,
-      composedImageUrl: share.publicUrl || share.imageDataUrl || memeData.imageUrl,
+      imageUrl: fusedUrl, // L'image principale devient l'image fusionnée
+      rawImageUrl: memeData.imageUrl, // On garde l'originale pour le Studio
+      composedImageUrl: fusedUrl,
       share,
     };
   } catch (e) {
     console.error("[MemeController] Share failed:", e.message);
-    return { ...memeData, share: null };
+    return { ...memeData, share: null, composedImageUrl: memeData.imageUrl };
   }
 }
 
@@ -35,11 +40,9 @@ async function autoPublish(req, withShare, type) {
     const imageUrl = withShare.share?.publicUrl || withShare.composedImageUrl;
 
     if (!imageUrl || imageUrl.startsWith('data:')) {
-      console.log(`[AutoPublish] Ignoré: Pas d'URL permanente pour ${type}`);
       return;
     }
 
-    // On utilise une version simplifiée de req/res pour ne pas faire planter le serveur
     const fakeReq = {
       body: {
         shareId: withShare.share?.shareId || `auto_${Date.now()}`,
@@ -51,8 +54,6 @@ async function autoPublish(req, withShare, type) {
       }
     };
 
-    // On appelle la logique de publication sans attendre (fire and forget)
-    // On passe un objet res simulé qui ne fait rien
     ForumController.publishMeme(fakeReq, {
       json: () => {},
       status: () => ({ json: () => {} })
@@ -91,17 +92,22 @@ const MemeController = {
       });
 
       const baseUrl = `${req.protocol}://${req.get("host")}`;
+      // FIX: On passe meme_text comme bottomText pour les remixers de status
       const share = await ShareService.buildShareBundle({
-        caption: remix.meme_text,
+        bottomText: remix.meme_text,
         imageUrl: remix.imageUrl || inputImageUrl,
         imageBase64: inputImageBase64,
         baseUrl,
       });
 
+      const fusedUrl = share.publicUrl || share.imageDataUrl || remix.imageUrl;
+
       const withShare = {
         ...remix,
-        share,
-        composedImageUrl: share.publicUrl || share.imageDataUrl || remix.imageUrl
+        imageUrl: fusedUrl,
+        rawImageUrl: remix.imageUrl || inputImageUrl || inputImageBase64,
+        composedImageUrl: fusedUrl,
+        share
       };
 
       autoPublish(req, withShare, "remix");
@@ -114,17 +120,19 @@ const MemeController = {
 
   compose: async (req, res) => {
     try {
-      const { imageUrl, imageBase64, topText, bottomText, topY, bottomY } = req.body;
+      const { imageUrl, imageBase64, rawImageUrl, topText, bottomText, topY, bottomY } = req.body;
+      // On utilise rawImageUrl en priorité pour éviter de fusionner sur une image déjà fusionnée
+      const sourceImage = rawImageUrl || imageUrl || imageBase64;
+
       const share = await ShareService.buildShareBundle({
         topText: topText || "",
         bottomText: bottomText || "",
-        imageUrl,
-        imageBase64,
+        imageUrl: sourceImage,
         topY,
         bottomY
       });
       res.json({
-        composedImageUrl: share.publicUrl || share.imageDataUrl || imageUrl || imageBase64,
+        composedImageUrl: share.publicUrl || share.imageDataUrl || sourceImage,
         share
       });
     } catch (error) {
@@ -136,12 +144,9 @@ const MemeController = {
   createFromVoice: async (req, res) => {
     try {
       let transcription = req.body.transcription;
-      
-      // If we have an audio file, transcribe it first
       if (req.file) {
         transcription = await AIService.transcribeAudio(req.file.buffer, req.file.mimetype);
       }
-
       if (!transcription) return res.status(400).json({ error: "Transcription manquante" });
 
       const memeData = await AIService.generateMemeFromVoice(transcription);
@@ -159,11 +164,9 @@ const MemeController = {
     try {
       const { companionId, message } = req.body;
       if (!message) return res.status(400).json({ error: "Message vide" });
-
       const reply = await AIService.chatWithCompanion(companionId, message);
       res.json({ reply });
     } catch (error) {
-      console.error("[MemeController] chat Error full:", error);
       res.status(500).json({ error: "Le compagnon ne répond pas." });
     }
   },
@@ -176,28 +179,19 @@ const MemeController = {
         bio: "Hey ! C’est Bio, l’expert visuel. Remixons des images ensemble !",
         ubu: "Bonjour ! Ubu ici, ton guide pour le forum viral.",
       };
-      res.json({
-        greeting: greetings[companionId] || "Salut ! Prêt à créer des memes ?"
-      });
+      res.json({ greeting: greetings[companionId] || "Salut ! Prêt à créer des memes ?" });
     } catch (error) {
-      console.error("[MemeController] getGreeting Error full:", error);
-      res.status(500).json({ error: "Erreur chargement du message de bienvenue." });
+      res.status(500).json({ error: "Erreur message." });
     }
   },
 
   generateImage: async (req, res) => {
     try {
       const { prompt } = req.body;
-      if (!prompt) return res.status(400).json({ error: "Prompt manquant" });
       const imageResult = await AIService.generateImage(prompt);
-      res.json({
-        imageUrl: imageResult.imageUrl,
-        provider: imageResult.provider,
-        fallback: imageResult.fallback
-      });
+      res.json(imageResult);
     } catch (error) {
-      console.error("[MemeController] generateImage Error full:", error);
-      res.status(500).json({ error: "Erreur lors de la génération de l'image." });
+      res.status(500).json({ error: "Erreur image." });
     }
   }
 };
