@@ -3,7 +3,7 @@ const path = require('path');
 const sharp = require('sharp');
 
 // Source logo
-const SOURCE_LOGO_PATH = path.join(__dirname, '../asset/logo/logo_sans_fond.png');
+const SOURCE_LOGO_PATH = path.join(__dirname, '../asset/logo/logo.png');
 
 // Target directories
 const TARGETS = [
