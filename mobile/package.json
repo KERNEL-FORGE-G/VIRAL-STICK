@@ -6,10 +6,13 @@
     "start": "react-native start",
     "start:reset": "react-native start --reset-cache",
     "android": "react-native run-android",
+    "android:clean": "cd android && ./gradlew clean && cd ..",
     "ios": "react-native run-ios",
     "devtools": "react-devtools",
     "log:android": "adb logcat -s ReactNativeJS:V ReactNative:V",
-    "apk": "cd android && ./gradlew assembleRelease && cp app/build/outputs/apk/release/app-release.apk ../viral-stick-release.apk && cd .."
+    "apk": "cd android && ./gradlew assembleRelease && mkdir -p ../builds && cp app/build/outputs/apk/release/app-release.apk ../builds/viral-stick-release.apk && cd .. && echo \"APK created at builds/viral-stick-release.apk\"",
+    "apk:debug": "cd android && ./gradlew assembleDebug && mkdir -p ../builds && cp app/build/outputs/apk/debug/app-debug.apk ../builds/viral-stick-debug.apk && cd .. && echo \"Debug APK created at builds/viral-stick-debug.apk\"",
+    "bundle:android": "cd android && ./gradlew bundleRelease && mkdir -p ../builds && cp app/build/outputs/bundle/release/app-release.aab ../builds/viral-stick-release.aab && cd .. && echo \"AAB created at builds/viral-stick-release.aab\""
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.21.0",
