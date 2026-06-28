@@ -13,6 +13,7 @@ import ForumPage from "./pages/ForumPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
+import VideoPage from "./pages/VideoPage";
 import "./App.css";
 
 const ProtectedRoute = ({ children }) => {
@@ -44,6 +45,7 @@ function App() {
               <Route path="/forum" element={<ProtectedRoute><ForumPage /></ProtectedRoute>} />
               <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+              <Route path="/video" element={<ProtectedRoute><VideoPage /></ProtectedRoute>} />
             </Routes>
           </Router>
         </UserProvider>

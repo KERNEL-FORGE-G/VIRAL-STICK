@@ -141,3 +141,5 @@ Le projet suit un **Duolingo-inspired design system** :
 ## 📜 Licence
 
 Projet réalisé par **KERNEL FORGE** — 2026
+github du projet: https://github.com/KERNEL-FORGE-G/VIRAL-STICK.git
+web: viral-stick.vercel.app
