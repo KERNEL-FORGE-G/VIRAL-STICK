@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { colors, radius, spacing } from '../theme/tokens';
 import { useTheme } from '../theme';
-import CompanionAvatar from '../components/CompanionAvatar';
+import AnimatedButton from '../components/AnimatedButton';
 import { apiUrl } from '../config/api';
 import axios from 'axios';
 import authService from '../services/authService';
@@ -22,16 +22,11 @@ const AuthScreen = ({ navigate }) => {
 
     setLoading(true);
     try {
-      // Pour l'instant, simulation simple - vérifier si le backend a des endpoints d'auth
       const url = apiUrl('/health');
       const res = await axios.get(url, { timeout: 5000 });
       
       if (res.status === 200) {
-        // Backend accessible - utiliser l'email comme identifiant unique pour la persistance
-        // Hash simple de l'email pour créer un userId stable
         const userId = `user_${email.trim().toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
-        
-        // Sauvegarder la session
         const saved = await authService.saveSession(userId, email);
         
         if (saved) {
@@ -51,21 +46,20 @@ const AuthScreen = ({ navigate }) => {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]} contentContainerStyle={styles.content}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.snowWhite }]} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <CompanionAvatar companion="para" size={100} />
-        <Text style={[styles.title, { color: theme.textPrimary }]}>{isLogin ? 'Bon retour !' : 'Créer un compte'}</Text>
-        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          {isLogin ? 'Connecte-toi pour tes mèmes.' : 'Rejoins la communauté.'}
+        <Text style={styles.title}>{isLogin ? 'Bon retour !' : 'Créer un compte'}</Text>
+        <Text style={styles.subtitle}>
+          {isLogin ? 'Connecte-toi pour tes mèmes.' : 'Rejoins la communauté Viral Stick !'}
         </Text>
       </View>
 
-      <View style={[styles.form, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
-        <Text style={[styles.label, { color: theme.textMuted }]}>E-MAIL</Text>
+      <View style={styles.form}>
+        <Text style={styles.label}>E-MAIL</Text>
         <TextInput
-          style={[styles.input, { borderColor: theme.border, color: theme.textPrimary }]}
+          style={styles.input}
           placeholder="ton@email.com"
-          placeholderTextColor={theme.textMuted}
+          placeholderTextColor={colors.silver}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -75,11 +69,11 @@ const AuthScreen = ({ navigate }) => {
           textContentType="none"
         />
 
-        <Text style={[styles.label, { color: theme.textMuted }]}>MOT DE PASSE</Text>
+        <Text style={styles.label}>MOT DE PASSE</Text>
         <TextInput
-          style={[styles.input, { borderColor: theme.border, color: theme.textPrimary }]}
+          style={styles.input}
           placeholder="••••••••"
-          placeholderTextColor={theme.textMuted}
+          placeholderTextColor={colors.silver}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
@@ -89,20 +83,15 @@ const AuthScreen = ({ navigate }) => {
           autoComplete="off"
         />
 
-        <TouchableOpacity 
-          style={[styles.mainBtn, { backgroundColor: colors.sapphire, opacity: loading ? 0.7 : 1 }]} 
+        <AnimatedButton 
+          title={isLogin ? 'SE CONNECTER' : 'CRÉER COMPTE'} 
           onPress={handleAuth}
+          loading={loading}
           disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.mainBtnText}>{isLogin ? 'SE CONNECTER' : 'CRÉER COMPTE'}</Text>
-          )}
-        </TouchableOpacity>
+        />
 
         <TouchableOpacity onPress={() => setIsLogin(!isLogin)} style={styles.switch}>
-          <Text style={[styles.switchText, { color: colors.sapphire }]}>
+          <Text style={styles.switchText}>
             {isLogin ? "Pas encore de compte ? S'INSCRIRE" : "Déjà inscrit ? SE CONNECTER"}
           </Text>
         </TouchableOpacity>
@@ -114,25 +103,26 @@ const AuthScreen = ({ navigate }) => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: spacing.xl, alignItems: 'center' },
-  header: { alignItems: 'center', marginBottom: 40, marginTop: 20 },
-  title: { fontSize: 28, fontWeight: '900', marginTop: 16 },
-  subtitle: { fontSize: 16, textAlign: 'center' },
-  form: { width: '100%', padding: 20, borderRadius: radius.xl, borderWidth: 1 },
-  label: { fontWeight: '900', fontSize: 13, marginBottom: 8 },
+  header: { alignItems: 'center', marginBottom: 40, marginTop: 60 },
+  title: { fontSize: 32, fontWeight: '900', color: colors.almostBlack, marginTop: 16, fontFamily: 'Nunito' },
+  subtitle: { fontSize: 16, textAlign: 'center', color: colors.graphite, marginTop: 8, fontFamily: 'Nunito' },
+  form: { width: '100%', padding: 24 },
+  label: { fontWeight: '800', fontSize: 13, marginBottom: 8, color: colors.charcoal, fontFamily: 'Nunito', letterSpacing: 1 },
   input: {
-    height: 50, borderWidth: 1,
-    borderRadius: radius.md, paddingHorizontal: 16, marginBottom: 20,
-    fontSize: 16
+    height: 56, 
+    borderWidth: 2,
+    borderColor: colors.cloudGray,
+    borderRadius: radius.buttons, 
+    paddingHorizontal: 20, 
+    marginBottom: 24,
+    fontSize: 16,
+    backgroundColor: colors.snowWhite,
+    color: colors.almostBlack,
+    fontFamily: 'Nunito',
+    fontWeight: '600'
   },
-  mainBtn: {
-    height: 54, borderRadius: radius.md,
-    justifyContent: 'center', alignItems: 'center',
-    shadowColor: colors.sapphireDark, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3, elevation: 4
-  },
-  mainBtnText: { color: '#fff', fontWeight: '900', fontSize: 16 },
   switch: { marginTop: 24, alignItems: 'center' },
-  switchText: { fontWeight: '800', fontSize: 13 }
+  switchText: { fontWeight: '800', fontSize: 15, color: colors.skyBlue, fontFamily: 'Nunito' }
 });
 
 export default AuthScreen;
