@@ -93,7 +93,7 @@ Le backend utilise les variables suivantes (mettre dans `backend/.env` ou sur Ve
 
 ---
 
-## 📱 Build Android
+## Android Build
 
 Pour compiler l'APK :
 ```bash
@@ -105,7 +105,23 @@ Pour compiler l'AAB :
 npm run apk:release
 ```
 
-Les fichiers générés sont dans `mobile/android/app/build/outputs/apk/` et `mobile/build/`.
+### Build Security (Release APK)
+
+Pour compiler l'APK de release, le projet nécessite une keystore de signature. **Ne jamais coder en dur** les identifiants dans `mobile/android/app/build.gradle`.
+
+Utilisez plutôt `mobile/android/gradle.properties` :
+
+1. Placez votre `my-upload-key.keystore` dans `mobile/android/app/`.
+2. Configurez vos identifiants dans `mobile/android/gradle.properties` :
+   ```properties
+   MYAPP_RELEASE_STORE_FILE=my-upload-key.keystore
+   MYAPP_RELEASE_KEY_ALIAS=my-key-alias
+   MYAPP_RELEASE_STORE_PASSWORD=VOTRE_MOT_DE_PASSE
+   MYAPP_RELEASE_KEY_PASSWORD=VOTRE_MOT_DE_PASSE
+   ```
+3. Assurez-vous que `mobile/android/gradle.properties` est bien ignoré par git (ajouté au `.gitignore`) pour ne jamais commiter vos secrets.
+
+Les fichiers générés sont dans `mobile/android/app/build/outputs/apk/` et `mobile/builds/`.
 
 ---
 

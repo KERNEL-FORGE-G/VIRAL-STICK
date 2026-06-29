@@ -136,7 +136,7 @@ jobs:
         if: steps.keystore.outputs.available == 'true'
         env:
           KS: ${{ secrets.ANDROID_KEYSTORE }}
-        run: echo "$KS" | base64 -d > android/app/viral-stick.keystore
+        run: echo "$KS" | base64 -d > android/app/my-upload-key.keystore
 
       # ── Vérifier secrets IA ───────────────────
       - name: Check secrets IA
@@ -160,9 +160,10 @@ jobs:
         run: ./gradlew --no-daemon assembleRelease
         env:
           JAVA_HOME: ${{ env.JAVA_HOME }}
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          MYAPP_RELEASE_STORE_FILE: my-upload-key.keystore
+          MYAPP_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          MYAPP_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          MYAPP_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -176,9 +177,10 @@ jobs:
         run: ./gradlew --no-daemon bundleRelease
         env:
           JAVA_HOME: ${{ env.JAVA_HOME }}
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          MYAPP_RELEASE_STORE_FILE: my-upload-key.keystore
+          MYAPP_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          MYAPP_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          MYAPP_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
       # ── Artifacts ─────────────────────────────
       - name: Upload APK debug
