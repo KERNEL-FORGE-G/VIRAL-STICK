@@ -35,11 +35,6 @@ android {
                 storePassword MYAPP_RELEASE_STORE_PASSWORD
                 keyAlias MYAPP_RELEASE_KEY_ALIAS
                 keyPassword MYAPP_RELEASE_KEY_PASSWORD
-            } else {
-                storeFile file('my-upload-key.keystore')
-                storePassword 'ravel123'
-                keyAlias 'my-key-alias'
-                keyPassword 'ravel123'
             }
         }
     }
